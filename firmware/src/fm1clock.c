@@ -263,7 +263,7 @@ static void draw_margins(uint32_t tod, int force)   /* the digits (left), the le
         shown_r = r;
         if (r & 3u) {
             uint32_t v = (r >> 2 & 127u) * 100u / 16u;
-            draw_text_box(BG_X + BG_W, 96, 240 - BG_X - BG_W, &FONT_S, (r & 3u) == 1u ? "TIKK" : "SLAG", RGB(224, 200, 150), 1);
+            draw_text_box(BG_X + BG_W, 96, 240 - BG_X - BG_W, &FONT_S, (r & 3u) == 1u ? "TICK" : "GONG", RGB(224, 200, 150), 1);
             s[0] = (char)(v >= 100u ? '0' + v / 100u : ' '); s[1] = (char)(v >= 10u ? '0' + v / 10u % 10u : ' ');
             s[2] = (char)('0' + v % 10u); s[3] = '%'; s[4] = 0;
             draw_text_box(BG_X + BG_W, 114, 240 - BG_X - BG_W, &FONT_S, s, RGB(224, 200, 150), 1);
@@ -271,7 +271,7 @@ static void draw_margins(uint32_t tod, int force)   /* the digits (left), the le
             lcd_fill(BG_X + BG_W, 96, 240 - BG_X - BG_W, 36, C_BLACK);
         }
         if (set.silent)
-            draw_text_box(BG_X + BG_W, 214, 240 - BG_X - BG_W, &FONT_S, "STILLE", RGB(150, 120, 90), 1);
+            draw_text_box(BG_X + BG_W, 214, 240 - BG_X - BG_W, &FONT_S, "SILENT", RGB(150, 120, 90), 1);
         else
             lcd_fill(BG_X + BG_W, 214, 240 - BG_X - BG_W, 16, C_BLACK);
     }

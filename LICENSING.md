@@ -14,7 +14,7 @@ complete source under the same licence too.
 | The update loader's screen: `firmware/loader/ldr_screen.c`, `tests/ldr_screen_test.c` | Copyright (C) 2026 zvenson (from OberVave, the Firmware Hub's look); the idea, a loader that draws, its 5 x 7 letters and the order of things from [Skiff](https://github.com/illuminus5/skiff) by illuminus5, GPL-3.0 |
 | From OberVave: the storage (blobs, slots), `LCD_IDLE`, the SMK-37 wiring of `platform.c`, `store.h`, the pad event queue in `smk_input.h`, `tests/smk_flash_test.c`, `tests/run_tests.sh`, the CI workflow | Copyright (C) 2026 zvenson |
 | The wiring `platform.c`, the host mode `tests/host.c`, Dinghy's docs (`docs/`) | zvenson |
-| FM1 Clock: `firmware/src/fm1clock.c` (from Dinghy's `dinghy.c`), `clk_engine.h`, `clk_draw.h`, `firmware/gen/clk_*.h`, `tools/analyze_ref.py`, `features.py`, `fit_model.py`, `gen_tables.py`, `gen_art.py`, `settime.py`, `emu_ci.sh`, `emu_check.sh`, `tests/run_clock.sh`, `tests/clk/`, `tests/scripts/` (the clock's), `tests/ref/`, `README.md`, `docs/lyd.md`, `PLATFORM.md` | Copyright (C) 2026 Joakim (joakimskurk) |
+| FM1 Clock: `firmware/src/fm1clock.c` (from Dinghy's `dinghy.c`), `clk_engine.h`, `clk_draw.h`, `firmware/gen/clk_*.h`, `tools/analyze_ref.py`, `features.py`, `fit_model.py`, `gen_tables.py`, `gen_art.py`, `settime.py`, `emu_ci.sh`, `emu_check.sh`, `tests/run_clock.sh`, `tests/clk/`, `tests/scripts/` (the clock's), `tests/ref/`, `README.md`, `docs/screens/`, `PLATFORM.md` | Copyright (C) 2026 Joakim (joakimskurk) |
 
 ## Third-party material
 
