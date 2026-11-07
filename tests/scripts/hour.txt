@@ -1,0 +1,6 @@
+# three o'clock: set to 2:59:50 over MIDI (CC 20, 21, 22), the hour comes at 10 s: three blows, 1.19 s apart
+100 trs 0xB0 20 2
+110 trs 0xB0 21 59
+120 trs 0xB0 22 50
+10500 shot
+15000 end

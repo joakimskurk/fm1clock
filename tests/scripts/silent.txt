@@ -1,0 +1,6 @@
+# FX: the strike off; four o'clock passes in silence
+50 btn 2
+100 midi 0xB0 20 3
+110 midi 0xB0 21 59
+120 midi 0xB0 22 55
+8000 end

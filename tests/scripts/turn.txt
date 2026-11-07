@@ -1,0 +1,6 @@
+# the minute hand turned forward from 10:10 past 11:00 (50 detents): the clock strikes eleven when the turning
+# stops; turned back past it again: nothing more (five of the eleven by 6.4 s)
+1000 enc 0 50
+1200 shot
+4000 enc 0 -3
+6500 end

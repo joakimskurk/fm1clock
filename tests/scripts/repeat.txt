@@ -1,0 +1,5 @@
+# PLAY: the repeater strikes the last hour (ten); the screen in the middle of it
+500 btn 12
+1000 shot
+1250 shot
+4000 end

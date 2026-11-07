@@ -1,0 +1,25 @@
+# Every push and pull request: FM1 Clock's host tests, Dinghy's platform tests and the real FM-1 package, built and
+# attested by the shared zvenson/fm1-build workflow (JieLi toolchain + AC79 SDK), as VaveHero, RoboSeq and SkurkyMello
+# do. Then fm1-emu runs the package and says how much of the chip the clock uses (tools/emu_ci.sh). A tag vX.Y also
+# publishes the release.
+name: build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: zvenson/fm1-build/.github/workflows/build.yml@v1
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    with:
+      build: |
+        if [ "$GITHUB_REF_TYPE" = tag ]; then ./build.sh --release "${GITHUB_REF_NAME#v}"; else ./build.sh; fi
+      test: python3 -m pip install -q numpy && sh tests/run_clock.sh && sh tests/run_tests.sh && sh tools/emu_ci.sh
+      packages: build/fm1clock*.fwsc

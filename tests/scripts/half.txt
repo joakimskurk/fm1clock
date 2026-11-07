@@ -1,0 +1,5 @@
+# half past three: one blow
+100 midi 0xB0 20 3
+110 midi 0xB0 21 29
+120 midi 0xB0 22 55
+8000 end
