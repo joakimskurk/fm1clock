@@ -142,8 +142,20 @@ def inpaint_dial(im):
     return im
 
 
+def box_blur(m, r):
+    out = m.astype(float)
+    for axis in (0, 1):
+        acc = np.zeros_like(out)
+        for d in range(-r, r + 1):
+            acc += np.roll(out, d, axis=axis)
+        out = acc / (2 * r + 1)
+    return out
+
+
 def window_layers(im):
-    """the window's inside: back panel (wood, no pendulum, no glass), front layer (gold, frame, reflections) RGBA"""
+    """the window's inside: back panel (wood, no pendulum, no glass), front layer (gold, frame, reflections) RGBA.
+    The design paints the pendulum's shadow onto the wood around it: the back panel is built again there from the
+    wood away from it (per row its colour, per column its grain), so the firmware's shadow can swing with it"""
     x0, y0, x1, y1 = WIN
     reg = im[y0:y1, x0:x1].astype(float)
     h, w = reg.shape[:2]
@@ -152,29 +164,34 @@ def window_layers(im):
     gold = (G > 75) & (R > 120) & (R - B > 60)                 # scrollwork, frame lines, and the pendulum
     bx, by, br = BOB
     pend = (np.hypot(xx + x0 - bx, yy + y0 - by) < br + 4) | ((np.abs(xx + x0 - 627) < 19) & (yy + y0 < by))
+    zone = dilate(pend, 30)                                    # the pendulum and the shadow painted round it
     lum = reg.mean(axis=2)
     sat = reg.max(axis=2) - reg.min(axis=2)
     glass = (sat < 40) & (lum > 55) & ~pend                     # the reflections: grey, lighter than the wood
     front_gold = gold & ~pend
-    panel_px = ~gold & ~pend & ~glass
-    # per column, the wood's colour (median of the clean pixels); a gentle vertical shading per row
-    col = np.zeros((w, 3))
-    for x in range(w):
-        sel = panel_px[:, x]
-        col[x] = np.median(reg[sel, x], axis=0) if sel.sum() > 8 else np.nan
-    for x in range(w):                                         # columns with too few clean pixels: neighbours
-        if np.isnan(col[x, 0]):
-            lo = next((col[x - k] for k in range(1, w) if x - k >= 0 and not np.isnan(col[x - k, 0])), None)
-            hi = next((col[x + k] for k in range(1, w) if x + k < w and not np.isnan(col[x + k, 0])), None)
-            col[x] = lo if hi is None else hi if lo is None else (lo + hi) / 2
-    rowgain = np.ones(h)
+    clean = ~gold & ~glass & ~zone
+    row = np.zeros((h, 3))                                      # per row the wood's colour, both sides of the zone
     for y in range(h):
-        sel = panel_px[y, :]
-        if sel.sum() > 20:
-            rowgain[y] = np.median(reg[y, sel].mean(axis=1) / col[sel].mean(axis=1))
-    rowgain = np.convolve(np.pad(rowgain, 15, mode="edge"), np.ones(31) / 31, "valid")
-    back = col[None, :, :] * rowgain[:, None, None]
-    back = np.where(panel_px[..., None], reg, back)            # keep the design's own wood where it shows
+        sel = clean[y]
+        row[y] = np.median(reg[y, sel], axis=0) if sel.sum() > 8 else np.nan
+    for y in range(h):
+        if np.isnan(row[y, 0]):
+            row[y] = row[~np.isnan(row[:, 0])][np.argmin(np.abs(np.where(~np.isnan(row[:, 0]))[0] - y))]
+    k = 7
+    row = np.array([np.mean(row[max(y - k, 0):y + k + 1], axis=0) for y in range(h)])
+    grain = np.ones((w, 3))                                     # per column its grain against the row's colour
+    have = np.zeros(w, bool)
+    for x in range(w):
+        sel = clean[:, x]
+        if sel.sum() > 0.3 * h:
+            grain[x] = np.median(reg[sel, x] / np.maximum(row[sel], 1), axis=0)
+            have[x] = True
+    src = np.where(have & (np.arange(w) > 40) & (np.arange(w) < w - 40))[0]   # (not the dark ones by the frame)
+    for i, x in enumerate(np.where(~have)[0]):                 # the zone's columns: the clean ones side by side, so
+        grain[x] = grain[src[(i + 17) % len(src)]]              # the planks keep their width
+    model = row[:, None, :] * grain[None, :, :]
+    wz = np.clip(box_blur(dilate(zone, 3), 6) * 1.6, 0, 1)      # the design's own wood outside, feathered
+    back = np.where(clean[..., None], reg * (1 - wz[..., None]) + model * wz[..., None], model)
     # the front: gold opaque; the reflections as white-ish over the back, alpha from how much lighter they are
     W_ = np.array([205.0, 205.0, 215.0])
     a = np.zeros((h, w))

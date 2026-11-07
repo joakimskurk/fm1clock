@@ -56,7 +56,7 @@ som ligger over støyen i opptaket):
 
 | | 0–20 ms | 20–50 | 50–100 | 0,1–0,2 s | 0,2–0,4 | 0,4–0,8 | 0,8–1,6 | 1,6–3,2 | 3,2–5 |
 |---|---|---|---|---|---|---|---|---|---|
-| Slag, 368 bærere | 0,6 dB | 1,3 | 0,7 | 0,7 | 0,6 | 1,1 | 1,2 | 0,7 | 1,8 |
+| Slag, 257 bærere (som i fm1-emu) | 0,5 dB | 1,2 | 0,7 | 0,7 | 0,7 | 1,3 | 1,3 | 0,7 | 1,8 |
 
 | | −2–4 ms | 4–10 | 10–20 | 20–35 |
 |---|---|---|---|---|
@@ -75,10 +75,11 @@ har. Resten av gongen klinger ut i det stille og tas inn igjen der den ville ha 
 Brikken er dermed full hele tiden, også mellom slagene, og aldri fullere enn det. På et ekte FM-1 tilpasser den
 seg det brikken faktisk klarer. SEQ viser tallet på skjermen.
 
-Beregnet ut fra x86 (callgrind × 0,8): ca. 7,6 instruksjoner per bærer per frame og ca. 1200 for de to
-tikkbankene. Det gir rundt 370 bærere, og med modulatorene og tikkoperatorene ca. 530 FM-operatorer i
-44,1 kHz. Slaget er like nær opptaket med 368 bærere som med alle 742 (99,8 % av energien), og innenfor 1,9 dB
-med 160. CI kjører pakken i fm1-emu og skriver det målte tallet i loggen (`tools/emu_check.sh`).
+**Målt i fm1-emu** (den ekte pakken, CI): guvernøren regner ut 257 av gongens 742 bærere. Med de 32
+modulatorene og de 128 tikkoperatorene blir det 417 FM-operatorer i 44,1 kHz. Lydmotoren tar 77 % av hver blokk
+(78 % i den verste), og alle avbruddene tar 75 % av brikken. Resten går til pendelen (50 bilder i sekundet),
+viserne, USB og panelet. Slaget er innenfor 1,8 dB av opptaket med 257 bærere, like nær som med alle 742 (de
+tar 99,8 % av energien), og innenfor 1,9 dB med 160.
 
 ## Bygg og test
 

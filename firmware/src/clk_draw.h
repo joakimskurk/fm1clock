@@ -194,7 +194,33 @@ static void draw_dial(uint32_t hour, uint32_t minute)
     lcd_blit((uint32_t)dial_x0, (uint32_t)dial_y0, DIAL_W, DIAL_W, dial_px);
 }
 
-/* ---- the pendulum */
+/* ---- the pendulum, and its shadow on the wood behind it (the light from the top left, as on the bob and the glass) */
+#define SH_DX 768                               /* the shadow's offset: 3 px right, 2.5 px down */
+#define SH_DY 640
+#define SH_K 170                                /* how dark, /256 */
+
+static int32_t bob_alpha(int32_t sxp, int32_t syp)   /* the bob's alpha (0..255) at sprite coordinates, 1/256 px */
+{
+    int32_t ix = sxp >> 8, iy = syp >> 8, fx = sxp & 255, fy = syp & 255, top, bot;
+    const uint8_t *p0;
+    if (sxp < 0 || syp < 0 || ix >= BOB_W - 1 || iy >= BOB_H - 1)
+        return 0;
+    p0 = &BOB_RGBA[4 * (iy * BOB_W + ix) + 3];
+    top = p0[0] * (256 - fx) + p0[4] * fx;
+    bot = p0[4 * BOB_W] * (256 - fx) + p0[4 * BOB_W + 4] * fx;
+    return (top * (256 - fy) + bot * fy) >> 16;
+}
+static int32_t rod_cov(int32_t px, int32_t py, int32_t s, int32_t c, int32_t *u_out)   /* 0..256 of the rod */
+{
+    int32_t u = ((px - HUB_X256) * c - (py - HUB_Y256) * s) >> 15;   /* across it (each term < 2^30: 32 bits do) */
+    int32_t t = ((px - HUB_X256) * s + (py - HUB_Y256) * c) >> 15;   /* along it, from the hub down */
+    int32_t cov = ROD_N * FX / 2 - (u < 0 ? -u : u) + FX / 2;        /* 1/256 px inside its edge, half a pixel soft */
+    *u_out = u;
+    if (t >= PEND_L256)
+        return 0;
+    return cov < 0 ? 0 : cov > FX ? FX : cov;
+}
+
 static void draw_window(uint32_t th)
 {
     int32_t s = SINT[th >> 18], c = SINT[(th + 1073741824u) >> 18];
@@ -211,32 +237,39 @@ static void draw_window(uint32_t th)
     }
     /* the columns the rod and the bob can touch */
     xa = ((rx_top < bx ? rx_top : bx) - BOB_R256 - 4 * FX) >> 8;
-    xb = ((rx_top > bx ? rx_top : bx) + BOB_R256 + 4 * FX) >> 8;
+    xb = ((rx_top > bx ? rx_top : bx) + BOB_R256 + 4 * FX + SH_DX) >> 8;
     if (xa < WIN_X) xa = WIN_X;
     if (xb > WIN_X + WIN_W) xb = WIN_X + WIN_W;
     for (y = 0; y < WIN_H; y++)
         for (x = xa; x < xb; x++) {
             int32_t i = y * WIN_W + (x - WIN_X), r, g, b, a;
             int32_t px = (x << 8) + 128, py = ((WIN_Y + y) << 8) + 128;
-            int32_t u, t, sxp, syp;
+            int32_t u, sxp, syp, cov, k, sh = 0;
             unpack(WIN_BACK[i], &r, &g, &b);
-            /* the rod: across it u, along it t (from the hub down), 1/256 px */
-            u = ((px - HUB_X256) * c - (py - HUB_Y256) * s) >> 15;   /* (each term < 2^30: 32 bits do) */
-            t = ((px - HUB_X256) * s + (py - HUB_Y256) * c) >> 15;
-            if (t < PEND_L256 && u > -(ROD_N * FX / 2) - FX && u < ROD_N * FX / 2 + FX) {
-                int32_t pos = u + ROD_N * FX / 2 - FX / 2, k = pos >> 8, f = pos & 255, cov;
-                int32_t k0 = k < 0 ? 0 : k > ROD_N - 1 ? ROD_N - 1 : k, k1 = k + 1 < 0 ? 0 : k + 1 > ROD_N - 1 ? ROD_N - 1 : k + 1;
-                int32_t edge = ROD_N * FX / 2 - (u < 0 ? -u : u);   /* 1/256 px inside the rod's edge */
-                cov = edge + FX / 2;
-                cov = cov < 0 ? 0 : cov > FX ? FX : cov;
-                if (cov) {
-                    int32_t rr = (ROD_RGB[3 * k0] * (256 - f) + ROD_RGB[3 * k1] * f) >> 8;
-                    int32_t rg = (ROD_RGB[3 * k0 + 1] * (256 - f) + ROD_RGB[3 * k1 + 1] * f) >> 8;
-                    int32_t rb = (ROD_RGB[3 * k0 + 2] * (256 - f) + ROD_RGB[3 * k1 + 2] * f) >> 8;
-                    r += ((rr - r) * cov) >> 8;
-                    g += ((rg - g) * cov) >> 8;
-                    b += ((rb - b) * cov) >> 8;
-                }
+            /* the shadow: the bob and the rod a little to the right and down, four samples soft */
+            for (k = 0; k < 4; k++) {
+                int32_t qx = px - SH_DX + (k & 1 ? 192 : -192), qy = py - SH_DY + (k & 2 ? 192 : -192), uu;
+                int32_t ba = bob_alpha(qx - bx + BOB_CX256 - 128, qy - by + BOB_CY256 - 128);
+                int32_t ra = rod_cov(qx, qy, s, c, &uu);
+                sh += ba > ra ? ba : ra;
+            }
+            if (sh) {
+                sh = (sh >> 2) * SH_K;                  /* 0 .. 255 * SH_K */
+                r -= (r * sh) >> 16;
+                g -= (g * sh) >> 16;
+                b -= (b * sh) >> 16;
+            }
+            /* the rod */
+            cov = rod_cov(px, py, s, c, &u);
+            if (cov) {
+                int32_t pos = u + ROD_N * FX / 2 - FX / 2, kk = pos >> 8, f = pos & 255;
+                int32_t k0 = kk < 0 ? 0 : kk > ROD_N - 1 ? ROD_N - 1 : kk, k1 = kk + 1 < 0 ? 0 : kk + 1 > ROD_N - 1 ? ROD_N - 1 : kk + 1;
+                int32_t rr = (ROD_RGB[3 * k0] * (256 - f) + ROD_RGB[3 * k1] * f) >> 8;
+                int32_t rg = (ROD_RGB[3 * k0 + 1] * (256 - f) + ROD_RGB[3 * k1 + 1] * f) >> 8;
+                int32_t rb = (ROD_RGB[3 * k0 + 2] * (256 - f) + ROD_RGB[3 * k1 + 2] * f) >> 8;
+                r += ((rr - r) * cov) >> 8;
+                g += ((rg - g) * cov) >> 8;
+                b += ((rb - b) * cov) >> 8;
             }
             /* the bob: its sprite (premultiplied), sampled between its pixels */
             sxp = px - bx + BOB_CX256 - 128;

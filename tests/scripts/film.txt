@@ -1,2 +1,2 @@
-# for the README: one swing to and fro (3.0 .. 4.0 s, after the time shown at power-on is gone)
+# for the README: one swing to and fro (3.08 .. 4.04 s, after the time shown at power-on is gone)
 4100 end

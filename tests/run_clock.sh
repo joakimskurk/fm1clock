@@ -26,8 +26,8 @@ run "the engine alone compiles without a warning (-Wextra -Werror)" \
 # the sound against the reference recording
 run "a strike, all 742 carriers: every window within 2 dB of the recording" sh -c \
     "build/clk_render strike build/audio/strike.wav && python3 tests/clk/parity.py gong build/audio/strike.wav 2.0"
-run "a strike, 368 carriers (what the governor leaves on the chip, estimated): within 2 dB" sh -c \
-    "build/clk_render strike build/audio/strike-368.wav 368 && python3 tests/clk/parity.py gong build/audio/strike-368.wav 2.0"
+run "a strike, 257 carriers (what the governor renders in fm1-emu): within 2 dB" sh -c \
+    "build/clk_render strike build/audio/strike-257.wav 257 && python3 tests/clk/parity.py gong build/audio/strike-257.wav 2.0"
 run "a strike, 160 carriers: within 2.5 dB" sh -c \
     "build/clk_render strike build/audio/strike-160.wav 160 && python3 tests/clk/parity.py gong build/audio/strike-160.wav 2.5"
 run "24 ticks: their mean within 1.6 dB of the recording's, every window" sh -c \

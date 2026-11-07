@@ -4,9 +4,11 @@
 
   check_clock.py hits LOG FROM TO N [T0]   N blows of the hammer between FROM and TO s in the host's log (its "HIT"
                                            lines), the first at T0 +- 0.01 s, 1.192 +- 0.05 s apart
-  check_clock.py onset WAV FROM TO T       the loudest jump of the sound between FROM and TO s is at T +- 0.03 s
-                                           (the first blow of a train, from silence: fm1-emu)
-  check_clock.py ticks WAV FROM TO         a tick every 0.5 s (+- 3 ms), left and right in turn
+  check_clock.py onset WAV FROM TO T [MS] the loudest jump of the sound between FROM and TO s is at T +- 0.03 s
+                                           (the first blow of a train: fm1-emu; MS: the run's length, whose sound
+                                           starts after the power-on: the times are the power-on's)
+  check_clock.py ticks WAV FROM TO         a tick every 0.5 s (+- 3 ms), left and right in turn, nothing else but
+                                           the tocks' second clicks
   check_clock.py moved A B                 the pendulum's window differs between two screens (it swings)
   check_clock.py hands IMG HH MM           the hands point at HH:MM (the darkest ray from the hub, each)
   check_clock.py isr REPORT LO HI          fm1-emu's report: the share of the chip in interrupts within LO..HI %
@@ -85,24 +87,35 @@ def main():
         return 0 if ok else 1
     if what == "onset":
         fs, x = read_wav(sys.argv[2])
-        t, r = onset(x, fs, float(sys.argv[3]), float(sys.argv[4]))
+        off = float(sys.argv[6]) / 1000 - len(x) / fs if len(sys.argv) > 6 else 0.0   # (fm1-emu: its sound starts late)
+        t, r = onset(x, fs, float(sys.argv[3]) - off, float(sys.argv[4]) - off)
         want = float(sys.argv[5])
-        print(f"the loudest onset between {sys.argv[3]} and {sys.argv[4]} s: {t:.3f} s ({10 * np.log10(r):.0f} dB up), want {want}")
-        return 0 if abs(t - want) < 0.03 and r > 30 else 1
+        print(f"the loudest onset between {sys.argv[3]} and {sys.argv[4]} s: {t + off:.3f} s ({10 * np.log10(r):.0f} dB up), "
+              f"want {want}" + (f" (the sound starts {1000 * off:.0f} ms after the power-on)" if off else ""))
+        return 0 if abs(t + off - want) < 0.03 and r > 30 else 1
     if what == "ticks":
         fs, x = read_wav(sys.argv[2])
         t0, t1 = float(sys.argv[3]), float(sys.argv[4])
         ev = [(t, lr) for t, lr in tick_events(x, fs) if t0 <= t <= t1]
-        main_ = [e for e in ev if abs(((e[0] + 0.25) % 0.5) - 0.25) < 0.01]   # on the half seconds (the rest: the tock's
-        others = len(ev) - len(main_)                                          # second click, 115 ms on)
+        # the ticks' place in the half second: where most of them are (fm1-emu's sound starts a little after the
+        # power-on, the host's with it); the tock's second click is 115 ms after it, the rest is not a tick
+        ph = np.array([t % 0.5 for t, _ in ev])
+        circ = lambda a, b: np.abs(((a - b + 0.25) % 0.5) - 0.25)
+        cand = [p0 for p0 in ph]
+        phase = max(cand, key=lambda p0: np.sum(circ(ph, p0) < 0.004)) if len(ph) else 0.0
+        main_ = [e for e, q in zip(ev, ph) if circ(q, phase) < 0.004]
+        after = sum(1 for q in ph if circ(q, phase + 0.115) < 0.01)
+        others = len(ev) - len(main_) - after
         ts = np.array([e[0] for e in main_])
         ok = len(ts) >= int((t1 - t0) / 0.5) - 1
-        err = np.abs(((ts + 0.25) % 0.5) - 0.25) if len(ts) else np.array([1.0])
+        err = circ(ts % 0.5, phase) if len(ts) else np.array([1.0])
+        gaps = np.diff(ts) if len(ts) > 1 else np.array([0.5])
         sides = [e[1] > 0 for e in main_]
         alt = all(a != b for a, b in zip(sides, sides[1:]))
-        print(f"ticks {t0}..{t1} s: {len(ts)} on the half seconds (worst {1000 * err.max():.1f} ms off), "
-              f"{others} more (the tocks' second click), left / right in turn: {alt}")
-        return 0 if ok and err.max() < 0.003 and alt else 1
+        print(f"ticks {t0}..{t1} s: {len(ts)} on the half seconds (at +{1000 * phase:.1f} ms; worst {1000 * err.max():.1f} ms "
+              f"off), apart {gaps.min():.4f} .. {gaps.max():.4f} s, {after} second clicks of the tocks, {others} else; "
+              f"left / right in turn: {alt}")
+        return 0 if ok and err.max() < 0.003 and np.all(np.abs(gaps - 0.5) < 0.004) and alt and others == 0 else 1
     if what == "moved":
         c = art_consts()
         a = np.asarray(Image.open(sys.argv[2]).convert("RGB")).astype(int)
