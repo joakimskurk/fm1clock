@@ -38,7 +38,7 @@ run "twelve o'clock (12 blows) does not clip" sh -c \
     "build/clk_render train 12 build/audio/train12.wav && python3 $P peak build/audio/train12.wav 0.95"
 
 # the clock: the time, the strike, the panel (host mode, 200 carriers: quicker, the same events)
-for s in hour half silent turn repeat; do
+for s in hour half silent turn repeat twelve; do
     run "the clock on the host: tests/scripts/$s.txt" sh -c "CLK_NG=200 $OUT/fm1clock $OUT/$s tests/scripts/$s.txt > $OUT/$s.log"
 done
 run "three o'clock: three blows, the first 40 ms after the hour, 1.19 s apart" python3 $P hits $OUT/hour.log 1 14.9 3 10.04
@@ -46,6 +46,9 @@ run "half past: one blow" python3 $P hits $OUT/half.log 1 7.9 1 5.04
 run "FX (silent): the hour passes without a blow" python3 $P hits $OUT/silent.log 0.3 7.9 0
 run "the minute hand turned past 11:00 strikes eleven when it stops, turned back nothing" python3 $P hits $OUT/turn.log 0.3 6.4 5 1.54
 run "PLAY strikes the last hour (ten)" python3 $P hits $OUT/repeat.log 0.3 3.9 3 0.54
+run "twelve o'clock: twelve blows" python3 $P hits $OUT/twelve.log 1 21 12 4.04
+run "every blow as hard as the first" python3 $P even $OUT/twelve.log
+run "twelve o'clock with the ticks does not clip" python3 $P peak $OUT/twelve.wav 0.95
 run "a tick every half second, on its frame, left and right in turn" python3 $P ticks $OUT/hour.wav 0.4 9.6
 run "the hands at 10:10 after power-on" python3 $P hands $OUT/repeat-1000.ppm 10 10
 run "the hands at 3:00 when it strikes three" python3 $P hands $OUT/hour-10500.ppm 3 0

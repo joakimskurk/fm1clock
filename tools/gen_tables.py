@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "firmware" / "gen" / "clk_tables.h"
 FS = 44100
-GAIN = 2.6                  # the output against the recording: the lone strike's peak at ~0.6 of full scale
+GAIN = 2.3                  # the output against the recording: twelve equal blows peak under 0.85 of full scale
 SUB = 16                    # frames per envelope step of the gong (clk_engine.h)
 TSTEP = 4                   # frames per envelope step of the ticks
 BLOCK = 256                 # frames per audio block (platform.c HALF_FRAMES)
@@ -74,9 +74,9 @@ def build():
     h.append(carray("F_I0", "uint32_t", [int(round(f["I"] / (2 * math.pi) * 2 ** 17)) for f in fm]))
     h.append(carray("F_DEC", "uint32_t", [dec(f["tauI"], SUB) for f in fm]))
     h.append(carray("F_B", "uint32_t", [int(round(f["B"] * 4096)) for f in fm]))
-    h.append("/* the hammer: its strength through a strike train (Q15), the first blow the strongest */")
-    g = m["train"]["gains"]
-    gains = [g[0], g[1]] + [sum(g[2:]) / len(g[2:])]
+    h.append("/* the hammer: its strength through a strike train (Q15). Every blow as the first: in the recording the")
+    h.append(" * later ones are softer only because the phone was further from the clock (its maker says) */")
+    gains = [1.0, 1.0, 1.0]
     h.append(carray("HAMMER", "uint32_t", [int(round(32767 * v)) for v in gains]))
     h.append("/* the ticks' rise: 1 - e^(-t / ta), per frame towards 1 by this much (Q15) */")
     h.append(carray("T_ATK", "uint32_t", [int(round(32768 * (1 - math.exp(-1 / (FS * m[n + "_attack"]))))) for n in ("tick", "tock")]))

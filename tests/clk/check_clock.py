@@ -4,6 +4,7 @@
 
   check_clock.py hits LOG FROM TO N [T0]   N blows of the hammer between FROM and TO s in the host's log (its "HIT"
                                            lines), the first at T0 +- 0.01 s, 1.192 +- 0.05 s apart
+  check_clock.py even LOG                  every blow in the host's log as hard as the first (+- 7 %: the hammer varies)
   check_clock.py onset WAV FROM TO T [MS] the loudest jump of the sound between FROM and TO s is at T +- 0.03 s
                                            (the first blow of a train: fm1-emu; MS: the run's length, whose sound
                                            starts after the power-on: the times are the power-on's)
@@ -85,6 +86,11 @@ def main():
             ok = bool(np.all(np.abs(gaps - 1.192) < 0.05))
             print(f"  apart {np.round(gaps, 3).tolist()} (want 1.192 +- 0.05)")
         return 0 if ok else 1
+    if what == "even":
+        g = [int(v) for v in re.findall(r"HIT at [\d.]+ s, strength (\d+)", Path(sys.argv[2]).read_text())]
+        lo, hi = (min(g) / g[0], max(g) / g[0]) if g else (0, 0)
+        print(f"{len(g)} blows, from {lo:.3f} to {hi:.3f} of the first")
+        return 0 if g and lo > 0.88 and hi < 1.14 else 1
     if what == "onset":
         fs, x = read_wav(sys.argv[2])
         off = float(sys.argv[6]) / 1000 - len(x) / fs if len(sys.argv) > 6 else 0.0   # (fm1-emu: its sound starts late)

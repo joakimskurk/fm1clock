@@ -44,8 +44,8 @@ It is a [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the same famil
 - **The pendulum swings and ticks.** It is a half-second pendulum: one full swing to and fro per second, and one
   click at each end of the swing, so a click every half second. The *tick* comes from the left, the *tock* from the
   right, as the pendulum is there.
-- **It strikes the hours** on the gong: one blow at one o'clock, twelve at twelve, 1.19 s apart, the first blow the
-  hardest. **One blow at the half hour.**
+- **It strikes the hours** on the gong: one blow at one o'clock, twelve at twelve, 1.19 s apart, every blow as hard
+  as the first. **One blow at the half hour.**
 - **It behaves like a real striking clock.** Turn the minute hand forward past the hour and it strikes that hour
   when you let go. A repeat button strikes the last hour again. A switch silences the strike.
 - **The keys' lights follow the pendulum.** Playing the keys does nothing: this is a clock.
@@ -187,8 +187,10 @@ FM1 Clock does the same thing, at a much larger scale:
 
 - **Timing.** The hammer strikes 1.192 s from blow to blow, as in the recording, varied by about ±1 % (±12 ms) from
   blow to blow, as a real clock's train is.
-- **Strength.** The first blow is the hardest; then 0.85 of it, then about 0.53 each. That is what the recording's
-  eleven strikes show: the energy just after each blow minus the energy just before.
+- **Strength.** Every blow is as hard as the first, varied by up to ±6 % from blow to blow. The recording's eleven
+  strikes do get softer after the first two (0.85, then about 0.53 of the first, measured as the energy just after
+  each blow minus the energy just before), but only because the phone recording them was moved further from the
+  clock, so here they are balanced.
 - **The release click.** About 40 ms before each blow there is a click: the strike train letting the hammer go. It
   is one of the tick sounds, softer.
 - **A blow on a ringing gong.** A new blow adds to a gong that is still ringing. Each mode's new level is the sum of
@@ -282,8 +284,8 @@ The chip has no floating point unit, so everything is integers (`firmware/src/cl
   step down every 4 frames (ticks fall fast) and their rise is applied every frame.
 - **The mix** is in Q30 and is scaled by the two level knobs. The gong goes to both channels equally, each tick
   bank with its own left/right pan.
-- **The levels:** the output is the recording's level × 2.6. A lone strike peaks at about 0.6 of full scale,
-  twelve strikes at 0.77, so nothing clips.
+- **The levels:** the output is the recording's level × 2.3. A lone strike peaks at about 0.68 of full scale.
+  Twelve blows at twelve o'clock, as the gong rings up and the ticks go on, peak at 0.82, so nothing clips.
 
 ## The picture
 
@@ -336,7 +338,6 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 - the tables are exactly what the model makes;
 - the app compiles without a warning (gcc and clang, `-Werror`);
 - the sound against the recording, as in the tables above: every window within 2 dB, the ticks within 1.6 dB;
-- twelve o'clock does not clip;
 - and, running the whole app on a computer from scripts (`tests/scripts/`):
 
 | Script | What must happen |
@@ -346,6 +347,7 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 | `silent.txt` | FX first, then four o'clock: no blow. |
 | `turn.txt` | The minute hand turned forward past 11:00: it strikes eleven when you stop; turned back: nothing more. |
 | `repeat.txt` | PLAY: ten blows; the hands at 10:10; the pendulum moves. |
+| `twelve.txt` | Twelve o'clock: twelve blows, every one as hard as the first, and nothing clips. |
 | (all) | A tick every half second to within 3 ms, left and right in turn, and **nothing between two ticks**. |
 
 **CI** (`.github/workflows/build.yml`, using the shared `zvenson/fm1-build` workflow) builds the package on every

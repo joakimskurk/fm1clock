@@ -1,0 +1,5 @@
+# twelve o'clock: set to 11:59:56 over MIDI; twelve blows, all as hard as the first, and nothing clips
+100 trs 0xB0 20 11
+110 trs 0xB0 21 59
+120 trs 0xB0 22 56
+22000 end
