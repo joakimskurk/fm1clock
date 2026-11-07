@@ -58,8 +58,7 @@ def build():
          f"#define NT {NT}u            /* operators per tick bank */",
          f"#define CLK_SUB {SUB}u", f"#define CLK_TSTEP {TSTEP}u", f"#define CLK_BLOCK {BLOCK}u",
          f"#define TRAIN_FRAMES {int(round(m['train']['interval'] * FS))}u   /* hit to hit in a strike train */",
-         f"#define CLICK_FRAMES {int(round(m['click_before'] * FS))}u    /* the release click before a hit */",
-         f"#define AFTER_FRAMES {int(round(0.115 * FS))}u   /* the tock's second click after it */"]
+         f"#define CLICK_FRAMES {int(round(m['click_before'] * FS))}u    /* the release click before a hit */"]
     # the sine, a quarter: SINQ[i] = sin(i / 4096 * pi / 2), Q15, i = 0..4096
     h.append(carray("SINQ", "int16_t", [int(round(32767 * math.sin(i / SINQ_N * math.pi / 2))) for i in range(SINQ_N + 1)], 16))
     h.append("/* the gong's carriers: phase step, level at the hit (Q31), decay per CLK_SUB and per CLK_BLOCK frames (Q32),")

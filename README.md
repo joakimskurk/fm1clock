@@ -47,7 +47,7 @@ ikke i dette repoet. Bare målingene ligger her (`tools/ref_model.json`, `tests/
   opptaket. Et utløserklikk kommer 40 ms før hvert slag. Et nytt slag legges oppå en gong som fortsatt ringer.
 - **Tikk og takk** er to lyder med 64 sinusoperatorer hver: de sterkeste toppene i spekteret og fyll mellom
   dem. Hvert tredjedels-oktavbånd har to utklingninger (et raskt fall og så en hale i verket og kassa), og
-  anslaget stiger over 4–5,5 ms. Takket har et svakere etterklikk 115 ms senere, som i opptaket. Hvert tikk
+  anslaget stiger over 4–5,5 ms. Opptaket har et svakt etterklikk 115 ms etter takket; det er tatt bort, så det er ett klikk på hver side. Hvert tikk
   starter operatorene med tilfeldig fase og litt variasjon i tone og nivå, så ingen to tikk er like. Tikket
   kommer litt fra venstre og takket litt fra høyre, der pendelen er.
 

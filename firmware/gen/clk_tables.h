@@ -11,7 +11,6 @@
 #define CLK_BLOCK 256u
 #define TRAIN_FRAMES 52570u   /* hit to hit in a strike train */
 #define CLICK_FRAMES 1764u    /* the release click before a hit */
-#define AFTER_FRAMES 5072u   /* the tock's second click after it */
 static const int16_t SINQ[4097] = {
     0, 13, 25, 38, 50, 63, 75, 88, 101, 113, 126, 138, 151, 163, 176, 188,
     201, 214, 226, 239, 251, 264, 276, 289, 302, 314, 327, 339, 352, 364, 377, 390,

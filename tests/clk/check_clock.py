@@ -7,8 +7,8 @@
   check_clock.py onset WAV FROM TO T [MS] the loudest jump of the sound between FROM and TO s is at T +- 0.03 s
                                            (the first blow of a train: fm1-emu; MS: the run's length, whose sound
                                            starts after the power-on: the times are the power-on's)
-  check_clock.py ticks WAV FROM TO         a tick every 0.5 s (+- 3 ms), left and right in turn, nothing else but
-                                           the tocks' second clicks
+  check_clock.py ticks WAV FROM TO         a tick every 0.5 s (+- 3 ms), left and right in turn, one click each,
+                                           nothing between
   check_clock.py moved A B                 the pendulum's window differs between two screens (it swings)
   check_clock.py hands IMG HH MM           the hands point at HH:MM (the darkest ray from the hub, each)
   check_clock.py isr REPORT LO HI          fm1-emu's report: the share of the chip in interrupts within LO..HI %
@@ -55,7 +55,7 @@ def tick_events(x, fs):
     hp = (out[0] ** 2 + out[1] ** 2) / 2
     env = np.sqrt(np.convolve(hp, np.ones(44) / 44, "same"))
     ev, i = [], 0
-    thr = np.percentile(env, 99.5) * 0.25
+    thr = np.percentile(env, 99.5) * 0.12                    # (low enough for a click 9 dB under a tick)
     while i < len(env):
         if env[i] > thr:
             seg = slice(i, i + int(0.015 * fs))
@@ -98,14 +98,13 @@ def main():
         t0, t1 = float(sys.argv[3]), float(sys.argv[4])
         ev = [(t, lr) for t, lr in tick_events(x, fs) if t0 <= t <= t1]
         # the ticks' place in the half second: where most of them are (fm1-emu's sound starts a little after the
-        # power-on, the host's with it); the tock's second click is 115 ms after it, the rest is not a tick
+        # power-on, the host's with it); one click at each end, nothing between
         ph = np.array([t % 0.5 for t, _ in ev])
         circ = lambda a, b: np.abs(((a - b + 0.25) % 0.5) - 0.25)
         cand = [p0 for p0 in ph]
         phase = max(cand, key=lambda p0: np.sum(circ(ph, p0) < 0.004)) if len(ph) else 0.0
         main_ = [e for e, q in zip(ev, ph) if circ(q, phase) < 0.004]
-        after = sum(1 for q in ph if circ(q, phase + 0.115) < 0.01)
-        others = len(ev) - len(main_) - after
+        others = len(ev) - len(main_)
         ts = np.array([e[0] for e in main_])
         ok = len(ts) >= int((t1 - t0) / 0.5) - 1
         err = circ(ts % 0.5, phase) if len(ts) else np.array([1.0])
@@ -113,7 +112,7 @@ def main():
         sides = [e[1] > 0 for e in main_]
         alt = all(a != b for a, b in zip(sides, sides[1:]))
         print(f"ticks {t0}..{t1} s: {len(ts)} on the half seconds (at +{1000 * phase:.1f} ms; worst {1000 * err.max():.1f} ms "
-              f"off), apart {gaps.min():.4f} .. {gaps.max():.4f} s, {after} second clicks of the tocks, {others} else; "
+              f"off), apart {gaps.min():.4f} .. {gaps.max():.4f} s, {others} clicks between; "
               f"left / right in turn: {alt}")
         return 0 if ok and err.max() < 0.003 and np.all(np.abs(gaps - 0.5) < 0.004) and alt and others == 0 else 1
     if what == "moved":

@@ -41,8 +41,8 @@ Tikk og takk måles hver for seg, 14 av hver, høypass ved 400 Hz (det er brum i
 I hvert tredjedels-oktavbånd har operatorene annenhver kort og lang utklingning (et raskt fall og så en hale).
 Utklingningene velges per bånd fra et rutenett (NNLS). Så tilpasses alle nivåene samtidig med hver operators egen
 mal, siden et vindu på 6 ms lar energi lekke over i nabobåndene (multiplikativ NMF-oppdatering). Anslaget stiger
-som 1 − e^(−t/τa), og τa = 4,0 ms for tikket og 5,5 ms for takket gir best treff. Takket har et etterklikk 115 ms
-senere, ca. 9 dB svakere.
+som 1 − e^(−t/τa), og τa = 4,0 ms for tikket og 5,5 ms for takket gir best treff. Opptaket har et etterklikk 115 ms
+etter takket, ca. 9 dB svakere. Det er tatt bort: ett klikk på hver side.
 
 ## Motoren
 

@@ -44,7 +44,7 @@ static volatile uint32_t eng_tick_lvl = 256u;   /* the ticks' level, Q8 (main) *
 static volatile uint32_t eng_gong_lvl = 256u;   /* the gong's level, Q8 (main) */
 static volatile uint32_t eng_fixed_ng;          /* nonzero: render this many, no governor (host tests) */
 
-enum { EV_TICK, EV_TOCK, EV_AFTER, EV_CLICK, EV_HIT };
+enum { EV_TICK, EV_TOCK, EV_CLICK, EV_HIT };
 typedef struct { uint32_t frame, type, arg; } ev_t;
 
 static uint32_t eng_rng = 0x2545F491u;
@@ -198,7 +198,6 @@ static void eng_event(const ev_t *e)
     switch (e->type) {
     case EV_TICK: eng_tick(0, 32767u, 256, 150); break;       /* left: the pendulum's left end */
     case EV_TOCK: eng_tick(1, 32767u, 150, 256); break;       /* right */
-    case EV_AFTER: eng_tick(0, 11500u, 150, 256); break;      /* the tock's second, softer click (115 ms on) */
     case EV_CLICK: eng_tick(0, 15000u, 220, 220); break;      /* the strike train lets the hammer go */
     case EV_HIT:
         eng_strike(e->arg);

@@ -57,7 +57,7 @@ static uint32_t hour12(uint32_t tod) { uint32_t h = tod / HOUR % 12u; return h ?
 #ifndef DINGHY_HOST
 static uint32_t frames;                         /* frames since power-on (the ISR's) */
 #endif
-static uint32_t ck_done, ck_started, tr_k, tr_t, tr_click, tr_seen, after_t, after_on;
+static uint32_t ck_done, ck_started, tr_k, tr_t, tr_click, tr_seen;
 
 static void ev_add(ev_t *ev, uint32_t *nev, uint32_t frame, uint32_t type, uint32_t arg)
 {
@@ -84,13 +84,7 @@ static void train_start(uint32_t n, uint32_t at)  /* n strikes from frame at: th
 static void half_second(uint32_t h, uint32_t f, ev_t *ev, uint32_t *nev)   /* the pendulum at an end: a tick */
 {
     uint32_t tod = (h + ck_off) % DAY;
-    if (h & 1u) {
-        ev_add(ev, nev, f, EV_TICK, 0);         /* the left end */
-    } else {
-        ev_add(ev, nev, f, EV_TOCK, 0);         /* the right end; its second click follows */
-        after_t = frames + f + AFTER_FRAMES;
-        after_on = 1;
-    }
+    ev_add(ev, nev, f, h & 1u ? EV_TICK : EV_TOCK, 0);   /* one click at each end: the left, the right */
     if (!ck_silent && tod % 3600u == 0)
         train_start(tod % HOUR ? 1u : hour12(tod), frames + f);
 }
@@ -139,10 +133,6 @@ static void app_audio(int32_t *out, uint32_t n)
             tr_t += TRAIN_FRAMES - CLICK_FRAMES + (eng_rnd() & 1023u) - 512u;
             tr_click = 1;
         }
-    }
-    if (after_on && (int32_t)(after_t - frames) < (int32_t)n) {
-        ev_add(ev, &nev, (int32_t)(after_t - frames) < 0 ? 0 : after_t - frames, EV_AFTER, 0);
-        after_on = 0;
     }
     if (!eng_off)
         eng_render(out, n, ev, nev);
