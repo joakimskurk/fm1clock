@@ -221,8 +221,8 @@ static void draw_window(uint32_t th)
             int32_t u, t, sxp, syp;
             unpack(WIN_BACK[i], &r, &g, &b);
             /* the rod: across it u, along it t (from the hub down), 1/256 px */
-            u = (int32_t)(((int64_t)(px - HUB_X256) * c - (int64_t)(py - HUB_Y256) * s) >> 15);
-            t = (int32_t)(((int64_t)(px - HUB_X256) * s + (int64_t)(py - HUB_Y256) * c) >> 15);
+            u = ((px - HUB_X256) * c - (py - HUB_Y256) * s) >> 15;   /* (each term < 2^30: 32 bits do) */
+            t = ((px - HUB_X256) * s + (py - HUB_Y256) * c) >> 15;
             if (t < PEND_L256 && u > -(ROD_N * FX / 2) - FX && u < ROD_N * FX / 2 + FX) {
                 int32_t pos = u + ROD_N * FX / 2 - FX / 2, k = pos >> 8, f = pos & 255, cov;
                 int32_t k0 = k < 0 ? 0 : k > ROD_N - 1 ? ROD_N - 1 : k, k1 = k + 1 < 0 ? 0 : k + 1 > ROD_N - 1 ? ROD_N - 1 : k + 1;
