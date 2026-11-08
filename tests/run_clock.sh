@@ -28,8 +28,8 @@ run "the engine alone compiles without a warning (-Wextra -Werror)" \
 # the sound against the reference recording
 run "a strike, all 742 carriers: every window within 2 dB of the recording" sh -c \
     "build/clk_render strike build/audio/strike.wav && python3 tests/clk/parity.py gong build/audio/strike.wav 2.0"
-run "a strike, 208 carriers (what the governor renders in fm1-emu): within 2 dB" sh -c \
-    "build/clk_render strike build/audio/strike-208.wav 208 && python3 tests/clk/parity.py gong build/audio/strike-208.wav 2.0"
+run "a strike, 206 carriers (what the governor renders in fm1-emu): within 2 dB" sh -c \
+    "build/clk_render strike build/audio/strike-206.wav 206 && python3 tests/clk/parity.py gong build/audio/strike-206.wav 2.0"
 run "a strike, 160 carriers: within 2.5 dB" sh -c \
     "build/clk_render strike build/audio/strike-160.wav 160 && python3 tests/clk/parity.py gong build/audio/strike-160.wav 2.5"
 run "24 ticks: their mean within 1.6 dB of the recording's, every window" sh -c \
@@ -44,9 +44,9 @@ run "the cuckoo's wire gong, all its carriers: every window within 3.5 dB" sh -c
     "build/clk_render ck_strike build/audio/ck_strike.wav && python3 tests/clk/parity.py ck_gong build/audio/ck_strike.wav 3.5"
 run "nine calls (the gong, the high pipe, the low): every window of the first 0.5 s within 6 dB" sh -c \
     "build/clk_render ck_call 9 build/audio/ck_call.wav && python3 tests/clk/parity.py ck_call build/audio/ck_call.wav 9 6.0"
-run "the cuckoo on the chip (208 carriers): the gong within 5.5 dB, the calls within 6.5 dB" sh -c \
-    "build/clk_render ck_strike build/audio/ck_strike-208.wav 208 && python3 tests/clk/parity.py ck_gong build/audio/ck_strike-208.wav 5.5 && \
-     build/clk_render ck_call 9 build/audio/ck_call-208.wav 208 && python3 tests/clk/parity.py ck_call build/audio/ck_call-208.wav 9 6.5"
+run "the cuckoo on the chip (206 carriers): the gong within 5.5 dB, the calls within 6.5 dB" sh -c \
+    "build/clk_render ck_strike build/audio/ck_strike-206.wav 206 && python3 tests/clk/parity.py ck_gong build/audio/ck_strike-206.wav 5.5 && \
+     build/clk_render ck_call 9 build/audio/ck_call-206.wav 206 && python3 tests/clk/parity.py ck_call build/audio/ck_call-206.wav 9 6.5"
 run "its train running: its drone (40-450 Hz) and its rattle (above 800 Hz) within 2 dB of the recording's" sh -c \
     "build/clk_render ck_run build/audio/ck_run.wav && python3 tests/clk/parity.py ck_drone build/audio/ck_run.wav"
 run "its ticks in thirds of an octave: within 5.5 dB to 90 ms (it rings on), its case's knock within 2 dB" sh -c \
