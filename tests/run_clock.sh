@@ -96,7 +96,7 @@ run "ALGORITHM twice: the wall clock again, as it was (but the minute hand's edg
 if [ -f build/fm1clock.fwsc ]; then
     run "the site: the page, its installer and the package (web/make_site.py)" sh -c \
         "python3 web/make_site.py build/fm1clock.fwsc test build/site && test -s build/site/index.html && \
-         test -s build/site/firmware/fm1clock-test.fwsc && test -s build/site/screens/cuckoo.gif"
+         test -s build/site/firmware/fm1clock-test.fwsc && test -s build/site/screens/cuckoo.png"
     if node -e "require('playwright')" 2>/dev/null; then
         run "the site's installer against a simulated FM-1: both steps, every byte, and an install cut off" \
             node tests/web/install_sim.js build/site

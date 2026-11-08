@@ -23,10 +23,10 @@
   h1 { font: 600 40px/1.1 Georgia, "Times New Roman", serif; margin: 0; letter-spacing: .01em; }
   .tag { color: var(--dim); margin: 6px 0 0; font-size: 17px; }
   h2 { font: 600 22px/1.2 Georgia, "Times New Roman", serif; margin: 44px 0 12px; color: var(--brass); }
-  .hero { display: flex; gap: 16px; justify-content: center; align-items: flex-end; margin: 28px 0 24px;
+  .hero { display: flex; gap: 16px; justify-content: center; align-items: flex-start; margin: 28px 0 24px;
           flex-wrap: wrap; }
   .hero img { display: block; max-width: 100%; height: auto; border-radius: 4px; }
-  .hero .a { width: 300px; } .hero .b { width: 200px; }
+  .hero img { width: 320px; }
   .lead { font-size: 18px; margin: 0 0 22px; }
   .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 8px; }
   .fact { background: var(--panel); border-top: 3px solid var(--brass); padding: 10px 12px 12px; }
@@ -59,7 +59,7 @@
   footer p { margin: 0 0 8px; }
   @media (max-width: 560px) {
     h1 { font-size: 32px; } .facts { grid-template-columns: repeat(2, 1fr); }
-    .hero .a { width: 100%; max-width: 340px; } .hero .b { width: 46%; }
+    .hero img { width: 46%; }
     td:first-child { white-space: normal; }
   }
 </style>
@@ -70,8 +70,8 @@
   <p class="tag">Firmware for the M-VAVE FM-1: a pendulum wall clock and a cuckoo clock.</p>
 
   <div class="hero">
-    <img class="a" src="screens/pendulum.gif" width="300" height="300" alt="The wall clock on the FM-1's screen, on a pine panel wall: the hands at ten past ten, the pendulum swinging behind the glass">
-    <img class="b" src="screens/cuckoo.gif" width="200" height="300" alt="The cuckoo clock, carved in dark red walnut, on the same wall: leaves along its roof, an ivory dial with serif numbers, its bird out and calling">
+    <img src="screens/clock.png" width="320" height="480" alt="The wall clock on the FM-1's screen, on a pine panel wall, at ten past ten: Roman numerals round a wooden centre, the pendulum's brass bob behind the glass">
+    <img src="screens/cuckoo.png" width="320" height="480" alt="The cuckoo clock on the same wall, at ten past ten, its bird out of its door and calling: a carved house in dark red walnut, leaves along its roof, an ivory dial with serif numbers, turned columns, fretwork under its shelf, the chains and their pine-cone weights">
   </div>
 
   <p class="lead">One day the FM-1 may be an almost forgotten treasure, so here is something that looks completely
