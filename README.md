@@ -550,7 +550,9 @@ The screen is 240 × 240 pixels.
 - **The hands** are drawn each second, at the exact angle (the minute hand moves on every second, not every
   minute). Each is two convex shapes, a shaft and a spear or arrow, filled with 4 × 4 samples per pixel for smooth
   edges, darker on one side and lighter on the other. Each has a soft shadow 1.2 px to the right and 1.6 px down.
-  The brass hub goes over them.
+  The brass hub goes over them. Only the round the hands can reach goes to the screen, row by row, not the square
+  round it: on the cuckoo clock the square's corners hold the windows' inner shutters, and sent again and again
+  (unchanged) they flickered on the panel while the bird was out.
 - **The pendulum** is drawn 50 times a second, in its window (78 × 56 pixels):
   - the back panel, darkened by the pendulum's own shadow, 3 px to the right and 2.5 px down (the light falls from
     the top left, as on the bob and on the glass), sampled four times for a soft edge;

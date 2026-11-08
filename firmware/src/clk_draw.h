@@ -223,7 +223,31 @@ static void draw_dial(uint32_t hour, uint32_t minute)
     draw_hand(HOUR, hour, 1);
     draw_hand(MINUTE, minute, 1);
     draw_hub();
-    lcd_blit((uint32_t)dial_x0, (uint32_t)dial_y0, (uint32_t)dial_w, (uint32_t)dial_w, dial_px);
+    /* to the screen only the round the hands can reach (r + 1 px from the hub, their shadows too), row by row:
+       the square's corners never change, and on the cuckoo clock they hold the windows' inner shutters, which
+       flickered on the panel as they were sent again every two seconds. The rows the whole width wide at once */
+    {
+        int32_t rr = (face->r + 1) * (face->r + 1), full0 = -1;
+        for (y = 0; y <= dial_w; y++) {
+            int32_t dy = 2 * y + 1 - dial_w, half = face->r;   /* (twice the row's offset from the hub) */
+            if (y < dial_w)
+                while (half > 0 && 4 * half * half + dy * dy > 4 * rr)
+                    half--;
+            if (y < dial_w && half >= face->r) {   /* a whole row: with the others round it */
+                if (full0 < 0)
+                    full0 = y;
+                continue;
+            }
+            if (full0 >= 0) {
+                lcd_blit((uint32_t)dial_x0, (uint32_t)(dial_y0 + full0), (uint32_t)dial_w, (uint32_t)(y - full0),
+                         &dial_px[full0 * dial_w]);
+                full0 = -1;
+            }
+            if (y < dial_w && half > 0)
+                lcd_blit((uint32_t)(dial_x0 + face->r - half), (uint32_t)(dial_y0 + y), (uint32_t)(2 * half), 1u,
+                         &dial_px[y * dial_w + face->r - half]);
+        }
+    }
 }
 
 /* ---- the pendulum, and its shadow on the wood behind it (the light from the top left, as on the bob and the glass) */
