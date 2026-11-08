@@ -287,23 +287,42 @@ CLICKS = {
 }
 # (the bird going in, 11.784 s, sounds on the low pipe's note, so its own sound cannot be measured: above 3 kHz,
 # where the pipe is quiet, it is as loud as the door shutting, within 1.2 dB; the firmware makes it that sound)
-DOOR_SPLIT = 0.013                  # the door is two impacts at least: the latch, then the door and its stop
-DOOR_A_WIN = [(-0.002, 0.003), (0.003, 0.008), (0.008, DOOR_SPLIT)]
+TICKS_SAME = [0.459, 0.886, 3.458, 3.888, 4.315, 12.903, 12.475]   # the ticks averaged for what comes back every time
+                                                    # (at 13.333 the onset is found 0.8 ms early: it lines up badly)
+FLAT_BANDS = [(500, 1500), (1500, 3000), (3000, 7000), (7000, 14000)]
+FLAT_WINS = [(0.0, 0.02), (0.02, 0.06), (0.06, 0.12)]
+DOOR_WOOD = [(1000.0, 1700.0), (3800.0, 5600.0)]   # the door's wood, its tok: struck three times (0, 10, 19 ms)
 
 
 def fine_clicks(m, fs):
-    """every click type's power per twelfth of an octave over time (tools/clicks.py); the door's first impact on
-    its own (up to DOOR_SPLIT), and the door from DOOR_SPLIT on"""
-    out = dict(edges=K.edges(), windows=K.WINDOWS, door_split=DOOR_SPLIT, door_a_windows=DOOR_A_WIN)
+    """every click: its onsets, its power in both grids (tools/clicks.py), how much like noise it is (its spectral
+    flatness, bands x windows); the tick's crack and its case's knock, from the ticks lined up and averaged sample
+    by sample; the door's wood struck, from the one door"""
+    out = dict(t0=dict(tick=K.T0_TICK, other=K.T0_CLICK), ta=K.TA, flat_bands=FLAT_BANDS, flat_windows=FLAT_WINS)
     for name, (ts, quiet) in CLICKS.items():
         ons = [onset(m, fs, t) for t in ts]
-        E, N = K.band_env(m, fs, ons, quiet=quiet)
-        out[name] = dict(ons=ons, E=E.tolist(), N=N.tolist())
+        det = []
+        if name == "tick":
+            same, cor = K.align(m, fs, [onset(m, fs, t) for t in TICKS_SAME], ref=3)
+            print("tick: lined up, " + ", ".join(f"{c:.2f}" for c in cor))
+            ons = same[:len(ts)]
+            ca = K.coherent(m, fs, same)
+            crack = K.modes(ca, fs, 0.02, 1500.0, 16000.0, K.T0_TICK, 0.015, 14, K.TA)
+            knock = [d for d in K.modes(ca, fs, 0.02, 80.0, 450.0, K.T0_TICK, 0.08, 8, K.TA, tau_max=0.05)
+                     if d["tau"] > 0.002]
+            det = crack + knock
+            print(f"tick: its crack {len(crack)} modes ({min(d['f'] for d in crack):.0f}-"
+                  f"{max(d['f'] for d in crack):.0f} Hz), its case's knock {len(knock)}")
         if name == "door":
-            Ea, _ = K.band_env(m, fs, ons, wins=DOOR_A_WIN, quiet=quiet)
-            Eb, _ = K.band_env(m, fs, [o + DOOR_SPLIT for o in ons], quiet=(quiet[0] - DOOR_SPLIT, quiet[1] - DOOR_SPLIT))
-            out["door_a"] = dict(ons=ons, E=Ea.tolist(), N=N.tolist())
-            out["door_b"] = dict(ons=[o + DOOR_SPLIT for o in ons], E=Eb.tolist(), N=N.tolist())
+            for lo, hi in DOOR_WOOD:
+                at, left = K.strikes(m, fs, ons[0], K.T0_CLICK, K.TA, lo, hi, n=6)
+                det += at
+                print(f"door: its wood {lo:.0f}-{hi:.0f} Hz, {len(at)} strikes, {100 * (1 - left):.0f} % of it")
+        meas = K.measure(m, fs, ons, quiet)
+        flat = [[K.flatness(m, fs, ons, a, b, lo, hi) for lo, hi in FLAT_BANDS] for a, b in FLAT_WINS]
+        snr = [[K.over_floor(m, fs, ons, a, b, lo, hi, quiet) for lo, hi in FLAT_BANDS] for a, b in FLAT_WINS]
+        out[name] = dict(ons=ons, quiet=quiet, det=det, flat=flat, flat_snr=snr,
+                         **{g: dict(E=meas[g][0].tolist(), N=meas[g][1].tolist()) for g in meas})
     return out
 
 def main():

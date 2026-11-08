@@ -11,7 +11,7 @@
  *   clk_render ck_strike OUT.wav [NG]   one blow on its wire gong at 50 ms, 3 s
  *   clk_render ck_call N OUT.wav [NG]   N calls (the gong, the high pipe, the low), CK_CALL_FRAMES apart
  *   clk_render ck_tick|ck_warning|ck_door|ck_shut OUT.wav [N]   N of its ticks (left), or of its train's warning
- *                                     clicks, its door opening (both its impacts), its door shutting (the middle)
+ *                                     clicks, its door opening, its door shutting (the middle), 0.2 s apart
  *   clk_render ck_run OUT.wav            its train running, its drone, from 0.1 to 1.1 s */
 #include <stdint.h>
 #include <stdio.h>
@@ -128,9 +128,6 @@ int main(int argc, char **argv)
             ty[k] = snd == SND_B_TICK ? EV_TICK : EV_CLICK;
             ar[k] = snd == SND_B_TICK ? snd : snd | 32767u << 8;
             k++;
-            if (snd == SND_B_DOOR) {            /* the door: its latch, then 13 ms on the door to its stop */
-                at[k] = 441u + i * 8820u + CK_DOOR2_FRAMES; ty[k] = EV_CLICK; ar[k] = SND_B_DOOR2 | 32767u << 8; k++;
-            }
         }
         run(441u + i * 8820u, at, ty, ar, k);
         write_wav(argv[2]);

@@ -129,7 +129,6 @@ static void train_start(uint32_t n, uint32_t at, uint32_t mute)
             tr_put(h - CK_PRE1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_WARN, 32767u));
             tr_put(h - CK_STOP_FRAMES, EV_RUN, 0);
             tr_put(h - CK_PRE2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_DOOR, 32767u));   /* the release: the door opens */
-            tr_put(h - CK_PRE2_FRAMES + CK_DOOR2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_DOOR2, 32767u));   /* to its stop */
             tr_put(h - CK_PRE2_FRAMES, EV_DOOR, 1);
             tr_put(h - CK_PRE2_FRAMES, EV_RUN, 1);                              /* the train runs on */
         }

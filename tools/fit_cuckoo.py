@@ -8,12 +8,10 @@ are made from (tools/gen_tables.py). The same methods as the wall clock's (tools
     (before the first pipe) have the reference's band energies;
   - the two pipes: an FM pair each, carrier and modulator at the pipe's pitch (1:1), the index from the second
     harmonic (J1(I) / J0(I) ~ I / 2), the bellows' envelope as measured, step by step;
-  - the tick: 64 operators, two decays per third octave, a rise, all levels fitted together over its first 0.13 s
-    (it rings on); the mechanism's clicks
-    (the warning and the door before a strike, the door after it) are its sound at their own level (their peaks
-    above 3 kHz: under them the pipes and the gong sound in the recording).
+  - the clicks (the tick, the warning, the door opening, the door shutting): what comes back every time as
+    measured, and noise operators over it (tools/clicks.py).
 
-  python3 -I tools/fit_cuckoo.py            (numpy; ~1 min)
+  python3 -I tools/fit_cuckoo.py [--clicks]   (numpy, scipy; ~8 min; --clicks: only the clicks, ~5)
 """
 import json
 import sys
@@ -25,8 +23,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import fit_model as F  # noqa: E402
 import clicks as K  # noqa: E402
-import os  # noqa: E402
-LOSS = os.environ.get("CK_TICK_LOSS", "is")   # (its tick: by ratio, so its quiet tail counts)
 from features import BANDS, band_energies  # noqa: E402
 
 
@@ -140,22 +136,19 @@ def fit_pipe_tails(modes, fm, pipes, call, feats, fs=44100):
     return pipes
 
 
-def low_energy(ops, ta, fs=44100, span=0.08, seeds=16):
-    """a tick's mean power at 80-450 Hz over its first span s (random phases, as the engine starts them)"""
-    t = np.arange(int(0.3 * fs)) / fs
-    att = 1 - np.exp(-t / ta)
-    f = np.fft.rfftfreq(len(t), 1 / fs)
+def low_energy(det, noise, ta, span=0.08, seeds=16):
+    """a click's mean power at 80-450 Hz over its first span s, as the engine plays it (tests/clk/parity.py ck_tick)"""
+    n = int(0.3 * K.FS)
+    f = np.fft.rfftfreq(n, 1 / K.FS)
     sel = (f >= 80) & (f <= 450)
     acc = 0.0
     for s_ in range(seeds):
-        rng = np.random.default_rng(100 + s_)
-        y = sum(d["a"] * att * np.exp(-t / d["tau"]) * np.sin(2 * np.pi * d["f"] * t + rng.uniform(0, 2 * np.pi)) for d in ops)
-        b = np.fft.irfft(np.fft.rfft(y) * sel, len(t))
-        acc += np.mean(b[:int(span * fs)] ** 2)
+        y = K.render(det, noise, n, ta, rng=np.random.default_rng(100 + s_))
+        acc += np.mean(np.fft.irfft(np.fft.rfft(y) * sel, n)[:int(span * K.FS)] ** 2)
     return acc / seeds
 
 
-CLICK_RISE = 0.001                                # the clicks' rise: hard (the pallet strikes the tooth)
+CK_NT = 68                                        # operators a click (the bank: as many as the wall clock's tick, and 4)
 RATTLE_RATE, RATTLE_TAU = 250.0, 0.0015           # clicks a second, each its decay (the recording: one every 2-10 ms)
 
 
@@ -193,55 +186,47 @@ if __name__ == "__main__":
     model = json.loads((ROOT / "tools" / "ref_cuckoo.json").read_text())
     feats = json.loads((ROOT / "tests" / "ref" / "cuckoo_features.json").read_text())
     F.feats = feats
-    modes, fm = F.fit_gong(model, feats, nwin=4, T=0.14, name="cuckoo gong")
-    out = dict(fs=F.FS, k_fm=F.K_FM, nt=F.NT, modes=modes, fm=fm, call=model["call"], mech=model["mech"],
-               beat=model["beat"])
-    out["pipes"] = {k: dict(f=v["f"], env=v["env"], env_step=v["env_step"], index=float(2 * 10 ** (v["h2"] / 20)),
-                            body=v["body"]) for k, v in model["pipes"].items()}
-    out["pipes"] = fit_pipe_tails(modes, fm, out["pipes"], model["call"], feats)
-    out["modes"] = fit_tails(modes, out["pipes"], model["call"], feats)
-    # the clicks, each its own sound at 1/12 of an octave (tools/clicks.py): the tick (above 400 Hz; under it the
-    # case's knock, its modes from the ticks averaged), the train's warning, the door (its latch, then from 13 ms
-    # on the door and its stop, fitted on what the first leaves), the door shutting (and the bird going in)
+    if "--clicks" in sys.argv:                  # (the clicks only, the rest as it is)
+        out = json.loads((ROOT / "tools" / "clk_cuckoo.json").read_text())
+    else:
+        modes, fm = F.fit_gong(model, feats, nwin=4, T=0.14, name="cuckoo gong")
+        out = dict(fs=F.FS, k_fm=F.K_FM, nt=F.NT, modes=modes, fm=fm, call=model["call"], mech=model["mech"],
+                   beat=model["beat"])
+        out["pipes"] = {k: dict(f=v["f"], env=v["env"], env_step=v["env_step"],
+                                index=float(2 * 10 ** (v["h2"] / 20)), body=v["body"]) for k, v in model["pipes"].items()}
+        out["pipes"] = fit_pipe_tails(modes, fm, out["pipes"], model["call"], feats)
+        out["modes"] = fit_tails(modes, out["pipes"], model["call"], feats)
+    # the clicks (tools/clicks.py): what comes back every time (the tick's crack and its case's knock; the door's
+    # wood, struck three times) as measured, and over it noise operators, fitted to each click's power over time in
+    # eighths of an octave and in octaves over 1 ms windows
     fine = json.loads((ROOT / "tests" / "ref" / "cuckoo_clicks.json").read_text())
-    ta = CLICK_RISE
-    def fit_fine(name, lo, nops, wins=K.WINDOWS, E=None, taus=None, hi=13500.0):
-        d = fine[name]                            # (the tick to 16 kHz; the others, mostly in the middle, to 13.5:
-        ops, err = K.fit(np.array(d["E"]) if E is None else E, np.array(d["N"]), lo=lo, ta=ta, wins=wins, nops=nops,
-                         taus=taus, hi=hi)        # their spare operators for second decays)
-        print(f"{name}: {len(ops)} operators at 1/12 octave, {err:.2f} dB rms off")
-        return ops
-    bank = fit_fine("tick", 400.0, 64, hi=16000.0)
-    knock = [dict(f=d["f"], tau=d["tau"], a=d["a"]) for d in model["ticks"]["knock"] if d["tau"] < 0.1][:4]
-    e_hi, e_kn = low_energy(bank, ta), low_energy(knock, ta)
-    want = 10 ** (feats["knock_db"] / 10)
-    g = np.sqrt(max(want - e_hi, 0.1 * want) / e_kn)
-    knock = [dict(d, a=d["a"] * g) for d in knock]
-    print("knock: " + ", ".join(f"{d['f']:.0f} Hz ({1000 * d['tau']:.0f} ms)" for d in knock) + f", x {g:.2f}")
-    out["tick"], out["tick_attack"] = bank + knock, ta
-    out["warning"], out["warning_attack"] = fit_fine("warning", 300.0, 68), ta
-    door_a = fit_fine("door_a", 300.0, 68, wins=[tuple(w) for w in fine["door_a_windows"]],
-                      taus=[t for t in K.TAUS if t <= 0.006])   # (the latch: done when the door hits its stop)
-    acc = 0                                       # what the latch leaves from 13 ms on: the door and its stop
-    for s_ in range(8):
-        y = K.render(door_a, ta, int(0.3 * K.FS), rng=np.random.default_rng(200 + s_))
-        acc = acc + K.band_env(np.concatenate([np.zeros(int(0.2 * K.FS)), y]), K.FS, [0.2 + fine["door_split"]])[0]
-    Eb = np.clip(np.array(fine["door_b"]["E"]) - acc / 8, 0, None) + np.array(fine["door_b"]["N"])
-    door_b = fit_fine("door_b", 300.0, 68, E=Eb)
-    err = K.refine([(door_a, 0.0), (door_b, fine["door_split"])], np.array(fine["door"]["E"]), np.array(fine["door"]["N"]),
-                   ta=ta)                         # then both their levels together, against the whole door
-    print(f"door: the latch and the door to its stop together, {err:.2f} dB rms off")
-    out["door"], out["door_attack"] = door_a, ta
-    out["door_b"], out["door_b_attack"] = door_b, ta
-    out["door_split"] = fine["door_split"]
-    out["door_shut"], out["door_shut_attack"] = fit_fine("door_shut", 300.0, 68), ta
-    # the train running: its partials as measured, those under 450 Hz together as loud as the recording's drone
-    # is there (their narrow bands leave out the whirr between them)
-    dr = model["drone"]
-    e = sum(d["a"] ** 2 / 2 for d in dr if 40 <= d["f"] <= 450)
-    g = np.sqrt(10 ** (feats["drone_db"] / 10) / e)
-    out["drone"] = [dict(d, a=d["a"] * (g if d["f"] <= 450 else 1.0)) for d in dr]
-    print(f"drone: under 450 Hz x {g:.2f}")
-    out["rattle"] = rattle_model(model["rattle"], feats["rattle_db"])
-    print(f"drone: {len(out['drone'])} partials, {min(d['f'] for d in out['drone']):.0f} .. {max(d['f'] for d in out['drone']):.0f} Hz")
+    for name, lo, hi, last, delays in [("tick", 400.0, 16000.0, 1.0, K.DELAYS),
+                                       ("warning", 300.0, 13500.0, 0.06, K.DELAYS),   # (then its train rattles on)
+                                       ("door", 300.0, 13500.0, 1.0, K.DELAYS + [28, 36, 40, 52, 60, 70]),
+                                       ("door_shut", 300.0, 13500.0, 1.0, K.DELAYS)]:
+        d = fine[name]
+        meas = {g: (np.array(d[g]["E"]), np.array(d[g]["N"])) for g in ("fine", "time")}
+        t0 = fine["t0"]["tick" if name == "tick" else "other"]
+        print(f"{name}: {len(d['det'])} modes the same every time, noise operators over them")
+        noise, _ = K.fit(meas, d["det"], t0, fine["ta"], nops=CK_NT - len(d["det"]), lo=lo, hi=hi, last=last,
+                         delays=sorted(set(delays)))
+        det = d["det"]
+        if name == "tick":                      # its case's knock, as loud as the ticks averaged have it over their
+            want = 10 ** (feats["knock_db"] / 10)   # floor (80-450 Hz, 80 ms; the average keeps an eighth of the
+            kn = [m for m in det if m["f"] < 450]   # room's rumble, and its modes take some of that)
+            e_kn, e_all = low_energy(kn, [], fine["ta"]), low_energy(det, noise, fine["ta"])
+            g = float(np.sqrt(max(want - (e_all - e_kn), 0.1 * want) / e_kn))
+            det = [dict(m, a=m["a"] * g) if m["f"] < 450 else m for m in det]
+            print(f"tick: its case's knock, {len(kn)} modes " + ", ".join(f"{m['f']:.0f}" for m in kn) + f" Hz, x {g:.2f}")
+        out[name], out[name + "_attack"], out[name + "_t0"] = det + noise, fine["ta"], t0
+    if "--clicks" not in sys.argv:
+        # the train running: its partials as measured, those under 450 Hz together as loud as the recording's drone
+        # is there (their narrow bands leave out the whirr between them)
+        dr = model["drone"]
+        e = sum(d["a"] ** 2 / 2 for d in dr if 40 <= d["f"] <= 450)
+        g = np.sqrt(10 ** (feats["drone_db"] / 10) / e)
+        out["drone"] = [dict(d, a=d["a"] * (g if d["f"] <= 450 else 1.0)) for d in dr]
+        print(f"drone: under 450 Hz x {g:.2f}")
+        out["rattle"] = rattle_model(model["rattle"], feats["rattle_db"])
+        print(f"drone: {len(out['drone'])} partials, {min(d['f'] for d in out['drone']):.0f} .. {max(d['f'] for d in out['drone']):.0f} Hz")
     (ROOT / "tools" / "clk_cuckoo.json").write_text(json.dumps(out, indent=1) + "\n")

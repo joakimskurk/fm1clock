@@ -51,8 +51,9 @@ run "its train running: its drone (40-450 Hz) and its rattle (above 800 Hz) with
     "build/clk_render ck_run build/audio/ck_run.wav && python3 tests/clk/parity.py ck_drone build/audio/ck_run.wav"
 run "its ticks in thirds of an octave: within 5.5 dB to 90 ms (it rings on), its case's knock within 2 dB" sh -c \
     "build/clk_render ck_tick build/audio/ck_tick.wav 24 && python3 tests/clk/parity.py ck_tick build/audio/ck_tick.wav 24 5.5"
-run "its tick at 1/12 of an octave: every window within 5 dB" python3 tests/clk/parity.py ck_fine_tick build/audio/ck_tick.wav 24 5.0
-run "its train's warning click, its door opening (both its impacts), its door shutting, at 1/12 octave: within 6 dB" sh -c \
+run "its tick as measured: its colour (eighths of an octave) and its time (octaves, 1 ms) within 5 dB, as much like noise" \
+    python3 tests/clk/parity.py ck_fine_tick build/audio/ck_tick.wav 24 5.0
+run "its train's warning click, its door opening (its wood struck three times), its door shutting: within 6 dB, like noise" sh -c \
     "build/clk_render ck_warning build/audio/ck_warning.wav 12 && python3 tests/clk/parity.py ck_fine_warning build/audio/ck_warning.wav 12 6.0 && \
      build/clk_render ck_door build/audio/ck_door.wav 12 && python3 tests/clk/parity.py ck_fine_door build/audio/ck_door.wav 12 6.0 && \
      build/clk_render ck_shut build/audio/ck_shut.wav 12 && python3 tests/clk/parity.py ck_fine_door_shut build/audio/ck_shut.wav 12 6.0"

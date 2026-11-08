@@ -26,8 +26,15 @@ static int16_t SINT[16384] __attribute__((section(".pool")));   /* one cycle, Q1
 
 typedef struct { uint32_t ph, inc, amp, dec; } op_t;          /* a sine operator: phase, its step, level, decay */
 typedef struct { uint32_t ph, inc, env, i0, dec, b; } mod_t;  /* a modulator: phase, step, index envelope (Q31), ... */
-typedef struct { op_t o[NT]; int32_t gl, gr, att, atk; } bank_t;   /* a tick: NT operators, its pan (Q8 left, right),
-                                                                     its rise (Q15) and how fast */
+typedef struct {                                /* a click: NT operators, its pan (Q8 left, right), its rise (Q15)
+                                                   and how fast; its sound and steps of CLK_SUB frames since it began
+                                                   (its noise operators take another frequency every SND_HOP of them;
+                                                   an operator sounds from SND_DLY of them on, at its level held) */
+    op_t o[NT];
+    int32_t gl, gr, att, atk;
+    uint32_t snd, step;
+    uint32_t held[NT];
+} bank_t;
 typedef struct {                                /* a pipe: an FM pair at its pitch (1:1), its body, its bellows */
     uint32_t ph, mph, inc, idx, pos, n, nb;
     const uint32_t *env;
@@ -41,10 +48,14 @@ static const gong_tab_t GONGS[2] = {
     {NG, G_INC, G_AMP, G_DEC, G_DEC_BLOCK, G_PH, F_INC, F_I0, F_DEC, F_B},          /* the wall clock's coil gong */
     {NGB, GB_INC, GB_AMP, GB_DEC, GB_DEC_BLOCK, GB_PH, FB_INC, FB_I0, FB_DEC, FB_B},   /* the cuckoo's wire gong */
 };
-enum { SND_A_TICK, SND_A_TOCK, SND_B_TICK, SND_B_WARN, SND_B_DOOR, SND_B_DOOR2, SND_B_SHUT };
-static const uint32_t *const SND_INC[NSND] = {T0_INC, T1_INC, T2_INC, T3_INC, T4_INC, T5_INC, T6_INC};
-static const uint32_t *const SND_AMP[NSND] = {T0_AMP, T1_AMP, T2_AMP, T3_AMP, T4_AMP, T5_AMP, T6_AMP};
-static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4_DEC, T5_DEC, T6_DEC};
+enum { SND_A_TICK, SND_A_TOCK, SND_B_TICK, SND_B_WARN, SND_B_DOOR, SND_B_SHUT };
+static const uint32_t *const SND_INC[NSND] = {T0_INC, T1_INC, T2_INC, T3_INC, T4_INC, T5_INC};
+static const uint32_t *const SND_AMP[NSND] = {T0_AMP, T1_AMP, T2_AMP, T3_AMP, T4_AMP, T5_AMP};
+static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4_DEC, T5_DEC};
+static const uint32_t *const SND_PH[NSND] = {T0_PH, T1_PH, T2_PH, T3_PH, T4_PH, T5_PH};
+static const uint16_t *const SND_HOP[NSND] = {T0_HOP, T1_HOP, T2_HOP, T3_HOP, T4_HOP, T5_HOP};
+static const uint32_t *const SND_SPR[NSND] = {T0_SPR, T1_SPR, T2_SPR, T3_SPR, T4_SPR, T5_SPR};
+static const uint8_t *const SND_DLY[NSND] = {T0_DLY, T1_DLY, T2_DLY, T3_DLY, T4_DLY, T5_DLY};
 #define NG_MAX (NG > NGB ? NG : NGB)
 
 static op_t gop[NG_MAX] __attribute__((section(".pool")));
@@ -153,24 +164,48 @@ static void eng_init(void)
 }
 
 /* ---- events */
+static inline uint32_t eng_stray(uint32_t inc, uint32_t spr)   /* a frequency within +- spr of inc, at random */
+{
+    return inc + (uint32_t)(int32_t)(((int64_t)((int32_t)(eng_rnd() & 65535u) - 32768) * (int32_t)spr) >> 15);
+}
+
 static void eng_tick(uint32_t snd, uint32_t g15, int32_t gl, int32_t gr)   /* a click sound (SND_...) at g15 (Q15) */
 {
     bank_t *b = &tbank[tbank_next];
     const uint32_t *I = SND_INC[snd], *A = SND_AMP[snd], *D = SND_DEC[snd];
+    const uint16_t *H = SND_HOP[snd];
+    const uint8_t *L = SND_DLY[snd];
     uint32_t k, g = (g15 * (30147u + (eng_rnd() & 4095u))) >> 15;   /* this tick: 0.92 .. 1.04 of it */
     tbank_next ^= 1u;
-    for (k = 0; k < NT; k++) {                  /* each operator: a phase of its own, a little off in pitch and level */
+    for (k = 0; k < T_NDET[snd]; k++) {         /* what comes back every time (the crack, the case's knock): its phase */
+        op_t *o = &b->o[k];
+        o->ph = SND_PH[snd][k];
+        o->inc = I[k];
+        o->amp = (uint32_t)(((uint64_t)A[k] * g) >> 15);
+        o->dec = D[k];
+    }
+    for (; k < NT; k++) {                       /* the rest: a phase of its own, a little off in pitch and level; the
+                                                   noise operators (SND_HOP) anywhere in their band */
         op_t *o = &b->o[k];
         int32_t dp = (int32_t)(eng_rnd() & 255u) - 128;
         o->ph = eng_rnd();
         o->inc = I[k] + (uint32_t)(int32_t)(((int64_t)(I[k] >> 1) * dp) >> (T_JSH[snd] + 6));   /* +- 2^-T_JSH */
         o->amp = (uint32_t)(((uint64_t)A[k] * ((g * (28672u + (eng_rnd() & 8191u))) >> 15)) >> 15);   /* 0.88 .. 1.12 */
         o->dec = D[k];
+        if (H[k])
+            o->inc = eng_stray(I[k], SND_SPR[snd][k]);
     }
+    for (k = 0; k < NT; k++)                    /* (the ones that come later: still till then) */
+        if (L[k]) {
+            b->held[k] = b->o[k].amp;
+            b->o[k].amp = 0;
+        }
     b->gl = gl;
     b->gr = gr;
     b->att = 0;
     b->atk = (int32_t)T_ATK[snd];
+    b->snd = snd;
+    b->step = 0;
 }
 
 static void eng_strike(uint32_t g15)            /* the hammer hits the gong, at g15 (Q15) of its strength */
@@ -242,10 +277,23 @@ static uint32_t gong_plain(int32_t *acc, uint32_t from, uint32_t to)
 
 static void tick_render(bank_t *b, int32_t *acc)
 {
-    uint32_t k, j;
+    uint32_t k, j, t = b->step++;
+    const uint32_t *I = SND_INC[b->snd], *W = SND_SPR[b->snd];
+    const uint16_t *H = SND_HOP[b->snd];
+    const uint8_t *L = SND_DLY[b->snd];
     for (k = 0; k < NT; k++) {
         op_t *o = &b->o[k];
-        uint32_t p = o->ph, d = o->inc, am = o->amp, dc = o->dec;
+        uint32_t p, d, am, dc;
+        if (L[k] == t && t) {                   /* its turn: it starts, from nothing (a mode: its phase ran on
+                                                   meanwhile to there; noise: up or down, at random) */
+            o->amp = b->held[k];
+            if (k >= T_NDET[b->snd])
+                o->ph = (eng_rnd() & 0x80000000u) - o->inc;
+        }
+        if (H[k] && !((t + k) & (H[k] - 1u)) && o->amp)   /* a noise operator: another frequency in its band, now and
+                                                             then, its phase unbroken (noise, not a line) */
+            o->inc = eng_stray(I[k], W[k]);
+        p = o->ph, d = o->inc, am = o->amp, dc = o->dec;
         int32_t *q = acc;
         for (j = 0; j < CLK_SUB; j += CLK_TSTEP) {   /* the level steps every 4 frames: ticks fall fast */
             int32_t a = (int32_t)(am >> 16);
