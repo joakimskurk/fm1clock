@@ -27,7 +27,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 BLOCKS, BLK, KEEP = 20, 0x30, 0x2F
-SCREENS = ("clock.png", "cuckoo.png", "icon.png")   # (the icon: the cuckoo clock's house, its dial)
+SCREENS = ("sign.png", "clock.png", "cuckoo.png", "icon.png")   # (the icon: the cuckoo clock's house, its dial)
 
 
 def product_of(raw):

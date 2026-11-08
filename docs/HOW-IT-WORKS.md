@@ -175,6 +175,7 @@ job of `.github/workflows/build.yml` on every push to the default branch.
 | [tools/settime.py](../tools/settime.py) | Sets the clock to the computer's time over MIDI |
 | [tools/emu_ci.sh](../tools/emu_ci.sh), [tools/emu_check.sh](../tools/emu_check.sh) | The package in fm1-emu |
 | [web/](../web/) | The web page and its installer: `index.html`, `make_site.py`, SLOOP's `fm1pkg.js` and `fm1ota.js` |
+| [tools/gen_sign.py](../tools/gen_sign.py) | The site's sign, "FM-1 Clock" carved and gilded on walnut, on the clocks' wall: `docs/screens/sign.png` |
 | [web/app/](../web/app/) | The clock in the browser: `build.sh` (the firmware to WebAssembly), `web_host.c` (the page's FM-1), `worklet.js`, `clock.js` |
 | [tests/run_clock.sh](../tests/run_clock.sh), [tests/clk/](../tests/clk/), [tests/scripts/](../tests/scripts/) | The tests |
 | [assets/design.png](../assets/design.png) | The design |

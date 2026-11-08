@@ -16,6 +16,8 @@ P=tests/clk/check_clock.py
 run "firmware/gen/clk_tables.h is what tools/gen_tables.py makes of tools/clk_model.json" python3 tools/gen_tables.py --check
 if python3 tools/gen_art.py --check >/dev/null 2>&1; then echo "== firmware/gen/clk_art.h is what tools/gen_art.py makes of assets/design.png"; echo "clk_art.h: up to date"
 else echo "== (clk_art.h differs from what this Pillow makes of the design: run tools/gen_art.py and look; not a failure)"; fi
+if python3 tools/gen_sign.py --check >/dev/null 2>&1; then echo "== docs/screens/sign.png (the site's sign) is what tools/gen_sign.py makes"; echo "sign.png: up to date"
+else echo "== (sign.png differs from what this Pillow makes: run tools/gen_sign.py and look; not a failure)"; fi
 if python3 tools/gen_art_cuckoo.py --check >/dev/null 2>&1; then echo "== firmware/gen/clk_art_cuckoo.h is what tools/gen_art_cuckoo.py draws"; echo "clk_art_cuckoo.h: up to date"
 else echo "== (clk_art_cuckoo.h differs from what this Pillow draws: run tools/gen_art_cuckoo.py and look; not a failure)"; fi
 run "fm1clock.c compiles for the host without a warning (-Werror)" sh -c "cc $CF -o $OUT/fm1clock firmware/src/fm1clock.c"
