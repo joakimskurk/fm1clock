@@ -55,7 +55,7 @@ off, as a pendulum clock stops when nobody winds it. Set it with SELECT and PRES
 
 ```sh
 pip3 install mido python-rtmidi
-python3 tools/settime.py            # finds the MIDI port with "FM-1" in its name; --list shows the ports
+python3 tools/settime.py            # finds the FM-1 ("Felucca" over USB); --list shows the ports
 ```
 
 The settings (the clock, the levels, the strike, the lights, the digits) are kept in flash.
