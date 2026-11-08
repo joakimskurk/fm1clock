@@ -1,5 +1,12 @@
-# ALGORITHM twice: the cuckoo clock, then the wall clock again (two clocks, turn and turn about), as it was at power-on
+# ALGORITHM: a turn of five detents over 0.4 s is one switch, to the cuckoo clock (before, the knob rested 300 ms
+# after a switch and then switched again: back to the wall clock); a turn the other way, after the knob has rested,
+# the wall clock again (two clocks, turn and turn about)
 100 enc 1 1
-500 enc 1 -1
+200 enc 1 1
+300 enc 1 1
+400 enc 1 1
+500 enc 1 1
 1000 shot
-1100 end
+1600 enc 1 -1
+2000 shot
+2100 end

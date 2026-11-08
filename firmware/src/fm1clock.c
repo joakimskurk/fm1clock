@@ -14,7 +14,6 @@
  *   FX           the strike on / off (FX lit: silent)
  *   GLO          the keys' lights: under the pendulum, on the hour (they flash with each blow, and in silence on the
  *                hour, its count), off
- *   ENV          (the cuckoo clock) wind it: pull its chains, the weights go up
  *   HOME         the time as digits beside the clock, on / off
  *   SEQ          how many of the FM operators the chip runs, and how much of it they take, on / off
  *   KNOB 1, 2    the ticks' and the strike's level (kept in flash, with the clock and the keys' lights)
@@ -504,11 +503,14 @@ static void app_main(void)
         platform_poll();
         midi_in();
 
-        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0 && (!t_clock || fm1_ms - t_clock > 300u)) {   /* the other clock (a turn:
-                                                   one), either way */
-            set.clock ^= 1u;
+        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) {   /* the other clock, either way: once a turn, however many
+                                                   detents (a turn ends when the knob has rested 400 ms: a turn of
+                                                   two detents switched there and back again) */
+            if (!t_clock || fm1_ms - t_clock > 400u) {
+                set.clock ^= 1u;
+                dirty = 1; t_change = fm1_ms;
+            }
             t_clock = fm1_ms;
-            dirty = 1; t_change = fm1_ms;
         }
         if ((e = fm1_enc_take(ENC_SELECT)) != 0)          /* a minute a detent */
             set_time((e < -60 ? -60 : e > 60 ? 60 : e) * 120);
@@ -540,8 +542,6 @@ static void app_main(void)
         if (b & (1u << BTN_HOME)) { set.digits ^= 1u; dirty = 1; t_change = fm1_ms; }
         if (b & (1u << BTN_SEQ)) { set.info ^= 1u; dirty = 1; t_change = fm1_ms; draw_info(1); }
         if (b & (1u << BTN_GLO)) { set.keys = (uint8_t)((set.keys + 1u) % 3u); t_keys = fm1_ms; dirty = 1; t_change = fm1_ms; }
-        if ((b & (1u << BTN_ENV)) && set.clock)
-            winding = 1;
         apply_set();
         if (strike_due && fm1_ms - t_turn > 500u) {   /* the hands have stopped: what they passed */
             strike_due = 0;

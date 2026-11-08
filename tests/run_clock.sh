@@ -87,9 +87,11 @@ run "the cuckoo's hands at 3:00 when it calls" python3 $P hands $OUT/cuckoo-5230
 run "silent: no call and no blow at three" sh -c "python3 $P events $OUT/cuckoo_silent.log PIPE 0 9 0 && python3 $P hits $OUT/cuckoo_silent.log 0 9 0"
 run "silent: the door stays shut" python3 $P same $OUT/cuckoo-1000.ppm $OUT/cuckoo_silent-5230.ppm $D 0
 run "silent, the keys on the hour: three flashes at three, none at the half hour" python3 $P events $OUT/cuckoo_silent.log FLASH 3 9 3
-# ALGORITHM again: the wall clock (two clocks), on its wall, as at power-on
-run "ALGORITHM twice: the wall clock again, as it was (but the minute hand's edge: drawn at another second)" \
-    python3 $P same $OUT/repeat-1000.ppm $OUT/back-1000.ppm 0 0 240 240 60
+# ALGORITHM: one switch a turn, however many detents; a turn either way
+run "ALGORITHM, a turn of five detents over 0.4 s: one switch, the cuckoo clock (its roof, not the wall clock's top)" \
+    python3 $P differ $OUT/repeat-1000.ppm $OUT/back-1000.ppm 0 0 240 55 1500
+run "ALGORITHM again, the other way: the wall clock, as at power-on (its top)" \
+    python3 $P same $OUT/repeat-1000.ppm $OUT/back-2000.ppm 0 0 240 55 0
 
 # the site (GitHub Pages): made from the package (CI builds it before the tests; here, if it is there), its installer
 # against a simulated FM-1 if Playwright is there

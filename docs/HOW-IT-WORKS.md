@@ -100,7 +100,7 @@ The screen is 240 × 240 pixels.
 | (all) | A tick every half second to within 3 ms, left and right in turn, and **nothing between two ticks**. |
 | `cuckoo.txt` | ALGORITHM, then 2:59:56: three calls, each a blow, the high pipe 0.11 s on (0.22 s the first), the low 0.19 s after it, 0.665 s apart, the first 0.87 s after the hour; a tick every 0.4286 s; the pendulum moves; at the hour the door is open and the bird out, after it the door is shut again; the hands at 3:00. |
 | `cuckoo_silent.txt` | The cuckoo, FX and GLO (the keys on the hour): three o'clock without a call or a blow, the door shut, the keys flashing three times; at the half hour nothing. |
-| `back.txt` | ALGORITHM twice, one way and back: the wall clock again, as it was at power-on. |
+| `back.txt` | ALGORITHM, a turn of five detents over 0.4 s: one switch, the cuckoo clock; a turn the other way: the wall clock again. |
 
 **CI** (`.github/workflows/build.yml`, using the shared `zvenson/fm1-build` workflow) builds the package on every
 push and attests it, runs these tests and Dinghy's own platform tests, then builds fm1-emu and runs the package in

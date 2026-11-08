@@ -36,14 +36,13 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 
 | Control | What it does |
 |---|---|
-| **ALGORITHM** | The wall clock or the cuckoo clock. |
+| **ALGORITHM** | The wall clock or the cuckoo clock: a turn, either way, switches to the other. |
 | **SELECT** | The minute hand, a minute a detent. Turned forward past the hour, it strikes it when you stop. |
 | **PRESETS** | The hour hand, an hour a detent. |
 | **SEL** | Rounds the time to the nearest minute (press it at :00 seconds). |
 | **PLAY** | Strikes (or calls) the last hour again, even with the strike off. |
 | **FX** | The strike on or off (SILENT on the screen). The cuckoo's door stays shut. |
 | **GLO** | The keys' lights: SWING, HOURS or OFF. |
-| **ENV** | Winds the cuckoo clock (it also winds itself when a weight reaches the bottom). |
 | **HOME** | The time as digits beside the clock. |
 | **SEQ** | How many FM operators are running, and how much of the chip they take. |
 | **KNOB 1 / KNOB 2** | The ticks' and the strike's levels, 0–200 % of the recordings'. |

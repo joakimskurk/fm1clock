@@ -45,7 +45,7 @@ the firmware from sprites made at the same time (`firmware/gen/clk_art_cuckoo.h`
 - **The weights go down** (see below): the going weight steadily, about a pixel every 23 minutes; the cuckoo's
   weight in a step at each call, its chain running for the time of the call. Both reach the bottom after about a
   day, and then somebody winds the clock (as one does a 1-day cuckoo clock every morning): the rings are pulled
-  down, the weights come up, one chain and then the other, the click wheel clicking. ENV does it whenever you like.
+  down, the weights come up, one chain and then the other, the click wheel clicking.
 - **The door and the bird.** With the train's release click, 0.4 s before the first call, the door opens:
   it turns about its hinge in perspective, its free edge growing as it comes towards you, edge on at 90°, its
   darker back against the gable at 150°. Then the bird comes forward out of the dark doorway: it grows from 55 %
