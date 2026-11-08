@@ -67,7 +67,7 @@ The screen is 240 × 240 pixels.
 
 | Memory | Used | Of |
 |---|---|---|
-| Code, tables and pictures of both clocks (flash) | 281 KB | 568 KB |
+| Code, tables and pictures of the three clocks (flash) | 434 KB | 568 KB |
 | RAM | 21 KB | 96 KB |
 | Pool (big buffers: the sine table, the operators, the screen buffers, the cuckoo's layers) | 151 KB | 336 KB |
 
