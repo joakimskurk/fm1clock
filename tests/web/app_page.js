@@ -3,13 +3,13 @@
 // clock runs: its screen drawn, a key lit under the pendulum, at the computer's time (the digits); the cuckoo clock and
 // PLAY (the strike button lit while it calls); no error on the page.
 //
-//   node tests/web/app_page.js build/site
+//   node tests/web/app_page.js build/site          (or a URL: the site as it is published)
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const dir = path.resolve(process.argv[2] || 'build/site');
+const dir = path.resolve(/^https?:/.test(process.argv[2] || '') ? '.' : process.argv[2] || 'build/site');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.wasm': 'application/wasm', '.png': 'image/png',
                 '.gif': 'image/gif', '.fwsc': 'application/octet-stream' };
 const server = http.createServer((req, res) => {
@@ -20,8 +20,9 @@ const server = http.createServer((req, res) => {
 });
 
 (async () => {
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  const url = `http://127.0.0.1:${server.address().port}/`;
+  const live = /^https?:/.test(process.argv[2] || '');
+  if (!live) await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const url = live ? process.argv[2] : `http://127.0.0.1:${server.address().port}/`;
   const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
   let fail = 0;
   const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) fail = 1; };
@@ -53,7 +54,7 @@ const server = http.createServer((req, res) => {
     check(errs.length === 0, `no errors on the page${errs.length ? ': ' + errs.join(' | ') : ''}`);
   } finally {
     await b.close();
-    server.close();
+    if (!live) server.close();
   }
   console.log(fail ? 'app_page: FAILED' : 'app_page: all passed');
   process.exit(fail);
