@@ -6,12 +6,12 @@ useless now, and may one day turn out to be its only useful function: a clock.
 Not just any clock. Its bell is a real 31-day pendulum wall clock striking its coil gong, taken apart into 742
 ringing modes and rebuilt as an FM synthesiser of some four hundred operators, which keeps the whole chip busy every
 frame, all day long. Turn ALGORITHM and there are two more: **cuckoo clocks**, a painted chalet and a classic carved
-one, hanging on a panel wall, whose bird comes out on the hour and calls on two FM pipes over a wire gong, fitted to
-a real Black Forest clock.
+one, whose bird comes out on the hour and calls on two FM pipes over a wire gong, fitted to a real Black Forest
+clock. All three hang on the same panel wall.
 
-<p align="center"><img src="docs/screens/pendulum.gif" width="360" alt="The clock on the FM-1's screen: the hands at ten past ten, the pendulum swinging from side to side behind the glass">
+<p align="center"><img src="docs/screens/pendulum.gif" width="360" alt="The clock on the FM-1's screen, on a pine panel wall: the hands at ten past ten, the pendulum swinging from side to side behind the glass">
 <img src="docs/screens/cuckoo.gif" width="200" alt="The chalet cuckoo clock at three o'clock on a pine panel wall: a painted chalet with a cream dial and a balcony of sawn boards; its door swings open, the bird comes out, bows and calls, goes back in, while the pendulum swings behind the chains and their pine-cone weights">
-<img src="docs/screens/cuckoo-classic.gif" width="200" alt="The classic cuckoo clock at three o'clock on the same wall: a carved house in dark red walnut, leaves along its roof and a crest of leaves at the peak, vines round a Roman-numeral dial, turned columns, fretwork under its shelf; its bird comes out and calls, its leaf-shaped pendulum swings"></p>
+<img src="docs/screens/cuckoo-classic.gif" width="200" alt="The classic cuckoo clock at three o'clock on the same wall: a carved house in dark red walnut, leaves along its roof and a crest of leaves at the peak, vines round an ivory dial with serif numbers, turned columns, fretwork under its shelf; its bird comes out and calls, its leaf-shaped pendulum swings"></p>
 
 > **Status: 0.1, in progress.** Built and run in CI (in fm1-emu, the FM-1 emulator), the sound tested against the
 > recordings on a computer, and now being tried on a real FM-1.
@@ -93,7 +93,7 @@ python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page
 - **[The sound, and the engine](docs/SOUND.md):** the wall clock's recording taken apart into 742 modes and rebuilt
   as FM, its strike train, its tick and tock, the engine in integers and the governor that keeps the chip full.
   Every third of an octave of a strike is within about 1–2 dB of the recording.
-- **[The cuckoo clocks](docs/CUCKOO.md):** their own two designs on their panel wall, what moves, why its chains are not a counterweight, and its
+- **[The cuckoo clocks](docs/CUCKOO.md):** their own two designs on the panel wall, what moves, why its chains are not a counterweight, and its
   sound: the wire gong, the two pipes, the train's warning and rattle, and clicks made of a crack and noise.
 - **[How it works](docs/HOW-IT-WORKS.md):** keeping time from the crystal, drawing the picture, the tests and CI,
   the web page and its installer, making the tables again, and what is where.

@@ -10,8 +10,10 @@ What the firmware draws over a picture is taken out of it first, at the design's
   - the pendulum: the window behind it is built again as a back panel (per column the wood's colour, the grain)
     and a front layer, the gold scrollwork and the frame (opaque) and the two reflections in the glass
     (partly transparent): the pendulum swings between the two.
-Then everything is scaled to the screen (240 x 240, the design's square as it is) and written as RGB565 in the
-byte order the screen takes. The bob is cut out of the design with its shading, as a sprite with alpha; the rod
+Then everything is scaled to the screen (240 x 240, the design's square as it is), the clock cut out of the design's
+black (what is black and joined to its edge) and hung on the panel wall the cuckoo clocks hang on (tools/
+gen_art_cuckoo.py), its soft shadow on it, and written as RGB565 in the byte order the screen takes: the box the clock
+and its shadow are in (the firmware draws the wall round it). The bob is cut out of the design with its shading, as a sprite with alpha; the rod
 is drawn by the firmware, its colours across are measured here. --check: fail if the header is not what this makes.
 """
 import argparse
@@ -20,6 +22,8 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+
+from gen_art_cuckoo import WALL_TW, shadowed, wall_tile    # the panel wall, the shadow on it
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "assets" / "design.png"
@@ -142,6 +146,26 @@ def inpaint_dial(im):
     return im
 
 
+def clock_mask(im):
+    """the clock in the design: all but its black background (what is black and joined to the picture's edge; the
+    black inside it, its numerals, the hands, the keyholes, is the clock's)"""
+    dark = im.max(axis=2) <= 12
+    bg = np.zeros_like(dark)
+    for sl in (np.s_[0, :], np.s_[-1, :], np.s_[:, 0], np.s_[:, -1]):
+        bg[sl] = dark[sl]
+    while True:                                                 # grown from the edge through the black
+        n = bg.copy()
+        n[1:] |= bg[:-1]; n[:-1] |= bg[1:]; n[:, 1:] |= bg[:, :-1]; n[:, :-1] |= bg[:, 1:]
+        n &= dark
+        if (n == bg).all():
+            return ~bg
+        bg = n
+
+
+def resize_f(ch, size):
+    return np.asarray(Image.fromarray(ch.astype(np.float32), mode="F").resize(size, Image.LANCZOS), np.float64)
+
+
 def box_blur(m, r):
     out = m.astype(float)
     for axis in (0, 1):
@@ -259,9 +283,15 @@ def build(debug=None):
     x0, y0, x1, y1 = WIN
     comp = back * (1 - fa[..., None]) + frgb * fa[..., None]
     clean[y0:y1, x0:x1] = comp
-    screen = np.asarray(Image.fromarray(np.clip(clean, 0, 255).astype(np.uint8)).resize((240, 240), Image.LANCZOS)).astype(float)
-    lum = screen.mean(axis=2)
-    ys, xs = np.where(lum > 10)
+    # the clock on the wall: premultiplied by its outline, colour and coverage scaled alike, its shadow under it
+    mask = clock_mask(im).astype(float)
+    pre = np.stack([resize_f(np.clip(clean[..., c], 0, 255) * mask, (240, 240)) for c in range(3)], axis=2)
+    cover = np.clip(resize_f(mask, (240, 240)), 0, 1)
+    tile = wall_tile()
+    wall = np.concatenate([tile] * (240 // WALL_TW + 1), axis=1)[:, :240]
+    hung = np.concatenate([np.clip(pre, 0, 255) / 255, cover[..., None]], axis=2)
+    screen = np.clip(pre + shadowed(hung, wall) * (1 - cover[..., None]), 0, 255)
+    ys, xs = np.where(np.abs(screen - wall).max(axis=2) > 0.5)   # the box the clock and its shadow are in
     bx0, by0, bx1, by1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
     bg = screen[by0:by1, bx0:bx1]
     # the window on the screen: whole pixels inside the frame
@@ -311,7 +341,7 @@ def header(a):
            f"#define BOB_Y256 {int(round(BOB[1] * S * 256))}   /* the bob's centre on the screen at rest */",
            f"#define BOB_R256 {int(round(BOB[2] * S * 256))}",
            f"#define ROD_N {len(a['rod'])}   /* the rod's colours across, a screen pixel apart */"]
-    out.append("/* the clock (the black around it is not stored), RGB565 in the screen's byte order */")
+    out.append("/* the clock on the panel wall, its shadow on it (the wall round it is not stored), RGB565 in the screen's byte order */")
     out.append(carray("BG_SW", "uint16_t", swapped(rgb565(a["bg"])).ravel()))
     out.append("/* the window's back panel behind the pendulum, RGB565 (the CPU's order: blended before it is sent) */")
     out.append(carray("WIN_BACK", "uint16_t", rgb565(a["wback"]).ravel()))

@@ -32,8 +32,8 @@ so everything that moves, and every sound, is the same for both.
 - A roof of two carved boards, arches cut under them, carved leaves along their tops, turned out from the roof in
   turn, and a crest of three leaves at the peak; a turned knob at each end of the eaves.
 - Vines climbing either side of the dial, their leaves and a bunch of grapes on each.
-- An ivory dial, as big as the chalet's (62 px), with **Roman numerals** round it, each turned to the centre (VI
-  upside down, IIII for four, as on the old dials), a minute track, a bezel of carved beads and a brass ring.
+- An ivory dial, as big as the chalet's (62 px), its hours in upright serif figures (Roman numerals were tried
+  first: at this size they read as strokes), a minute track, a bezel of carved beads and a brass ring.
 - Turned columns either side, standing on a shelf with turned ends, their drops hanging under it.
 - Under the shelf, fretwork: two scrolls curling in from the columns, leaves on them, a leaf hanging in the middle,
   open between, so the chains and the pendulum hang through it.
@@ -41,9 +41,8 @@ so everything that moves, and every sound, is the same for both.
 - Its bob is a carved leaf, its stick walnut.
 
 **The panel wall.** Both hang on a wall of tongue-and-groove pine boards, stained honey, a V at each joint, lit a little
-from above, and each casts a soft shadow on it (3 px to the right, 4 down). The words in the screen's margins are
-burnt into the wood, dark, instead of light on black. (The wall clock stays on black: its picture, from the design, has
-no edge of its own to put on a wall.)
+from above, and each casts a soft shadow on it (3 px to the right, 4 down). The wall clock hangs on the same wall,
+cut out of the design's black. The words in the screen's margins are burnt into the wood, dark.
 
 Everything is drawn eight times over (polygons, ellipses, and wood grain made from smoothed noise, the boards'
 grain vertical, the beams' horizontal) and averaged down to the screen, so the edges are soft. Each house is

@@ -9,7 +9,7 @@ One layout (the dial, the bird's door, the pendulum, the chains and the weights 
     bird's door in the gable, a big cream dial (Arabic numerals, a carved bezel), two shuttered windows with
     geraniums, a balcony of sawn boards;
   - the classic: carved, in dark red walnut, leaves along its roof boards and a crest of leaves at the peak, vines
-    round an ivory dial with Roman numerals, turned columns on a shelf, fretwork under it, a leaf for a bob.
+    round an ivory dial with serif numerals, turned columns on a shelf, fretwork under it, a leaf for a bob.
 Both hang on a wall of pine boards (a tile four boards wide, across the screen), each its soft shadow on it.
 Everything is drawn 8 times over (polygons, ellipses, wood grain from smoothed noise) and box-filtered down to the
 screen, so its edges are soft.
@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "firmware" / "gen" / "clk_art_cuckoo.h"
@@ -131,6 +131,29 @@ def shade(col, f):
 
 
 # ---- the house
+def numerals(cv, cx, cy, r, font_file, size, col, narrow=1.0):
+    """the hours 1 to 12, upright, centred on a circle of radius r round (cx, cy); two-figure ones narrowed by
+    narrow (so 10, 11 and 12 keep clear of each other on a small dial)"""
+    font = ImageFont.truetype(font_file, int(round(size * K)))
+    for h in range(1, 13):
+        a = np.radians(h * 30)
+        tx, ty = cx + r * np.sin(a), cy - r * np.cos(a)
+        txt = str(h)
+        f = narrow if h >= 10 else 1.0
+
+        def num(d, P, k, txt=txt, tx=tx, ty=ty, f=f):
+            bb = d.textbbox((0, 0), txt, font=font)
+            w, hh = bb[2] - bb[0], bb[3] - bb[1]
+            if f == 1.0:
+                d.text((tx * k - w / 2 - bb[0], ty * k - hh / 2 - bb[1]), txt, font=font, fill=255)
+                return
+            t = Image.new("L", (w + 4, hh + 4), 0)
+            ImageDraw.Draw(t).text((2 - bb[0], 2 - bb[1]), txt, font=font, fill=255)
+            t = t.resize((max(1, int(round(t.size[0] * f))), t.size[1]), Image.LANCZOS)
+            d.bitmap((int(round(tx * k - t.size[0] / 2)), int(round(ty * k - t.size[1] / 2))), t, fill=255)
+        cv.paint(cv.mask(num), col)
+
+
 def house():
     cv = Canvas(240, 240)
     # the facade behind the roof: the gable's boards above the beam, the plaster below it
@@ -203,17 +226,7 @@ def house():
         r0 = 22.6 if mnt % 5 else 21.4
         cv.line([(cx + r0 * np.sin(a), cy - r0 * np.cos(a)), (cx + 24.6 * np.sin(a), cy - 24.6 * np.cos(a))],
                 0.45 if mnt % 5 else 0.9, (70, 50, 36))
-    font = ImageFont.truetype(FONT, int(5.9 * K))
-    for h in range(1, 13):
-        a = np.radians(h * 30)
-        tx, ty = cx + 17.4 * np.sin(a), cy - 17.4 * np.cos(a)
-        txt = str(h)
-
-        def num(d, P, k, txt=txt, tx=tx, ty=ty):
-            bb = d.textbbox((0, 0), txt, font=font)
-            w, hh = bb[2] - bb[0], bb[3] - bb[1]
-            d.text((tx * k - w / 2 - bb[0], ty * k - hh / 2 - bb[1]), txt, font=font, fill=255)
-        cv.paint(cv.mask(num), (52, 34, 24))
+    numerals(cv, cx, cy, 17.4, FONT, 5.9, (52, 34, 24))
     # the roof: shingles on a thick edge, a scalloped barge board under them, a finial at the peak
     outer = [(52, 62), (120, 7), (188, 62)]
     inner = [(65, 64), (120, 19), (175, 64)]
@@ -491,7 +504,7 @@ def house_classic():
         cv.line([(CX + s_ * 30, 139.2), (CX + s_ * 4, 139.2)], 1.2, WN_D)
     carved_leaf(cv, CX, 156, 7.2, 180)                                # the drop: a leaf, its tip down
     cv.ellipse(CX, 145.5, 2.2, 2.2, wood(WN_M, WN_D, False, 140))
-    # the dial: a carved bezel, a brass bead, the ivory face, Roman numerals and minutes
+    # the dial: a carved bezel, a brass bead, the ivory face, its hours and minutes
     cx, cy = DIAL_C
     cv.ellipse(cx + 1.0, cy + 1.4, DIAL_R + 0.6, DIAL_R + 0.6, (0, 0, 0), 0.45)
     cv.ellipse(cx, cy, DIAL_R, DIAL_R, wood(WN_D, WN_X, False, 150))
@@ -509,7 +522,7 @@ def house_classic():
         cv.line([(cx + r0 * np.sin(a), cy - r0 * np.cos(a)), (cx + 24.8 * np.sin(a), cy - 24.8 * np.cos(a))],
                 0.45 if mnt % 5 else 0.9, (62, 40, 28))
     cv.ellipse(cx, cy, 24.8, 24.8, (62, 40, 28), 0.0)
-    cv.paint(roman(cv, cx, cy, 18.6, 4.9), (44, 28, 20))       # the numerals, round the face, their feet inwards
+    numerals(cv, cx, cy, 17.6, SERIF, 6.1, (44, 28, 20), 0.86)     # the hours, upright, in a serif
     # the doorway: a carved frame, a sill, and a leaf over it
     hx, hy = HOLE_C
     cv.ellipse(hx + 0.5, hy + 0.6, HOLE_R + 2.4, HOLE_R + 2.4, WN_X)
@@ -544,27 +557,6 @@ def house_classic():
     carved_leaf(cv, CX + 10.5, 11.5, 7.0, 48)
     carved_leaf(cv, CX, 8.2, 8.2, 0)
     return cv
-
-
-def roman(cv, cx, cy, r, size):
-    """a mask of the twelve Roman numerals round (cx, cy) at radius r, each turned to the centre (VI upside
-    down, as on the old dials), narrowed where it is wide"""
-    k = cv.k
-    im = Image.new("L", (cv.w * k, cv.h * k), 0)
-    font = ImageFont.truetype(SERIF, int(round(size * k)))
-    for h, txt in enumerate(["XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI"]):
-        bb = font.getbbox(txt)
-        t = Image.new("L", (bb[2] - bb[0] + 4, bb[3] - bb[1] + 4), 0)
-        ImageDraw.Draw(t).text((2 - bb[0], 2 - bb[1]), txt, font=font, fill=255)
-        w = t.size[0] * (0.78 if len(txt) >= 4 else 0.9 if len(txt) == 3 else 1.0)
-        t = t.resize((max(1, int(round(w))), t.size[1]), Image.LANCZOS)
-        t = t.rotate(-h * 30, resample=Image.BICUBIC, expand=True)
-        a = np.radians(h * 30)
-        x, y = (cx + r * np.sin(a)) * k, (cy - r * np.cos(a)) * k
-        layer = Image.new("L", im.size, 0)
-        layer.paste(t, (int(round(x - t.size[0] / 2)), int(round(y - t.size[1] / 2))))
-        im = ImageChops.lighter(im, layer)
-    return np.asarray(im, np.float32) / 255, im.getbbox()
 
 
 def ivory_fill(x0, y0, x1, y1):

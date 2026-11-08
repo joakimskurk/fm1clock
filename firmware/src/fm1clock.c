@@ -333,9 +333,9 @@ static void midi_in(void)
 #define M_W (240 - M_R)
 
 /* words in the margins, over what is there (bg_px: the panel wall, the clock's own picture), their edges blended
- * into it; on the cuckoos' wall dark, as if burnt into the wood, on the wall clock's black light */
-#define TXT_HI (draw_clock ? RGB(56, 32, 16) : RGB(224, 200, 150))
-#define TXT_LO (draw_clock ? RGB(92, 60, 36) : RGB(150, 120, 90))
+ * into it, dark, as if burnt into the wood */
+#define TXT_HI RGB(56, 32, 16)
+#define TXT_LO RGB(92, 60, 36)
 static void bg_text_box(uint32_t x, uint32_t y, uint32_t w, const felucca_font_t *f, const char *s, uint16_t c)
 {
     int32_t tx = ((int32_t)w - text_w(f, s)) / 2;

@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* FM1 Clock's pictures, for two clocks. The wall clock: the design as the background (firmware/gen/clk_art.h,
- * tools/gen_art.py), and over it what moves: the hands (polygons, 4 x 4 samples a pixel) and the pendulum (the rod,
- * the bob with its own shading, both behind the glass: its reflections and the gold go over them). The cuckoo clock:
- * this firmware's own chalet (firmware/gen/clk_art_cuckoo.h, tools/gen_art_cuckoo.py) with its big cream dial and the
- * same hands; its door, turned on its hinge in perspective, and the bird, coming forward out of the dark and bowing
+/* FM1 Clock's pictures, for three clocks, all on one panel wall. The wall clock: the design as the background
+ * (firmware/gen/clk_art.h, tools/gen_art.py), and over it what moves: the hands (polygons, 4 x 4 samples a pixel) and the pendulum (the rod,
+ * the bob with its own shading, both behind the glass: its reflections and the gold go over them). The cuckoo clocks:
+ * this firmware's own chalet and classic (firmware/gen/clk_art_cuckoo.h, tools/gen_art_cuckoo.py) with their big
+ * dials and the same hands; its door, turned on its hinge in perspective, and the bird, coming forward out of the dark and bowing
  * to its call; and below the house what hangs from it: the pendulum (a stick and its bob, swinging behind the rest,
  * close to the wall), the two chains over their sprockets, each with a pine-cone weight on one end and a ring on the
  * other, and the house's balcony and apron in front of it all. The regions are drawn again, each into a buffer of
@@ -81,12 +81,12 @@ static inline uint32_t pack(int32_t r, int32_t g, int32_t b)
 static uint32_t lo_dirty;                       /* the cuckoo's window: everything again */
 
 /* what is behind everything drawn over the clock (the margins' words): the clock's picture where it is, round it
- * the panel wall the cuckoos hang on (the wall clock: black) */
+ * the panel wall all three clocks hang on */
 static inline uint16_t bg_px(uint32_t x, uint32_t y)
 {
     if (x - (uint32_t)face->bx < (uint32_t)face->bw && y - (uint32_t)face->by < (uint32_t)face->bh)
         return face->bg[(y - (uint32_t)face->by) * (uint32_t)face->bw + (x - (uint32_t)face->bx)];
-    return draw_clock ? CK_WALL_SW[y * CK_WALL_TW + x % CK_WALL_TW] : 0u;
+    return CK_WALL_SW[y * CK_WALL_TW + x % CK_WALL_TW];
 }
 static void bg_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h)   /* (in strips through dial_px) */
 {
@@ -109,12 +109,8 @@ static void draw_all(void)
     bw = (uint32_t)face->bw;
     bh = (uint32_t)face->bh;
     lcd_sync();
-    if (draw_clock) {                           /* a cuckoo: the panel wall it hangs on, all of the screen */
-        ck = &CK_ART[draw_clock == 2u ? 1 : 0];
-        bg_fill(0, 0, 240, 240);
-    } else {
-        lcd_fill(0, 0, 240, 240, C_BLACK);
-    }
+    ck = &CK_ART[draw_clock == 2u ? 1 : 0];
+    bg_fill(0, 0, 240, 240);                    /* the panel wall the clock hangs on, all of the screen */
     for (y = 0; y < bh; y += 32u) {             /* in strips through RAM: the screen's DMA reads RAM only (lcd.c) */
         uint32_t h = bh - y < 32u ? bh - y : 32u;
         lcd_sync();

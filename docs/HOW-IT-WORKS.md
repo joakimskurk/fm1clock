@@ -29,9 +29,11 @@
 
 The screen is 240 × 240 pixels.
 
-- **The background** is the design (`assets/design.png`, 1254 × 1254) scaled to the screen. Only the clock itself
-  is stored (126 × 233 pixels, RGB565, 58 KB of flash). What the firmware draws over it is first taken out of the
-  design, at the design's own resolution (`tools/gen_art.py`):
+- **The background** is the design (`assets/design.png`, 1254 × 1254) scaled to the screen, the clock cut out of
+  its black (the black joined to the picture's edge; the black inside it, the numerals and the keyholes, is the
+  clock's) and hung on the cuckoo clocks' panel wall with its soft shadow. Only the clock and its shadow are stored
+  (136 × 239 pixels, RGB565, 64 KB of flash); the wall round it is drawn from its tile. What the firmware draws over
+  it is first taken out of the design, at the design's own resolution (`tools/gen_art.py`):
   - **The hands and the hub.** On the wood, the grey and dark pixels in a wide area round each hand are replaced
     by wood from the same column higher or lower, with one shift per column so that the vertical grain runs on
     unbroken; the disc's rim is turned round the hub instead. On the cream chapter ring, the tips are covered with
@@ -59,9 +61,10 @@ The screen is 240 × 240 pixels.
   door when it or the bird moves, and the space under the house (72 × 94 pixels) 50 times a second, where only the
   columns the pendulum touches now or touched last time are made again, unless a chain has run (see
   [What moves](CUCKOO.md#what-moves)). Both have one layout and their own pictures (the firmware takes the one or the
-  other's). Behind them is the panel wall: the screen is filled from a tile of it, the house is stored on it with
-  its shadow, and under the house the pendulum, the chains and the weights go over the wall kept for that region;
-  the words in the margins are drawn over whatever is behind them, their edges blended in.
+  other's). Behind them, and behind the wall clock, is the panel wall: the screen is filled from a tile of it, the
+  house is stored on it with its shadow, and under the house the pendulum, the chains and the weights go over the
+  wall kept for that region; the words in the margins are drawn over whatever is behind them, their edges blended
+  in.
 - **The screen only takes data from RAM** (its DMA cannot read flash), so every picture is assembled in a RAM
   buffer and sent while the next is made.
 
