@@ -7,6 +7,9 @@
 - **The time base is the crystal.** The FM-1's TIMER4 counts the 24 MHz crystal. Every 5.8 ms the audio interrupt
   takes what it has counted and turns it into half seconds (12,000,000 crystal ticks each). It does not count audio
   frames, so the clock is exactly as good as the crystal, typically within a couple of seconds a day.
+- **In an emulator the crystal is the emulator's.** fm1-emu counts TIMER4 from the instructions it runs and paces
+  itself by the computer's sound, so there the clock is only as good as that pace. In Chrome, at 100 MHz, it kept
+  188.0 s of the FM-1's time in 188.7 s (the difference is its start), and the hands showed the same.
 - **Each tick lands on its exact frame.** When a half second falls inside the 256 frames the interrupt is about to
   render, it works out on which frame it falls (44,100 / 24,000,000 = 147 / 80,000 frames per crystal tick) and the
   tick starts there. If a half second ever slips between two blocks, its tick is played at the start of the next
