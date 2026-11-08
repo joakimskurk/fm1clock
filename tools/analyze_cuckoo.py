@@ -196,39 +196,48 @@ def case_knock(m, fs, ons, lo=80.0, hi=450.0, lead=0.10, span=0.08):
 IDLE = [(3.05, 3.45), (3.50, 3.88), (3.92, 4.30)]   # the train still: the ticks only
 
 
-def train_drone(m, fs, run, n_max=12):
-    """the striking train's drone while it runs (run: its stretches; its wheels, its fly: 74 Hz and up, 15-30 dB
-    over the train still): the peaks of the running spectrum that stand 6 dB over the still one, each its level
-    from a narrow band round it (running less still), and the drone's energy 40-450 Hz over the still (dB)"""
+DRONE_EDGES = [56.2 * 2 ** (k / 3) for k in range(10)]   # its thirds of an octave, 56-447 Hz
+
+
+def train_drone(m, fs, find, run, n_band=3, n_max=12):
+    """the striking train's drone while it runs (its wheels, its fly: 70 Hz and up, over the train still). Its
+    partials: the peaks of the running spectrum over find (stretches long enough to tell them apart) that stand
+    6 dB over the still one, at most n_band in a third of an octave (the strongest); in a third with none where the
+    train running stands 3 dB over it still, its strongest bin. Their levels: each third's power running less
+    still, over run (stretches with no click, no door, no gong in them: the door rings 0.1 s, and a band as narrow
+    as a partial smears the first blow back over the stretch before it), shared by its partials as their peaks are.
+    And that power, all its thirds, 56-447 Hz (dB, for the tests)"""
     N = 1 << 16
-    def psd(segs):
+    f = np.fft.rfftfreq(N, 1 / fs)
+
+    def psd(segs):                              # (power per bin: a band's power is its bins' sum)
         acc = 0
         for a, b in segs:
             x = m[int(a * fs):int(b * fs)]
             w = np.hanning(len(x))
-            acc = acc + np.abs(np.fft.rfft(x * w, N)) ** 2 / np.sum(w ** 2)
+            acc = acc + np.abs(np.fft.rfft(x * w, N)) ** 2 / np.sum(w ** 2) * 2 / N
         return acc / len(segs)
-    f = np.fft.rfftfreq(N, 1 / fs)
-    pr, pi = psd(run), psd(IDLE)
-    db, over = 10 * np.log10(pr + 1e-30), 10 * np.log10(pr + 1e-30) - 10 * np.log10(pi + 1e-30)
-    sel = (f > 40) & (f < 450)                       # (above it, the rattle: tools/analyze_cuckoo.py train_rattle)
-    pk, _ = sg.find_peaks(np.where(sel, db, -300), prominence=6, distance=4)
-    pk = sorted([p for p in pk if over[p] > 6], key=lambda p: -db[p])[:n_max]
-    n = len(m)
-    X = np.fft.rfft(m)
-    fx = np.fft.rfftfreq(n, 1 / fs)
-    def rms(lo, hi, segs):
-        Y = X.copy()
-        Y[(fx < lo) | (fx > hi)] = 0
-        y = np.fft.irfft(Y, n)
-        return np.mean([np.mean(y[int(a * fs):int(b * fs)] ** 2) for a, b in segs])
-    parts = []
-    for p in sorted(pk):
-        e = rms(f[p] - 3, f[p] + 3, run) - rms(f[p] - 3, f[p] + 3, IDLE)
-        if e > 0:
-            parts.append(dict(f=float(f[p]), a=float(np.sqrt(2 * e))))
-    e_db = 10 * np.log10(max(rms(40, 450, run) - rms(40, 450, IDLE), 1e-20))
-    return parts, float(e_db)
+    pf, pi = psd(find), psd(IDLE)
+    db, over = 10 * np.log10(pf + 1e-30), 10 * np.log10(pf + 1e-30) - 10 * np.log10(pi + 1e-30)
+    pr, pq = psd(run), psd([(a + d, a + d + 0.12) for a, _ in IDLE for d in (0.0, 0.15)])
+    parts, e = [], 0.0
+    for lo, hi in zip(DRONE_EDGES[:-1], DRONE_EDGES[1:]):
+        sel = (f >= lo) & (f < hi)
+        net = float(np.sum(pr[sel]) - np.sum(pq[sel]))
+        if net <= 0:
+            continue
+        pk, _ = sg.find_peaks(np.where(sel, db, -300), prominence=6, distance=4)
+        pk = sorted([p for p in pk if over[p] > 6], key=lambda p: -db[p])[:n_band]
+        if not pk:
+            if np.sum(pr[sel]) < 2 * np.sum(pq[sel]):
+                continue                        # (not 3 dB over the still: nothing of its own)
+            pk = [int(np.argmax(np.where(sel, pr, 0)))]
+        w = np.array([pf[p] for p in pk])
+        for p, wt in zip(pk, w / w.sum()):
+            parts.append(dict(f=float(f[p]), a=float(np.sqrt(2 * net * wt))))
+        e += net
+    parts = sorted(sorted(parts, key=lambda d: -d["a"])[:n_max], key=lambda d: d["f"])
+    return parts, float(10 * np.log10(max(e, 1e-20)))
 
 
 def train_rattle(m, fs, h0, n_max=10):
@@ -252,7 +261,8 @@ def train_rattle(m, fs, h0, n_max=10):
     t_run = next(t for t in ts if lv(t) > mid)
     ts = np.arange(h0 - 0.62, h0 - 0.42, 0.005)
     t_stop = next(t for t in ts if lv(t) < mid)
-    RUNS = [(t_run + 0.02, h0 - 0.76), (h0 - 0.36, h0 - 0.24), (h0 - 0.17, h0 - 0.02)]   # (no tick, no warning click in them)
+    RUNS = [(t_run + 0.02, h0 - 0.76), (h0 - 0.30, h0 - 0.24), (h0 - 0.17, h0 - 0.02)]   # (no tick, no warning click,
+                                                    # not the door's ring in them: it rings 0.1 s, 3 dB over the rattle)
     QUIET = [(3.10, 3.40), (3.53, 3.83), (3.96, 4.25)]
     N = 1 << 15
     def psd(segs):
@@ -354,7 +364,8 @@ def main():
     knock, knock_db = case_knock(m, fs, tick_ons[:7])
     rattle, rattle_db = train_rattle(m, fs, train[0])
     h0 = train[0]                                   # the train running before the first call: no gong, no pipe yet
-    drone, drone_db = train_drone(m, fs, [(h0 + rattle["start"] + 0.03, h0 + rattle["stop"] - 0.01), (h0 - 0.36, h0 - 0.02)])
+    drone, drone_db = train_drone(m, fs, [(h0 + rattle["start"] + 0.03, h0 + rattle["stop"] - 0.01), (h0 - 0.36, h0 - 0.02)],
+                                  [(h0 + rattle["start"] + 0.02, h0 - 0.76), (h0 - 0.30, h0 - 0.24), (h0 - 0.17, h0 - 0.02)])
     model = dict(fs=fs, hit=hit, modes=modes, pipes=dict(high=hi_p, low=lo_p),
                  call=dict(period=float(np.median(np.diff(train))), hit_to_high=float(np.median(d_hi[1:])),
                            first_hit_to_high=float(d_hi[0]), high_to_low=float(np.median(d_lo))),

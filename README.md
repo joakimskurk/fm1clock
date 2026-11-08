@@ -415,11 +415,15 @@ repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_fea
     0.05 and under above 3 kHz. FM1 Clock's now: 0.24 to 0.46.
 
 <p align="center"><img src="docs/screens/cuckoo-clicks.png" width="820" alt="Waveforms and spectrograms, the recording against FM1 Clock: the tick, a sharp crack and a burst of noise gone in about 20 ms, the same in both, with no steady tones in FM1 Clock's spectrogram; the door opening, its wood struck three times in 20 ms, at 0, 10 and 19 ms, in both"></p>
-- **The train's drone.** Under its rattle the running train whirs: 70 Hz, and a comb from 286 to 439 Hz with its
-  partials 12.6 Hz apart (so it beats 12.6 times a second), 15 to 30 dB over the train standing still. In the
-  recording it is the loudest thing below 200 Hz, and much of the cuckoo's depth. Its 12 partials are measured from
-  the train running before the first call (no gong and no pipe yet) against the quiet, and sound whenever the train
-  runs, up in 60 ms, down in 100 ms: 12 sine operators, computed all the time.
+- **The train's drone.** Under its rattle the running train whirs: 70 and 75 Hz the loudest, a little at 93, 155
+  and 248 Hz, and a comb from 283 to 439 Hz with its partials about 12.6 Hz apart, which beats. In the recording it
+  is the loudest thing below 100 Hz, and much of the cuckoo's depth. Its 12 partials are found in the train running
+  before the first call (no gong and no pipe yet), at most three in a third of an octave; their levels from each
+  third's power, the train running less the train still, over stretches with no click, no door and no gong in
+  them. (An earlier measurement had the door's ring and the warning clicks in its stretches, and a band so narrow
+  that it smeared the first blow back over the stretch before it: the comb came out 12 to 16 dB too loud, a rasp
+  under the calls.) They sound whenever the train runs, up in 60 ms, down in 100 ms: 12 sine operators, computed
+  all the time.
 - **Winding** is the click wheel: the tick's sound, softer, every 84 ms while the chains are pulled.
 - **All of it at once.** The engine holds one clock's operators at a time. When ALGORITHM changes the clock, the
   interrupt loads the other one's gong into the same carriers (all still), and its governor carries on. The pipes
@@ -437,8 +441,8 @@ octave, the root mean square over the bands that stand 6 dB over the recording's
 
 | A call, the mean of nine | 0–20 ms | 20–60 | 60–140 | 0.14–0.22 s | 0.22–0.3 | 0.3–0.4 | 0.4–0.5 | 0.5–0.6 |
 |---|---|---|---|---|---|---|---|---|
-| all 681 carriers | 5.45 dB | 4.93 | 4.10 | 4.48 | 4.04 | 4.17 | 4.35 | 6.17 |
-| 206 carriers (as on the chip) | 5.45 dB | 5.58 | 4.78 | 4.76 | 3.60 | 4.89 | 5.08 | 7.16 |
+| all 681 carriers | 5.01 dB | 4.73 | 3.92 | 4.49 | 3.92 | 4.30 | 3.49 | 6.70 |
+| 206 carriers (as on the chip) | 5.01 dB | 5.43 | 4.69 | 4.84 | 3.53 | 5.08 | 4.49 | 7.73 |
 
 | The mean of 24 | −2–4 ms | 4–10 | 10–20 | 20–35 | 35–60 | 60–90 |
 |---|---|---|---|---|---|---|
@@ -456,7 +460,7 @@ worst):
 | the door shutting | 4.05 | 2.79 | 2.48 | 2.01 | 2.91 | 3.14 | 2.23 | 4.56 | 1.79 (2.72) |
 
 The case's knock (80–450 Hz, its first 80 ms) is within 0.7 dB of the recording's, the running train's drone
-(40–450 Hz) and its rattle (above 800 Hz) within 0.3 dB.
+(56–447 Hz) within 0.1 dB and its rattle (above 800 Hz) within 0.3 dB.
 
 The recording has five clean ticks, three warning clicks, one door opening and two door shuttings: in eighths of an
 octave a single click differs from the next by a few dB a band (and the one door, a single noise, by about 5), and
@@ -465,7 +469,7 @@ not as close as the
 wall clock's gong: the recording's calls overlap (a pipe is still breathing out and the gong still ringing when the
 next call starts), and the gong could be watched for only 0.17 s round the pipes' pitches. The running train's
 rattle filled much of what was missing between the calls: the last tenth of a second before the next call, 8 dB
-dry without it, is within about 4 dB now.
+dry without it, is within about 7 dB now (the drone, 12 to 16 dB too loud before, is as the recording has it).
 On the chip the governor renders 206 of the wire gong's 681 carriers (97.5 % of its energy; the wall clock's 206
 hold 99.6 % of its gong's), and what it leaves out is the weak, long-ringing modes, so the lone gong's tail is a
 little drier there: that is what the case's knock, the clicks' noise, the train's drone and its rattle cost, which

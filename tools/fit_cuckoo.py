@@ -220,13 +220,8 @@ if __name__ == "__main__":
             print(f"tick: its case's knock, {len(kn)} modes " + ", ".join(f"{m['f']:.0f}" for m in kn) + f" Hz, x {g:.2f}")
         out[name], out[name + "_attack"], out[name + "_t0"] = det + noise, fine["ta"], t0
     if "--clicks" not in sys.argv:
-        # the train running: its partials as measured, those under 450 Hz together as loud as the recording's drone
-        # is there (their narrow bands leave out the whirr between them)
-        dr = model["drone"]
-        e = sum(d["a"] ** 2 / 2 for d in dr if 40 <= d["f"] <= 450)
-        g = np.sqrt(10 ** (feats["drone_db"] / 10) / e)
-        out["drone"] = [dict(d, a=d["a"] * (g if d["f"] <= 450 else 1.0)) for d in dr]
-        print(f"drone: under 450 Hz x {g:.2f}")
+        # the train running: its partials, each third of an octave as loud as the train running is over it still
+        out["drone"] = model["drone"]
         out["rattle"] = rattle_model(model["rattle"], feats["rattle_db"])
         print(f"drone: {len(out['drone'])} partials, {min(d['f'] for d in out['drone']):.0f} .. {max(d['f'] for d in out['drone']):.0f} Hz")
     (ROOT / "tools" / "clk_cuckoo.json").write_text(json.dumps(out, indent=1) + "\n")

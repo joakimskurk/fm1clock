@@ -2267,24 +2267,24 @@ static const uint32_t PIPE_ENV1[2085] = {
 #define DRONE_RISE 198u   /* its level per CLK_SUB frames (Q15): up in 60 ms */
 #define DRONE_FALL 119u   /* down in 100 ms */
 static const uint32_t DRONE_INC[12] = {
-    6776512u, 27819363u, 28960670u, 30315973u, 31457280u, 32812582u, 33953890u, 35166528u,
-    36521831u, 37663138u, 38947109u, 42799020u,
+    6776512u, 7347165u, 9059126u, 15122321u, 24110115u, 27534036u, 28960670u, 30315973u,
+    31457280u, 35166528u, 38947109u, 42799020u,
 };
 static const uint32_t DRONE_AMP[12] = {
-    12388695u, 6405121u, 10789834u, 10292362u, 13483732u, 7714055u, 10342189u, 9894349u,
-    8838925u, 7758653u, 11472767u, 8849781u,
+    9834776u, 12309864u, 3395074u, 1609872u, 2817846u, 2236694u, 1923457u, 1956010u,
+    2221285u, 2245983u, 2363597u, 2000974u,
 };
 #define RATTLE_N 10u   /* the train's rattle: its clicks' frequencies, chosen by RATTLE_CUM (Q16) */
 #define RATTLE_P16 5944u   /* a click starts in CLK_SUB frames with this chance (Q16) */
-#define RATTLE_AMP 128205565u   /* its full level (Q31) */
+#define RATTLE_AMP 108797939u   /* its full level (Q31) */
 #define RATTLE_DEC 4042952772u   /* its decay per CLK_TSTEP frames (Q32) */
 #define CK_RUN0_FRAMES 38367u   /* the train starts to run before the first blow */
 #define CK_STOP_FRAMES 24255u   /* and stops, on its warning pin, until the release */
 static const uint32_t RATTLE_INC[10] = {
-    78750198u, 95441816u, 116698662u, 123689169u, 133104953u, 191311621u, 203723337u, 461088113u,
-    467507966u, 501889846u,
+    95441816u, 116841326u, 126257110u, 132106310u, 191026294u, 203723337u, 454525597u, 460802786u,
+    507739045u, 521434732u,
 };
 static const uint32_t RATTLE_CUM[10] = {
-    1957u, 3572u, 11841u, 46676u, 54574u, 56849u, 59226u, 62298u,
-    64063u, 65535u,
+    1500u, 9023u, 47529u, 50712u, 52253u, 54187u, 55728u, 60236u,
+    63779u, 65535u,
 };
