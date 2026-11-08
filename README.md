@@ -69,8 +69,7 @@ or Edge on a computer, the FM-1 on USB. One button; it always offers the latest 
 **Try it without an FM-1:** download `packages` from a run under *Actions* on GitHub, unzip `fm1clock.fwsc`, and
 open it in [fm1-emu](https://joakimeriksson.github.io/fm1-emu/) in a browser.
 
-**Or install it** from a computer with Python, or with the [FM-1 Firmware Hub](https://thefirmwarehub.com) in Chrome
-or Edge (which also takes you back to any other firmware):
+**Or install it** from a computer with Python:
 
 ```sh
 python3 tools/fm1_install.py build/fm1clock.fwsc     # asks before it writes, then restarts into the clock
@@ -108,8 +107,7 @@ python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page
   [SLOOP](https://github.com/isod89/sloop-fm1) (isod89). The package's identity is `FM-1_94N` (N the minor version).
 - **Licence.** GPL-3.0 ([LICENSE](LICENSE); who made what: [LICENSING.md](LICENSING.md)). The design
   (`assets/design.png`) is the author's; the cuckoo clock's is this firmware's own.
-- **The recordings.** The wall clock's belongs to Adelaide Clocks; the cuckoo clock's is of a small Black Forest
-  clock. Only measurements of them are here.
+- **The recordings** the sound is fitted to are not ours and are not here: only measurements of them.
 - **Thanks** to joakimeriksson for [fm1-emu](https://github.com/joakimeriksson/fm1-emu).
 - **Trademarks.** "M-VAVE" and "FM-1" belong to their owners. This is a fan project, not an official M-VAVE product.
 

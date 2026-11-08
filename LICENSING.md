@@ -29,10 +29,11 @@ complete source under the same licence too.
 `assets/design.png` is FM-1 Clock's design, by its author (joakimskurk); `firmware/gen/clk_art.h` is made from it
 (`tools/gen_art.py`) and goes with the firmware under its licence.
 
-The sound is fitted to a recording, *Clock Strike Chime Sound 31x Day BEACON Pendulum Wall Item 1125*, by Adelaide
-Clocks. The recording is theirs and is not in this repository; what is here are measurements of it (the frequencies,
-decays and levels in `tools/ref_model.json`, the band energies in `tests/ref/features.json`) and the model fitted to
-them (`tools/clk_model.json`). No sample of it is in the firmware: every sound is synthesised.
+The sound is fitted to recordings of a real pendulum wall clock and of a Black Forest cuckoo clock. They are not
+ours, they are not in this repository, and it does not point to them; what is here are measurements of them (the
+frequencies, decays and levels in `tools/ref_model.json` and `tools/ref_cuckoo.json`, the band energies in
+`tests/ref/`) and the models fitted to them (`tools/clk_model.json`, `tools/clk_cuckoo.json`). No sample of them is
+in the firmware: every sound is synthesised.
 
 ## The logo
 

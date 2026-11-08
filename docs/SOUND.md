@@ -4,17 +4,13 @@
 
 Everything you hear is synthesised. No sample of the recording is in the firmware.
 
-## The recording
+## What it is fitted to
 
-*Clock Strike Chime Sound 31x Day BEACON Pendulum Wall Item 1125*, by Adelaide Clocks: 48 kHz, mono, 43 seconds,
-low-passed at about 15.5 kHz. It is not in this repository (it is not ours to share). What is here are measurements
-of it (`tools/ref_model.json`, `tests/ref/features.json`), made by `tools/analyze_ref.py`.
-
-| Time | What is in it |
-|---|---|
-| 0–15.5 s | The clock ticking. Its tick and tock come 0.578 s and 0.511 s apart in turn: that clock is a little out of beat. FM-1 Clock ticks evenly, every 0.5 s. |
-| 15.65 s | **One strike, on its own** (a half hour). This is what the gong's model is measured from. |
-| 25.6–37.5 s | **Eleven strikes** (eleven o'clock), 1.192 s apart. This is what the strike train is measured from. |
+A recording of a real 31-day pendulum wall clock, ticking and striking on its coil gong. It is not ours, it is not in
+this repository, and nothing here points to it: what is here are measurements of it (`tools/ref_model.json`,
+`tests/ref/features.json`), made by `tools/analyze_ref.py`. The gong's model is measured from a strike on its own,
+the strike train from eleven strikes, 1.192 s apart. That clock's tick and tock come 0.578 s and 0.511 s apart in
+turn (it is a little out of beat); FM-1 Clock ticks evenly, every 0.5 s.
 
 ## The coil gong
 

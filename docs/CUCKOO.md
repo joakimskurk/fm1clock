@@ -86,9 +86,8 @@ Sources: [How do cuckoo clocks work (German Clocks and Gifts)](https://germanclo
 
 ## Its sound
 
-The sound is fitted, as the wall clock's is, to a recording of a real clock: a small carved 1-day Black Forest
-cuckoo clock, made in Germany, ticking, calling the half hour and then ten o'clock. The recording is not in this
-repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_features.json`, made by
+The sound is fitted, as the wall clock's is, to a recording of a real Black Forest cuckoo clock, its half hour's
+single call and its hour's calls. The recording is not ours and not in this repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_features.json`, made by
 `tools/analyze_cuckoo.py`), and the model fitted to them (`tools/clk_cuckoo.json`, by `tools/fit_cuckoo.py`).
 
 - **The wire gong.** A cuckoo clock strikes a wire gong at each call, the hammer driven by the same train as the
