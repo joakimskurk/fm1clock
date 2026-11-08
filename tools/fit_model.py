@@ -95,11 +95,12 @@ def score(feat, ref, noise, rows, w=None):
     return err
 
 
-def fit_gong(model, feats):
+def fit_gong(model, feats, nwin=3, T=0.1, name="gong"):
+    """the modulators of the K_FM strongest modes, so the hit's first nwin windows (the wall clock: 0-20, 20-50,
+    50-100 ms) have the reference's band energies"""
     modes = sorted(model["modes"], key=lambda d: -d["a"] ** 2 * d["tau"])
     ref = np.array(feats["gong"]); noise = np.array(feats["noise"])
-    wins = feats["gong_windows"][:3]                         # 0-20, 20-50, 50-100 ms
-    T = 0.1
+    wins = feats["gong_windows"][:nwin]
     pad = int(0.05 * FS)
 
     def feat_of(y):
@@ -111,8 +112,8 @@ def fit_gong(model, feats):
     parts = [gong_wave([d], [], T) for d in modes[:K_FM]]
     fm = [dict(r=1.0, I=0.0, tauI=0.015, B=0.0) for _ in range(K_FM)]
     total = base + sum(parts)
-    best = score(feat_of(total), ref, noise, range(3))
-    print(f"gong: the hit's error before FM {np.sqrt(best / (3 * 20)):.2f} dB rms")
+    best = score(feat_of(total), ref, noise, range(nwin))
+    print(f"{name}: the hit's error before FM {np.sqrt(best / (nwin * 20)):.2f} dB rms")
     for sweep in range(3):
         for k in range(K_FM):
             d = modes[k]
@@ -127,14 +128,14 @@ def fit_gong(model, feats):
                         c = np.cos(ph) * d["a"] * np.exp(-t / d["tau"])
                         for B in FM_BOOST:
                             y = c * (1 + B * e)
-                            s = score(feat_of(rest + y), ref, noise, range(3))
+                            s = score(feat_of(rest + y), ref, noise, range(nwin))
                             if s < cand_best - 1e-9:
                                 cand_best, cand = s, (dict(r=r, I=I, tauI=tauI, B=B), y)
             if cand:
                 fm[k], parts[k] = cand
                 total = rest + parts[k]
                 best = cand_best
-        print(f"gong: sweep {sweep + 1}, the hit's error {np.sqrt(best / (3 * 20)):.2f} dB rms")
+        print(f"{name}: sweep {sweep + 1}, the hit's error {np.sqrt(best / (nwin * 20)):.2f} dB rms")
     return modes, fm
 
 

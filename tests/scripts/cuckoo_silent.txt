@@ -1,0 +1,13 @@
+# the cuckoo clock, FX (silent) and GLO (the keys light on the hour): three o'clock passes without a call or a blow,
+# the door stays shut, and the keys flash three times; the half hour after it (3:30) nothing at all
+100 enc 1 1
+150 btn 2
+180 btn 7
+200 trs 0xB0 20 2
+210 trs 0xB0 21 59
+220 trs 0xB0 22 56
+5230 shot
+6000 trs 0xB0 20 3
+6010 trs 0xB0 21 29
+6020 trs 0xB0 22 58
+9000 end

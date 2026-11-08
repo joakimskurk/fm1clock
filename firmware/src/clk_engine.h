@@ -1,12 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* FM1 Clock's sound, in the audio interrupt: a gong of NG FM carriers (the first K_FM with a modulator each) and two
- * banks of NT sine operators for the ticks, every one of them computed in every frame, sounding or not. That is the
- * point: the chip is full, all of the time. A governor keeps it full and no fuller: it measures each render against
- * the crystal and renders as many of the gong's carriers (strongest first) as fit in LOAD_PCT of the time a block
- * has. The tables (firmware/gen/clk_tables.h) are fitted to a recording of a real 31-day pendulum clock striking
- * on a coil gong (tools/analyze_ref.py, tools/fit_model.py).
+/* FM1 Clock's sound, in the audio interrupt, for two clocks: a gong of FM carriers (the first K_FM with a modulator
+ * each), two banks of NT sine operators for the ticks and the mechanism's clicks, and for the cuckoo clock its two
+ * pipes (an FM pair each, with their body partials), every one of them computed in every frame, sounding or not.
+ * That is the point: the chip is full, all of the time. A governor keeps it full and no fuller: it measures each
+ * render against the crystal and renders as many of the gong's carriers (strongest first) as fit in LOAD_PCT of the
+ * time a block has. The tables (firmware/gen/clk_tables.h) are fitted to recordings of a real 31-day pendulum clock
+ * striking on a coil gong (tools/analyze_ref.py, tools/fit_model.py) and of a Black Forest cuckoo clock
+ * (tools/analyze_cuckoo.py, tools/fit_cuckoo.py).
  *
- *   eng_init()                        the sine table, the operators (main, before the audio runs)
+ *   eng_init()                        the sine table, the wall clock's operators (main, before the audio runs)
+ *   eng_load(clock)                   another clock's operators, all silent (the ISR, when eng_want changes)
  *   eng_render(out, n, ev, nev)       n frames (CLK_BLOCK), the events of this block at their frames (the ISR)
  *
  * Integers only: phases of 2^32 a cycle, levels Q31 of the output's full scale, the mix in Q30. */
@@ -25,9 +28,29 @@ typedef struct { uint32_t ph, inc, amp, dec; } op_t;          /* a sine operator
 typedef struct { uint32_t ph, inc, env, i0, dec, b; } mod_t;  /* a modulator: phase, step, index envelope (Q31), ... */
 typedef struct { op_t o[NT]; int32_t gl, gr, att, atk; } bank_t;   /* a tick: NT operators, its pan (Q8 left, right),
                                                                      its rise (Q15) and how fast */
+typedef struct {                                /* a pipe: an FM pair at its pitch (1:1), its body, its bellows */
+    uint32_t ph, mph, inc, idx, pos, n, nb;
+    const uint32_t *env;
+    uint32_t bph[4], binc[4], brel[4];
+} pipe_t;
+typedef struct {                                /* a clock's gong: its carriers and its modulators */
+    uint32_t ng;
+    const uint32_t *inc, *amp, *dec, *decb, *ph, *finc, *fi0, *fdec, *fb;
+} gong_tab_t;
+static const gong_tab_t GONGS[2] = {
+    {NG, G_INC, G_AMP, G_DEC, G_DEC_BLOCK, G_PH, F_INC, F_I0, F_DEC, F_B},          /* the wall clock's coil gong */
+    {NGB, GB_INC, GB_AMP, GB_DEC, GB_DEC_BLOCK, GB_PH, FB_INC, FB_I0, FB_DEC, FB_B},   /* the cuckoo's wire gong */
+};
+enum { SND_A_TICK, SND_A_TOCK, SND_B_TICK, SND_B_PRE, SND_B_POST };
+static const uint32_t *const SND_INC[NSND] = {T0_INC, T1_INC, T2_INC, T3_INC, T4_INC};
+static const uint32_t *const SND_AMP[NSND] = {T0_AMP, T1_AMP, T2_AMP, T3_AMP, T4_AMP};
+static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4_DEC};
+#define NG_MAX (NG > NGB ? NG : NGB)
 
-static op_t gop[NG] __attribute__((section(".pool")));
-static uint32_t gdec_blk[NG] __attribute__((section(".pool")));
+static op_t gop[NG_MAX] __attribute__((section(".pool")));
+static uint32_t gdec_blk[NG_MAX] __attribute__((section(".pool")));
+static pipe_t cpipe[2];
+static uint32_t eng_clock;                      /* (the ISR's) the clock sounding: 0 the wall clock, 1 the cuckoo */
 static mod_t gmod[K_FM] __attribute__((section(".pool")));
 static bank_t tbank[2] __attribute__((section(".pool")));
 static uint32_t tbank_next;
@@ -39,12 +62,22 @@ static volatile struct {                        /* (the ISR's; one struct, so fm
     uint32_t peak;                              /* the loudest carrier of the last block (Q15): 0 = the gong is still */
     uint32_t worst;                             /* the longest render after the first second */
     uint32_t blocks;                            /* blocks rendered */
-} eng_st = {NG_START, 0, 0, 0, 0};
+    uint32_t clock;                             /* the clock sounding */
+} eng_st = {NG_START, 0, 0, 0, 0, 0};
 static volatile uint32_t eng_tick_lvl = 256u;   /* the ticks' level, Q8 (main) */
 static volatile uint32_t eng_gong_lvl = 256u;   /* the gong's level, Q8 (main) */
 static volatile uint32_t eng_fixed_ng;          /* nonzero: render this many, no governor (host tests) */
+static volatile uint32_t eng_want;              /* (main) the clock to sound */
+static volatile uint32_t eng_hits;              /* (ISR) blows so far, sounded or silent: the keys flash on them */
+static volatile uint32_t eng_door;              /* (ISR) the cuckoo's door: 1 open, the bird out */
+static volatile uint32_t eng_bow;               /* (ISR) the pipes blown so far: the bird calls to each */
+static volatile uint32_t eng_pipe;              /* (ISR) the last of them: 0 the high, 1 the low */
+static volatile uint32_t eng_calls;             /* (ISR) the calls so far (their high pipes): the weight goes down */
 
-enum { EV_TICK, EV_TOCK, EV_CLICK, EV_HIT };
+/* EV_TICK, EV_TOCK: arg the sound, from the left, the right; EV_CLICK: arg the sound | its level (Q15) << 8, from the
+ * middle; EV_HIT: arg the hammer's strength (Q15); EV_PIPE: arg 0 the high pipe, 1 the low; EV_DOOR: arg 1 open, 0
+ * shut; EV_FLASH: a blow that does not sound (the strike off): only the keys see it */
+enum { EV_TICK, EV_TOCK, EV_CLICK, EV_HIT, EV_PIPE, EV_DOOR, EV_FLASH };
 typedef struct { uint32_t frame, type, arg; } ev_t;
 
 static uint32_t eng_rng = 0x2545F491u;
@@ -57,37 +90,64 @@ static uint32_t eng_rnd(void)
 }
 static inline uint32_t mulhi(uint32_t a, uint32_t b) { return (uint32_t)(((uint64_t)a * b) >> 32); }
 
+static void eng_load(uint32_t c)                /* a clock's operators, all of them still */
+{
+    const gong_tab_t *t = &GONGS[c];
+    uint32_t k, j;
+    for (k = 0; k < NG_MAX; k++) {
+        gop[k].ph = k < t->ng ? t->ph[k] : 0;
+        gop[k].inc = k < t->ng ? t->inc[k] : 0;
+        gop[k].amp = 0;
+        gop[k].dec = k < t->ng ? t->dec[k] : 0;
+        gdec_blk[k] = k < t->ng ? t->decb[k] : 0;
+    }
+    for (k = 0; k < K_FM; k++) {
+        gmod[k].ph = 0;
+        gmod[k].inc = t->finc[k];
+        gmod[k].env = 0;
+        gmod[k].i0 = t->fi0[k];
+        gmod[k].dec = t->fdec[k];
+        gmod[k].b = t->fb[k];
+    }
+    for (k = 0; k < 2u; k++)
+        for (j = 0; j < NT; j++)
+            tbank[k].o[j].amp = 0;
+    for (k = 0; k < 2u; k++) {
+        pipe_t *pp = &cpipe[k];
+        pp->inc = PIPE_INC[k];
+        pp->idx = PIPE_IDX[k];
+        pp->env = k ? PIPE_ENV1 : PIPE_ENV0;
+        pp->n = k ? PIPE_ENV1_N : PIPE_ENV0_N;
+        pp->pos = pp->n;                        /* still */
+        pp->nb = PIPE_NBODY[k];
+        for (j = 0; j < 4u; j++) {
+            pp->binc[j] = PIPE_BODY_INC[4u * k + j];
+            pp->brel[j] = PIPE_BODY_REL[4u * k + j];
+            pp->bph[j] = 0;
+        }
+    }
+    eng_clock = c;
+    eng_st.clock = c;
+    if (eng_st.ng > t->ng) eng_st.ng = t->ng;
+}
+
 static void eng_init(void)
 {
-    uint32_t i, k;
+    uint32_t i;
     for (i = 0; i < 4096u; i++) {
         SINT[i] = SINQ[i];
         SINT[4096u + i] = SINQ[4096u - i];
         SINT[8192u + i] = (int16_t)-SINQ[i];
         SINT[12288u + i] = (int16_t)-SINQ[4096u - i];
     }
-    for (k = 0; k < NG; k++) {
-        gop[k].ph = G_PH[k];
-        gop[k].inc = G_INC[k];
-        gop[k].amp = 0;
-        gop[k].dec = G_DEC[k];
-        gdec_blk[k] = G_DEC_BLOCK[k];
-    }
-    for (k = 0; k < K_FM; k++) {
-        gmod[k].ph = 0;
-        gmod[k].inc = F_INC[k];
-        gmod[k].env = 0;
-        gmod[k].i0 = F_I0[k];
-        gmod[k].dec = F_DEC[k];
-        gmod[k].b = F_B[k];
-    }
+    eng_load(0);
 }
 
 /* ---- events */
-static void eng_tick(uint32_t snd, uint32_t g15, int32_t gl, int32_t gr)   /* a tick (0) or a tock (1) at g15 (Q15) */
+static void eng_tick(uint32_t snd, uint32_t g15, int32_t gl, int32_t gr)   /* a click sound (SND_...) at g15 (Q15) */
 {
     bank_t *b = &tbank[tbank_next];
-    const uint32_t *I = snd ? T1_INC : T0_INC, *A = snd ? T1_AMP : T0_AMP, *D = snd ? T1_DEC : T0_DEC;
+    const uint32_t *I = SND_INC[snd], *A = SND_AMP[snd], *D = SND_DEC[snd];
     uint32_t k, g = (g15 * (30147u + (eng_rnd() & 4095u))) >> 15;   /* this tick: 0.92 .. 1.04 of it */
     tbank_next ^= 1u;
     for (k = 0; k < NT; k++) {                  /* each operator: a phase of its own, a little off in pitch and level */
@@ -106,13 +166,14 @@ static void eng_tick(uint32_t snd, uint32_t g15, int32_t gl, int32_t gr)   /* a 
 
 static void eng_strike(uint32_t g15)            /* the hammer hits the gong, at g15 (Q15) of its strength */
 {
+    const gong_tab_t *t = &GONGS[eng_clock];
     uint32_t k;
-    for (k = 0; k < NG; k++) {
+    for (k = 0; k < t->ng; k++) {
         op_t *o = &gop[k];
-        uint32_t nw = (uint32_t)(((uint64_t)G_AMP[k] * g15) >> 15), old = o->amp;
+        uint32_t nw = (uint32_t)(((uint64_t)t->amp[k] * g15) >> 15), old = o->amp;
         if (old < (nw >> 1)) {                  /* (nearly) still: the hit as recorded, its own phase */
             o->amp = nw + (old >> 2) + (old >> 3);
-            o->ph = G_PH[k];
+            o->ph = t->ph[k];
         } else {                                /* ringing: the two add with unknown phases, |a + b| ~ max + 3/8 min */
             uint32_t hi = old > nw ? old : nw, lo = old > nw ? nw : old;
             o->amp = hi + (lo >> 2) + (lo >> 3);
@@ -191,18 +252,69 @@ static void tick_render(bank_t *b, int32_t *acc)
     }
 }
 
+static void pipes_render(int32_t *acc)          /* the cuckoo's two pipes, CLK_SUB frames (still: level 0) */
+{
+    uint32_t k, i, j;
+    for (k = 0; k < 2u; k++) {
+        pipe_t *pp = &cpipe[k];
+        uint32_t p = pp->ph, mp = pp->mph, d = pp->inc;
+        int32_t a = pp->pos < pp->n ? (int32_t)(pp->env[pp->pos] >> 16) : 0, I = (int32_t)pp->idx;
+        if (pp->pos < pp->n)
+            pp->pos++;
+        for (i = 0; i < CLK_SUB; i++) {         /* the FM pair: the pipe's tone */
+            mp += d;
+            p += d;
+            acc[i] += SINT[(p + (uint32_t)(SINT[mp >> 18] * I)) >> 18] * a;
+        }
+        pp->ph = p;
+        pp->mph = mp;
+        for (j = 0; j < pp->nb; j++) {          /* its body: the bellows and the wood */
+            uint32_t bp = pp->bph[j], bi = pp->binc[j];
+            int32_t ab = (a * (int32_t)pp->brel[j]) >> 15;
+            for (i = 0; i < CLK_SUB; i++) {
+                bp += bi;
+                acc[i] += SINT[bp >> 18] * ab;
+            }
+            pp->bph[j] = bp;
+        }
+    }
+}
+
 static uint32_t clk_now(void);
 
 static void eng_event(const ev_t *e)
 {
     switch (e->type) {
-    case EV_TICK: eng_tick(0, 32767u, 256, 150); break;       /* left: the pendulum's left end */
-    case EV_TOCK: eng_tick(1, 32767u, 150, 256); break;       /* right */
-    case EV_CLICK: eng_tick(0, 15000u, 220, 220); break;      /* the strike train lets the hammer go */
+    case EV_TICK: eng_tick(e->arg, 32767u, 256, 150); break; /* left: the pendulum's left end */
+    case EV_TOCK: eng_tick(e->arg, 32767u, 150, 256); break; /* right */
+    case EV_CLICK: {                            /* the train, the door; from the middle (the cuckoo's as recorded) */
+        int32_t g = (e->arg & 255u) >= SND_B_TICK ? 256 : 220;
+        eng_tick(e->arg & 255u, e->arg >> 8, g, g);
+        break;
+    }
     case EV_HIT:
         eng_strike(e->arg);
+        eng_hits++;
 #ifdef ENG_ON_HIT
         ENG_ON_HIT(e);                          /* (the host's log: the tests count the blows) */
+#endif
+        break;
+    case EV_PIPE:
+        cpipe[e->arg & 1u].pos = 0;
+        cpipe[e->arg & 1u].ph = cpipe[e->arg & 1u].mph = 0;
+        eng_pipe = e->arg & 1u;
+        if (!eng_pipe)
+            eng_calls++;
+        eng_bow++;
+#ifdef ENG_ON_PIPE
+        ENG_ON_PIPE(e);
+#endif
+        break;
+    case EV_DOOR: eng_door = e->arg; break;
+    case EV_FLASH:
+        eng_hits++;
+#ifdef ENG_ON_FLASH
+        ENG_ON_FLASH(e);
 #endif
         break;
     }
@@ -211,10 +323,13 @@ static void eng_event(const ev_t *e)
 static void eng_render(int32_t *out, uint32_t n, const ev_t *ev, uint32_t nev)
 {
     int32_t acc[CLK_SUB], ta[CLK_SUB], tb[CLK_SUB];
-    uint32_t s, i, k, ng = eng_fixed_ng ? eng_fixed_ng : eng_st.ng, pk = 0, t0 = clk_now(), dt;
+    uint32_t s, i, k, ng = eng_fixed_ng ? eng_fixed_ng : eng_st.ng, pk = 0, t0 = clk_now(), dt, ngc;
     int32_t gl = (int32_t)eng_gong_lvl, tl = (int32_t)eng_tick_lvl;
+    if (eng_want != eng_clock)                  /* another clock: its operators, from silence */
+        eng_load(eng_want & 1u);
+    ngc = GONGS[eng_clock].ng;
     if (ng < K_FM) ng = K_FM;
-    if (ng > NG) ng = NG;
+    if (ng > ngc) ng = ngc;
     for (s = 0; s < n; s += CLK_SUB) {
         uint32_t p;
         while (nev && ev->frame < s + CLK_SUB / 2u) {      /* an event: at the nearest step of CLK_SUB frames */
@@ -228,6 +343,7 @@ static void eng_render(int32_t *out, uint32_t n, const ev_t *ev, uint32_t nev)
         if (p > pk) pk = p;
         p = gong_plain(acc, K_FM, ng);
         if (p > pk) pk = p;
+        pipes_render(acc);
         tick_render(&tbank[0], ta);
         tick_render(&tbank[1], tb);
         for (i = 0; i < CLK_SUB; i++) {
@@ -244,7 +360,7 @@ static void eng_render(int32_t *out, uint32_t n, const ev_t *ev, uint32_t nev)
         eng_event(ev++);
         nev--;
     }
-    for (k = ng; k < NG; k++) {                 /* the carriers not rendered ring down and turn on all the same: when
+    for (k = ng; k < ngc; k++) {                /* the carriers not rendered ring down and turn on all the same: when
                                                    the governor takes one back it goes on where it would be */
         gop[k].amp = mulhi(gop[k].amp, gdec_blk[k]);
         gop[k].ph += gop[k].inc * n;
@@ -261,11 +377,11 @@ static void eng_render(int32_t *out, uint32_t n, const ev_t *ev, uint32_t nev)
         if (dt > LOAD_TARGET + LOAD_TARGET / 50u) {
             uint32_t cut = dt > LOAD_TARGET * 5u / 4u ? cur / 4u : 1u + (cur * ((dt - LOAD_TARGET) >> 4)) / (dt >> 4);
             cur = cur > K_FM + cut ? cur - cut : K_FM;
-        } else if (dt + LOAD_TARGET / 50u < LOAD_TARGET && cur < NG) {
+        } else if (dt + LOAD_TARGET / 50u < LOAD_TARGET && cur < ngc) {
             uint32_t add = 1u + (cur * ((LOAD_TARGET - dt) >> 4)) / (LOAD_TARGET >> 4) / 4u;
             cur += add > 8u ? 8u : add;
-            if (cur > NG) cur = NG;
         }
+        if (cur > ngc) cur = ngc;
         eng_st.ng = cur;
     }
 }

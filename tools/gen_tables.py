@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""The clock's sound tables, from the fitted model (tools/clk_model.json, tools/fit_model.py): firmware/gen/clk_tables.h.
+"""The clocks' sound tables, from the fitted models (tools/clk_model.json, tools/fit_model.py; tools/clk_cuckoo.json,
+tools/fit_cuckoo.py): firmware/gen/clk_tables.h.
 Integers only (the chip has no FPU): phase steps of 2^32 per cycle at 44.1 kHz, levels in Q31 of the output's full
 scale, decays as Q32 multipliers per step of frames. Plain Python, no numpy.
 
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "firmware" / "gen" / "clk_tables.h"
 FS = 44100
 GAIN = 2.3                  # the output against the recording: twelve equal blows peak under 0.85 of full scale
+GAIN_B = 4.0                # the cuckoo clock against its recording (made further away, quieter)
 SUB = 16                    # frames per envelope step of the gong (clk_engine.h)
 TSTEP = 4                   # frames per envelope step of the ticks
 BLOCK = 256                 # frames per audio block (platform.c HALF_FRAMES)
@@ -29,8 +31,8 @@ def dec(tau, frames):
     return min(int(round(math.exp(-frames / (FS * tau)) * 2 ** 32)), 0xFFFFFFFF)
 
 
-def q31(a):
-    v = int(round(a * GAIN * 2 ** 31))
+def q31(a, gain=None):
+    v = int(round(a * (GAIN if gain is None else gain) * 2 ** 31))
     assert 0 <= v < 2 ** 31, a
     return v
 
@@ -56,6 +58,7 @@ def build():
          f"#define NG {len(modes)}u            /* the gong's modes, strongest first (their energy a^2 tau) */",
          f"#define K_FM {K}u            /* the first K_FM carry a modulator */",
          f"#define NT {NT}u            /* operators per tick bank */",
+         "#define NSND 5u            /* click sounds: the wall clock's tick, tock; the cuckoo's tick, its train, its door */",
          f"#define CLK_SUB {SUB}u", f"#define CLK_TSTEP {TSTEP}u", f"#define CLK_BLOCK {BLOCK}u",
          f"#define TRAIN_FRAMES {int(round(m['train']['interval'] * FS))}u   /* hit to hit in a strike train */",
          f"#define CLICK_FRAMES {int(round(m['click_before'] * FS))}u    /* the release click before a hit */"]
@@ -78,14 +81,60 @@ def build():
     h.append(" * later ones are softer only because the phone was further from the clock (its maker says) */")
     gains = [1.0, 1.0, 1.0]
     h.append(carray("HAMMER", "uint32_t", [int(round(32767 * v)) for v in gains]))
-    h.append("/* the ticks' rise: 1 - e^(-t / ta), per frame towards 1 by this much (Q15) */")
-    h.append(carray("T_ATK", "uint32_t", [int(round(32768 * (1 - math.exp(-1 / (FS * m[n + "_attack"]))))) for n in ("tick", "tock")]))
-    for k, name in enumerate(("tick", "tock")):
-        b = m[name]
-        h.append(f"/* {name}: phase step, level (Q31), decay per CLK_TSTEP frames (Q32) */")
+    c = json.loads((ROOT / "tools" / "clk_cuckoo.json").read_text())
+    sounds = [(m, "tick", GAIN, "the wall clock's tick"), (m, "tock", GAIN, "the wall clock's tock"),
+              (c, "tick", GAIN_B, "the cuckoo clock's tick"), (c, "pre", GAIN_B, "the cuckoo's train before a strike"),
+              (c, "post", GAIN_B, "its door shutting after it")]
+    h.append("/* the click sounds' rise: 1 - e^(-t / ta), per frame towards 1 by this much (Q15) */")
+    h.append(carray("T_ATK", "uint32_t", [int(round(32768 * (1 - math.exp(-1 / (FS * src[n + "_attack"]))))) for src, n, _, _ in sounds]))
+    for k, (src, name, g, what) in enumerate(sounds):
+        b = src[name]
+        h.append(f"/* {what}: phase step, level (Q31), decay per CLK_TSTEP frames (Q32) */")
         h.append(carray(f"T{k}_INC", "uint32_t", [inc(o["f"]) for o in b]))
-        h.append(carray(f"T{k}_AMP", "uint32_t", [q31(o["a"]) for o in b]))
+        h.append(carray(f"T{k}_AMP", "uint32_t", [q31(o["a"], g) for o in b]))
         h.append(carray(f"T{k}_DEC", "uint32_t", [dec(o["tau"], TSTEP) for o in b]))
+    # ---- the cuckoo clock
+    cm, cf = c["modes"], c["fm"]
+    ca = c["call"]
+    sec = lambda v: int(round(v * FS))
+    h += [f"#define NGB {len(cm)}u            /* the cuckoo clock's wire gong: its modes, strongest first */",
+          f"#define CK_BEAT_TICKS {int(round(c['beat'] * 24000000))}u   /* its beat, in crystal ticks ({c['beat']:.4f} s) */",
+          f"#define CK_BEAT_K {int(round(2 ** 51 / round(c['beat'] * 24000000)))}u   /* 2^51 / CK_BEAT_TICKS: ticks to phase */",
+          f"#define CK_CALL_FRAMES {sec(ca['period'])}u   /* a call to the next */",
+          f"#define CK_HIT_TO_HIGH {sec(ca['hit_to_high'] - 0.010)}u   /* the gong's hit to the high pipe's envelope */",
+          f"#define CK_FIRST_HIT_TO_HIGH {sec(ca['first_hit_to_high'] - 0.010)}u   /* (the first call of a train: longer) */",
+          f"#define CK_HIGH_TO_LOW {sec(ca['high_to_low'])}u",
+          f"#define CK_PRE_FRAMES {sec(-c['mech']['pre'][0])}u   /* the train's first click before the first hit (the warning) */",
+          f"#define CK_PRE1_FRAMES {sec(-c['mech']['pre'][1])}u",
+          f"#define CK_PRE2_FRAMES {sec(-c['mech']['pre'][2])}u   /* the door opens */",
+          f"#define CK_POST0_FRAMES {sec(c['mech']['post'][0])}u   /* after the last low pipe starts: the bird goes in */",
+          f"#define CK_POST1_FRAMES {sec(c['mech']['post'][1])}u   /* the door shuts */"]
+    h.append("/* the wire gong's carriers and modulators, as the wall clock's */")
+    h.append(carray("GB_INC", "uint32_t", [inc(d["f"]) for d in cm]))
+    h.append(carray("GB_AMP", "uint32_t", [q31(d["a"], GAIN_B) for d in cm]))
+    h.append(carray("GB_DEC", "uint32_t", [dec(d["tau"], SUB) for d in cm]))
+    h.append(carray("GB_DEC_BLOCK", "uint32_t", [dec(d["tau"], BLOCK) for d in cm]))
+    h.append(carray("GB_PH", "uint32_t", [int(round(((d["ph"] + math.pi / 2) / (2 * math.pi)) % 1.0 * 2 ** 32)) & 0xFFFFFFFF for d in cm]))
+    h.append(carray("FB_INC", "uint32_t", [inc(f["r"] * d["f"]) for f, d in zip(cf, cm)]))
+    h.append(carray("FB_I0", "uint32_t", [int(round(f["I"] / (2 * math.pi) * 2 ** 17)) for f in cf]))
+    h.append(carray("FB_DEC", "uint32_t", [dec(f["tauI"], SUB) for f in cf]))
+    h.append(carray("FB_B", "uint32_t", [int(round(f["B"] * 4096)) for f in cf]))
+    h.append("/* the two pipes (0 high, 1 low): an FM pair each at its pitch (1:1), its index (as F_I0), its body partials")
+    h.append(" * (phase step, level against the note, Q15), its bellows' envelope (Q31, one value a CLK_SUB frames) */")
+    pp = [c["pipes"]["high"], c["pipes"]["low"]]
+    for p_ in pp:
+        assert p_["env_step"] == SUB
+    h.append(carray("PIPE_INC", "uint32_t", [inc(p_["f"]) for p_ in pp]))
+    h.append(carray("PIPE_IDX", "uint32_t", [int(round(p_["index"] / (2 * math.pi) * 2 ** 17)) for p_ in pp]))
+    h.append(carray("PIPE_NBODY", "uint32_t", [len(p_["body"]) for p_ in pp]))
+    body_inc = [[inc(b["f"]) for b in p_["body"]] + [0] * (4 - len(p_["body"])) for p_ in pp]
+    body_rel = [[int(round(32767 * b["rel"])) for b in p_["body"]] + [0] * (4 - len(p_["body"])) for p_ in pp]
+    h.append(carray("PIPE_BODY_INC", "uint32_t", body_inc[0] + body_inc[1]))
+    h.append(carray("PIPE_BODY_REL", "uint32_t", body_rel[0] + body_rel[1]))
+    for k, p_ in enumerate(pp):
+        h.append(carray(f"PIPE_ENV{k}", "uint32_t", [q31(v, GAIN_B) for v in p_["env"]]))
+    h.append(f"#define PIPE_ENV0_N {len(pp[0]['env'])}u")
+    h.append(f"#define PIPE_ENV1_N {len(pp[1]['env'])}u")
     return "\n".join(h) + "\n"
 
 

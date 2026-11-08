@@ -6,7 +6,11 @@
  *   clk_render strike OUT.wav [NG]      one blow of the hammer at 50 ms, 5.3 s
  *   clk_render tick|tock OUT.wav [N]    N (1) ticks (left) or tocks (right), the first at 10 ms, 0.2 s apart
  *   clk_render train N OUT.wav [NG]     N strikes 1.192 s apart, as on the hour
- *   clk_render bench [NG]               the worst case for the instruction count (callgrind): ticks and a strike */
+ *   clk_render bench [NG]               the worst case for the instruction count (callgrind): ticks and a strike
+ * the cuckoo clock's:
+ *   clk_render ck_strike OUT.wav [NG]   one blow on its wire gong at 50 ms, 3 s
+ *   clk_render ck_call N OUT.wav [NG]   N calls (the gong, the high pipe, the low), CK_CALL_FRAMES apart
+ *   clk_render ck_tick|ck_pre|ck_post OUT.wav [N]   N of its ticks (left), or its train's clicks (the middle) */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +74,7 @@ int main(int argc, char **argv)
         for (i = 0; i < n && i < 64u; i++) {
             at[i] = 441u + i * 8820u;
             ty[i] = mode[1] == 'i' ? EV_TICK : EV_TOCK;
-            ar[i] = 0;
+            ar[i] = mode[1] == 'i' ? SND_A_TICK : SND_A_TOCK;
         }
         run(441u + i * 8820u, at, ty, ar, i);
         write_wav(argv[2]);
@@ -84,13 +88,45 @@ int main(int argc, char **argv)
         }
         run(2205u + n * TRAIN_FRAMES + 44100u * 4u, at, ty, ar, i);
         write_wav(argv[3]);
+    } else if (!strcmp(mode, "ck_strike") && argc > 2) {
+        uint32_t at[] = {2205}, ty[] = {EV_HIT}, ar[] = {HAMMER[0]};
+        eng_want = 1;
+        eng_load(1);
+        eng_fixed_ng = argc > 3 ? (uint32_t)atoi(argv[3]) : NGB;
+        run(44100u * 3u, at, ty, ar, 1);
+        write_wav(argv[2]);
+    } else if (!strcmp(mode, "ck_call") && argc > 3) {
+        uint32_t n = (uint32_t)atoi(argv[2]), at[36], ty[36], ar[36], i, k = 0;
+        eng_want = 1;
+        eng_load(1);
+        eng_fixed_ng = argc > 4 ? (uint32_t)atoi(argv[4]) : NGB;
+        for (i = 0; i < n && i < 12u; i++) {
+            uint32_t h = 2205u + i * CK_CALL_FRAMES;
+            at[k] = h; ty[k] = EV_HIT; ar[k] = HAMMER[2]; k++;
+            at[k] = h + CK_HIT_TO_HIGH; ty[k] = EV_PIPE; ar[k] = 0; k++;
+            at[k] = h + CK_HIT_TO_HIGH + CK_HIGH_TO_LOW; ty[k] = EV_PIPE; ar[k] = 1; k++;
+        }
+        run(2205u + n * CK_CALL_FRAMES + 44100u * 2u, at, ty, ar, k);
+        write_wav(argv[3]);
+    } else if ((!strcmp(mode, "ck_tick") || !strcmp(mode, "ck_pre") || !strcmp(mode, "ck_post")) && argc > 2) {
+        uint32_t n = argc > 3 ? (uint32_t)atoi(argv[3]) : 1u, at[64], ty[64], ar[64], i;
+        uint32_t snd = mode[3] == 't' ? SND_B_TICK : mode[4] == 'r' ? SND_B_PRE : SND_B_POST;
+        eng_want = 1;
+        eng_load(1);
+        for (i = 0; i < n && i < 64u; i++) {
+            at[i] = 441u + i * 8820u;
+            ty[i] = snd == SND_B_TICK ? EV_TICK : EV_CLICK;
+            ar[i] = snd == SND_B_TICK ? snd : snd | 32767u << 8;
+        }
+        run(441u + i * 8820u, at, ty, ar, i);
+        write_wav(argv[2]);
     } else if (!strcmp(mode, "bench")) {
-        uint32_t at[] = {100, 2205, 22050, 44100}, ty[] = {EV_TICK, EV_HIT, EV_TOCK, EV_TICK}, ar[] = {0, HAMMER[0], 0, 0};
+        uint32_t at[] = {100, 2205, 22050, 44100}, ty[] = {EV_TICK, EV_HIT, EV_TOCK, EV_TICK}, ar[] = {SND_A_TICK, HAMMER[0], SND_A_TOCK, SND_A_TICK};
         if (argc > 2) eng_fixed_ng = (uint32_t)atoi(argv[2]);
         run(44100u * 2u, at, ty, ar, 4);
         printf("bench: %u frames at %u carriers\n", wav_n, eng_fixed_ng);
     } else {
-        fprintf(stderr, "usage: clk_render strike|tick|tock OUT.wav [NG] | train N OUT.wav [NG] | bench [NG]\n");
+        fprintf(stderr, "usage: clk_render strike|tick|tock|ck_strike|ck_tick|ck_pre|ck_post OUT.wav [NG|N] | train|ck_call N OUT.wav [NG] | bench [NG]\n");
         return 2;
     }
     return 0;
