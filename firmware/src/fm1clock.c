@@ -342,11 +342,11 @@ static void num(char *s, uint32_t v, const char *unit)   /* "368 OP" */
     *s = 0;
 }
 static void draw_info(int force)                /* SEQ: the FM operators on the chip (the gong's carriers and
-                                                   modulators, the ticks', the pipes', the drone's), and the share of
-                                                   the audio's time the engine takes */
+                                                   modulators, the ticks', the pipes', the drone's, the rattle's),
+                                                   and the share of the audio's time the engine takes */
 {
     static uint32_t shown = ~0u, t_last;
-    uint32_t ops = eng_st.ng + K_FM + 2u * NT + 4u + PIPE_NBODY[0] + PIPE_NBODY[1] + DRONE_N;
+    uint32_t ops = eng_st.ng + K_FM + 2u * NT + 4u + PIPE_NBODY[0] + PIPE_NBODY[1] + DRONE_N + RATTLE_G;
     uint32_t pct = eng_st.load / (BLOCK_TICKS / 100u), v;
     char s[16];
     if (!force && fm1_ms - t_last < 1000u)

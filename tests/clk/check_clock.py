@@ -45,7 +45,8 @@ def table_consts():
     h = (ROOT / "firmware" / "gen" / "clk_tables.h").read_text()
     c = {k: int(v) for k, v in re.findall(r"#define (\w+) (\d+)u", h)}
     m = re.search(r"PIPE_NBODY\[2\] = \{\s*(\d+)u, (\d+)u", h)
-    c["PIPE_OPS"] = 4 + int(m.group(1)) + int(m.group(2)) + c.get("DRONE_N", 0)   # (and the drone's partials)
+    c["PIPE_OPS"] = 4 + int(m.group(1)) + int(m.group(2)) + c.get("DRONE_N", 0) + 8   # (and the drone's partials,
+                                                                                       # the rattle's 8: clk_engine.h)
     return c
 
 
@@ -236,7 +237,7 @@ def main():
         ops = ng + t["K_FM"] + 2 * t["NT"] + t["PIPE_OPS"]
         name = ("the wall clock's coil gong", t["NG"]) if clock == 0 else ("the cuckoo's wire gong", t["NGB"])
         print(f"fm1-emu: the governor renders {ng} of {name[0]}'s {name[1]} carriers ({ops} FM operators in all, with "
-              f"the modulators, the ticks', the pipes' and the drone's); the engine takes {100 * load / block:.1f} % of a block, "
+              f"the modulators, the ticks', the pipes', the drone's and the rattle's); the engine takes {100 * load / block:.1f} % of a block, "
               f"{100 * worst / block:.1f} % at its worst, over {blocks} blocks")
         if len(sys.argv) > 4 and clock != int(sys.argv[4]):
             print(f"  the clock sounding is {clock}, want {sys.argv[4]}")
