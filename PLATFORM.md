@@ -4,7 +4,8 @@ FM1 Clock runs on **Dinghy 0.5**, imported as source (as VaveHero does).
 
 - upstream: https://github.com/zvenson/dinghy
 - commit: `ea1b6bf` (2026-11, after "Dinghy 0.5" `1675934`; the release workflow's file pattern only)
-- Dinghy's docs stay in `docs/` (`API.md`, `RULES.md`, `MAKE-IT-YOURS.md`, `SMK37.md`). Its README is
+- Dinghy's docs stay in `docs/` (`API.md`, `RULES.md`, `MAKE-IT-YOURS.md`, `SMK37.md`; the clock's own are `SOUND.md`,
+  `CUCKOO.md`, `HOW-IT-WORKS.md`). Its README is
   `docs/DINGHY_README.md` (the toolchain, the SDK, the host mode).
 
 ## What differs from upstream
