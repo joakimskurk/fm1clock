@@ -15,6 +15,7 @@
  *   GLO          the keys' lights: under the pendulum, on the hour (they flash with each blow, and in silence on the
  *                hour, its count), off
  *   HOME         the time as digits beside the clock, on / off
+ *   ENV          (the cuckoo clock) wind it: pull its chains, the weights go up (it winds itself when one is down)
  *   SEQ          how many of the FM operators the chip runs, and how much of it they take, on / off
  *   KNOB 1, 2    the ticks' and the strike's level (kept in flash, with the clock and the keys' lights)
  *   MIDI         CC 20 hours, CC 21 minutes, CC 22 seconds (any channel): the time is set when the seconds come
@@ -542,6 +543,8 @@ static void app_main(void)
         if (b & (1u << BTN_HOME)) { set.digits ^= 1u; dirty = 1; t_change = fm1_ms; }
         if (b & (1u << BTN_SEQ)) { set.info ^= 1u; dirty = 1; t_change = fm1_ms; draw_info(1); }
         if (b & (1u << BTN_GLO)) { set.keys = (uint8_t)((set.keys + 1u) % 3u); t_keys = fm1_ms; dirty = 1; t_change = fm1_ms; }
+        if ((b & (1u << BTN_ENV)) && set.clock)   /* wind it when you like; it winds itself when a weight is down */
+            winding = 1;
         apply_set();
         if (strike_due && fm1_ms - t_turn > 500u) {   /* the hands have stopped: what they passed */
             strike_due = 0;

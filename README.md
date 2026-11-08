@@ -42,6 +42,7 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 | **SEL** | Rounds the time to the nearest minute (press it at :00 seconds). |
 | **PLAY** | Strikes (or calls) the last hour again, even with the strike off. |
 | **FX** | The strike on or off (SILENT on the screen). The cuckoo's door stays shut. |
+| **ENV** | Winds the cuckoo clock, when you like. Left alone, it winds itself when a weight reaches the bottom (after about a day): it never stops. |
 | **GLO** | The keys' lights: SWING, HOURS or OFF. |
 | **HOME** | The time as digits beside the clock. |
 | **SEQ** | How many FM operators are running, and how much of the chip they take. |
