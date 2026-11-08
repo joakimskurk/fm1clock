@@ -342,6 +342,7 @@ def main():
         notes.append("register access: hal/ only (src/, loader/ clean)")
     for n in notes:
         print("  ok   ", n)
+    (OUT / "fm1clock.notes").write_text("".join(f"{n}\n" for n in notes))   # (CI shows them again after fm1-emu)
     for e in errors:
         print("  FAIL ", e)
     if errors:

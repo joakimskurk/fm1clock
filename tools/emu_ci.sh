@@ -15,4 +15,5 @@ if [ ! -x "$DIR/target/release/fm1-emu" ]; then
     (cd "$DIR" && timeout 900 cargo build -q --release -p fm1-emu)
 fi
 echo "emu_ci: fm1-emu ready"
+[ -f build/fm1clock.notes ] && sed 's/^/emu_ci: the build: /' build/fm1clock.notes
 timeout 2700 sh tools/emu_check.sh build/fm1clock.fwsc

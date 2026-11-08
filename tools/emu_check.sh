@@ -41,8 +41,9 @@ echo "emu_check: 5 s of the cuckoo clock took $(( $(date +%s) - s0 )) s to emula
 grep -E "in an ISR|^time |^dump| 0x" "$OUT/ck/report.txt" | sed 's/^/  emu: /' || true
 run "the cuckoo: the interrupts take 60 .. 95 % of the chip" python3 $P isr "$OUT/ck/report.txt" 60 95
 run "the cuckoo: its carriers, the worst block (its calls among them) under 92 %" python3 $P state "$OUT/ck/report.txt" 92 1
-run "the cuckoo: a tick every 0.4286 s, left and right in turn" python3 $P ticks "$OUT/ck/out.wav" 0.9 2.45 0.4286
-run "the cuckoo: PLAY, its first blow 0.75 s on (the warning, the door)" python3 $P onset "$OUT/ck/out.wav" 3.0 3.6 3.26 5000
+# (the sound's times: 0.16 s before the power-on's; the ticks before PLAY's warning click, the blow before its pipe)
+run "the cuckoo: a tick every 0.4286 s, left and right in turn" python3 $P ticks "$OUT/ck/out.wav" 0.9 2.2 0.4286
+run "the cuckoo: PLAY, its first blow 0.75 s on (the warning, the door)" python3 $P onset "$OUT/ck/out.wav" 3.1 3.4 3.26 5000
 run "the cuckoo's pendulum swings" python3 $P moved "$OUT/ck/work/lcd_1500.bmp" "$OUT/ck/work/lcd_1700.bmp" cuckoo
 run "the cuckoo's door open, the bird out, calling" python3 $P differ "$OUT/ck/work/lcd_1500.bmp" "$OUT/ck/work/lcd_4000.bmp" 92 28 56 36 150
 run "the cuckoo's hands at 10:10" python3 $P hands "$OUT/ck/work/lcd_1500.bmp" 10 10 cuckoo

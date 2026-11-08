@@ -28,8 +28,8 @@ run "the engine alone compiles without a warning (-Wextra -Werror)" \
 # the sound against the reference recording
 run "a strike, all 742 carriers: every window within 2 dB of the recording" sh -c \
     "build/clk_render strike build/audio/strike.wav && python3 tests/clk/parity.py gong build/audio/strike.wav 2.0"
-run "a strike, 257 carriers (what the governor renders in fm1-emu): within 2 dB" sh -c \
-    "build/clk_render strike build/audio/strike-257.wav 257 && python3 tests/clk/parity.py gong build/audio/strike-257.wav 2.0"
+run "a strike, 243 carriers (what the governor renders in fm1-emu): within 2 dB" sh -c \
+    "build/clk_render strike build/audio/strike-243.wav 243 && python3 tests/clk/parity.py gong build/audio/strike-243.wav 2.0"
 run "a strike, 160 carriers: within 2.5 dB" sh -c \
     "build/clk_render strike build/audio/strike-160.wav 160 && python3 tests/clk/parity.py gong build/audio/strike-160.wav 2.5"
 run "24 ticks: their mean within 1.6 dB of the recording's, every window" sh -c \
@@ -44,6 +44,9 @@ run "the cuckoo's wire gong, all its carriers: every window within 3.5 dB" sh -c
     "build/clk_render ck_strike build/audio/ck_strike.wav && python3 tests/clk/parity.py ck_gong build/audio/ck_strike.wav 3.5"
 run "nine calls (the gong, the high pipe, the low): every window of the first 0.5 s within 6 dB" sh -c \
     "build/clk_render ck_call 9 build/audio/ck_call.wav && python3 tests/clk/parity.py ck_call build/audio/ck_call.wav 9 6.0"
+run "the cuckoo on the chip (243 carriers): the gong within 4 dB, the calls within 6.5 dB" sh -c \
+    "build/clk_render ck_strike build/audio/ck_strike-243.wav 243 && python3 tests/clk/parity.py ck_gong build/audio/ck_strike-243.wav 4.0 && \
+     build/clk_render ck_call 9 build/audio/ck_call-243.wav 243 && python3 tests/clk/parity.py ck_call build/audio/ck_call-243.wav 9 6.5"
 run "its ticks: their mean within 2 dB, every window" sh -c \
     "build/clk_render ck_tick build/audio/ck_tick.wav 24 && python3 tests/clk/parity.py ck_tick build/audio/ck_tick.wav 24 2.0"
 run "its train's clicks (the warning, the door): their peak within 1.5 dB of the recording's" sh -c \
