@@ -138,6 +138,21 @@ def fit_pipe_tails(modes, fm, pipes, call, feats, fs=44100):
         pipes[name]["env"] = out[name]
     return pipes
 
+
+def low_energy(ops, ta, fs=44100, span=0.08, seeds=16):
+    """a tick's mean power at 80-450 Hz over its first span s (random phases, as the engine starts them)"""
+    t = np.arange(int(0.3 * fs)) / fs
+    att = 1 - np.exp(-t / ta)
+    f = np.fft.rfftfreq(len(t), 1 / fs)
+    sel = (f >= 80) & (f <= 450)
+    acc = 0.0
+    for s_ in range(seeds):
+        rng = np.random.default_rng(100 + s_)
+        y = sum(d["a"] * att * np.exp(-t / d["tau"]) * np.sin(2 * np.pi * d["f"] * t + rng.uniform(0, 2 * np.pi)) for d in ops)
+        b = np.fft.irfft(np.fft.rfft(y) * sel, len(t))
+        acc += np.mean(b[:int(span * fs)] ** 2)
+    return acc / seeds
+
 if __name__ == "__main__":
     model = json.loads((ROOT / "tools" / "ref_cuckoo.json").read_text())
     feats = json.loads((ROOT / "tests" / "ref" / "cuckoo_features.json").read_text())
@@ -149,12 +164,22 @@ if __name__ == "__main__":
                             body=v["body"]) for k, v in model["pipes"].items()}
     out["pipes"] = fit_pipe_tails(modes, fm, out["pipes"], model["call"], feats)
     out["modes"] = fit_tails(modes, out["pipes"], model["call"], feats)
-    # its tick rings on (the wooden case, the escapement's steel): fitted over 0.13 s, its decays up to 0.16 s
+    # its tick rings on (the wooden case, the escapement's steel): fitted over 0.13 s, its decays up to 0.16 s,
+    # above 400 Hz; and under it the case's knock, its modes measured from the ticks averaged
+    # (tools/analyze_cuckoo.py), four operators more, their level so that the whole tick has the recording's
+    # energy at 80-450 Hz (the fit's lowest operators are there too)
     bank, err, ta = F.tick_bank(model["ticks"]["tick"], feats["tick"], feats["tick_noise"], 3, nwin=len(feats["tick_windows"]),
                                 taus=[0.0015, 0.0025, 0.004, 0.006, 0.009, 0.013, 0.019, 0.028, 0.04, 0.056, 0.08, 0.115, 0.16],
                                 tlen=0.22, loss=LOSS, lo=400.0)   # (its analysis is high-passed at 400 Hz)
-    out["tick"], out["tick_attack"] = bank, ta
+    knock = [dict(f=d["f"], tau=d["tau"], a=d["a"]) for d in model["ticks"]["knock"] if d["tau"] < 0.1][:4]
+    e_hi, e_kn = low_energy(bank, ta), low_energy(knock, ta)
+    want = 10 ** (feats["knock_db"] / 10)
+    g = np.sqrt(max(want - e_hi, 0.1 * want) / e_kn)
+    knock = [dict(d, a=d["a"] * g) for d in knock]
     print(f"tick: {len(bank)} operators, rise {1000 * ta:.1f} ms, band energies over 0-130 ms: {err:.2f} dB rms off")
+    print("knock: " + ", ".join(f"{d['f']:.0f} Hz ({1000 * d['tau']:.0f} ms)" for d in knock) + f", x {g:.2f}")
+    bank = bank + knock
+    out["tick"], out["tick_attack"] = bank, ta
     # the train's clicks and the door: the same mechanism's clicks, but in the recording the pipes and the gong sound
     # under them; their level from their peak above 3 kHz against the tick's, their sound the tick's
     for name in ("pre", "post"):
@@ -162,4 +187,12 @@ if __name__ == "__main__":
         out[name] = [dict(o, a=o["a"] * r) for o in bank]
         out[name + "_attack"] = ta
         print(f"{name}: the tick, {20 * np.log10(r):+.1f} dB")
+    # the train running: its partials as measured, those under 450 Hz together as loud as the recording's drone
+    # is there (their narrow bands leave out the whirr between them)
+    dr = model["drone"]
+    e = sum(d["a"] ** 2 / 2 for d in dr if 40 <= d["f"] <= 450)
+    g = np.sqrt(10 ** (feats["drone_db"] / 10) / e)
+    out["drone"] = [dict(d, a=d["a"] * (g if d["f"] <= 450 else 1.0)) for d in dr]
+    print(f"drone: under 450 Hz x {g:.2f}")
+    print(f"drone: {len(out['drone'])} partials, {min(d['f'] for d in out['drone']):.0f} .. {max(d['f'] for d in out['drone']):.0f} Hz")
     (ROOT / "tools" / "clk_cuckoo.json").write_text(json.dumps(out, indent=1) + "\n")

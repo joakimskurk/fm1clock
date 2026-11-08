@@ -124,6 +124,7 @@ static void train_start(uint32_t n, uint32_t at, uint32_t mute)
     } else {                                    /* the warning, the door, the calls: the gong and the two pipes */
         uint32_t h = at + CK_PRE_FRAMES, lo = h;
         if (!mute) {
+            tr_put(at, EV_RUN, 1);              /* the train runs: its wheels, its fly */
             tr_put(at, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
             tr_put(h - CK_PRE1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
             tr_put(h - CK_PRE2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
@@ -143,6 +144,7 @@ static void train_start(uint32_t n, uint32_t at, uint32_t mute)
             tr_put(lo + CK_POST0_FRAMES, EV_CLICK, CLICK_ARG(SND_B_POST, 32767u));
             tr_put(lo + CK_POST0_FRAMES, EV_DOOR, 0);   /* the bird goes in; the door shuts on the next click */
             tr_put(lo + CK_POST1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_POST, 32767u));
+            tr_put(lo + CK_POST1_FRAMES, EV_RUN, 0);   /* and stops */
         }
     }
     tr_left = tr_n;
@@ -338,11 +340,11 @@ static void num(char *s, uint32_t v, const char *unit)   /* "368 OP" */
     *s = 0;
 }
 static void draw_info(int force)                /* SEQ: the FM operators on the chip (the gong's carriers and
-                                                   modulators, the ticks', the pipes'), and the share of the audio's
-                                                   time the engine takes */
+                                                   modulators, the ticks', the pipes', the drone's), and the share of
+                                                   the audio's time the engine takes */
 {
     static uint32_t shown = ~0u, t_last;
-    uint32_t ops = eng_st.ng + K_FM + 2u * NT + 4u + PIPE_NBODY[0] + PIPE_NBODY[1];
+    uint32_t ops = eng_st.ng + K_FM + 2u * NT + 4u + PIPE_NBODY[0] + PIPE_NBODY[1] + DRONE_N;
     uint32_t pct = eng_st.load / (BLOCK_TICKS / 100u), v;
     char s[16];
     if (!force && fm1_ms - t_last < 1000u)

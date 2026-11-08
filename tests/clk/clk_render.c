@@ -10,7 +10,8 @@
  * the cuckoo clock's:
  *   clk_render ck_strike OUT.wav [NG]   one blow on its wire gong at 50 ms, 3 s
  *   clk_render ck_call N OUT.wav [NG]   N calls (the gong, the high pipe, the low), CK_CALL_FRAMES apart
- *   clk_render ck_tick|ck_pre|ck_post OUT.wav [N]   N of its ticks (left), or its train's clicks (the middle) */
+ *   clk_render ck_tick|ck_pre|ck_post OUT.wav [N]   N of its ticks (left), or its train's clicks (the middle)
+ *   clk_render ck_run OUT.wav            its train running, its drone, from 0.1 to 1.1 s */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,7 +101,8 @@ int main(int argc, char **argv)
         eng_want = 1;
         eng_load(1);
         eng_fixed_ng = argc > 4 ? (uint32_t)atoi(argv[4]) : NGB;
-        for (i = 0; i < n && i < 12u; i++) {
+        at[k] = 0; ty[k] = EV_RUN; ar[k] = 1; k++;    /* the train runs under the calls */
+        for (i = 0; i < n && i < 11u; i++) {
             uint32_t h = 2205u + i * CK_CALL_FRAMES;
             at[k] = h; ty[k] = EV_HIT; ar[k] = HAMMER[2]; k++;
             at[k] = h + CK_HIT_TO_HIGH; ty[k] = EV_PIPE; ar[k] = 0; k++;
@@ -108,6 +110,12 @@ int main(int argc, char **argv)
         }
         run(2205u + n * CK_CALL_FRAMES + 44100u * 2u, at, ty, ar, k);
         write_wav(argv[3]);
+    } else if (!strcmp(mode, "ck_run") && argc > 2) {
+        uint32_t at[] = {4410, 48510}, ty[] = {EV_RUN, EV_RUN}, ar[] = {1, 0};
+        eng_want = 1;
+        eng_load(1);
+        run(44100u * 3u / 2u, at, ty, ar, 2);
+        write_wav(argv[2]);
     } else if ((!strcmp(mode, "ck_tick") || !strcmp(mode, "ck_pre") || !strcmp(mode, "ck_post")) && argc > 2) {
         uint32_t n = argc > 3 ? (uint32_t)atoi(argv[3]) : 1u, at[64], ty[64], ar[64], i;
         uint32_t snd = mode[3] == 't' ? SND_B_TICK : mode[4] == 'r' ? SND_B_PRE : SND_B_POST;

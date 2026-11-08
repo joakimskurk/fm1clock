@@ -50,6 +50,8 @@ static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4
 static op_t gop[NG_MAX] __attribute__((section(".pool")));
 static uint32_t gdec_blk[NG_MAX] __attribute__((section(".pool")));
 static pipe_t cpipe[2];
+static uint32_t drone_ph[DRONE_N];              /* the cuckoo's train running: its partials' phases */
+static int32_t drone_lvl, drone_on;             /* its level (Q15), going up or down to 0 or full */
 static uint32_t eng_clock;                      /* (the ISR's) the clock sounding: 0 the wall clock, 1 the cuckoo */
 static mod_t gmod[K_FM] __attribute__((section(".pool")));
 static bank_t tbank[2] __attribute__((section(".pool")));
@@ -76,8 +78,9 @@ static volatile uint32_t eng_calls;             /* (ISR) the calls so far (their
 
 /* EV_TICK, EV_TOCK: arg the sound, from the left, the right; EV_CLICK: arg the sound | its level (Q15) << 8, from the
  * middle; EV_HIT: arg the hammer's strength (Q15); EV_PIPE: arg 0 the high pipe, 1 the low; EV_DOOR: arg 1 open, 0
- * shut; EV_FLASH: a blow that does not sound (the strike off): only the keys see it */
-enum { EV_TICK, EV_TOCK, EV_CLICK, EV_HIT, EV_PIPE, EV_DOOR, EV_FLASH };
+ * shut; EV_FLASH: a blow that does not sound (the strike off): only the keys see it; EV_RUN: arg 1 the cuckoo's
+ * train starts to run (its drone comes up), 0 it stops */
+enum { EV_TICK, EV_TOCK, EV_CLICK, EV_HIT, EV_PIPE, EV_DOOR, EV_FLASH, EV_RUN };
 typedef struct { uint32_t frame, type, arg; } ev_t;
 
 static uint32_t eng_rng = 0x2545F491u;
@@ -126,6 +129,7 @@ static void eng_load(uint32_t c)                /* a clock's operators, all of t
             pp->bph[j] = 0;
         }
     }
+    drone_lvl = drone_on = 0;
     eng_clock = c;
     eng_st.clock = c;
     if (eng_st.ng > t->ng) eng_st.ng = t->ng;
@@ -280,6 +284,24 @@ static void pipes_render(int32_t *acc)          /* the cuckoo's two pipes, CLK_S
     }
 }
 
+static void drone_render(int32_t *acc)          /* the train's drone, CLK_SUB frames (still: level 0) */
+{
+    uint32_t k, i;
+    if (drone_on)
+        drone_lvl = drone_lvl + (int32_t)DRONE_RISE > 32767 ? 32767 : drone_lvl + (int32_t)DRONE_RISE;
+    else
+        drone_lvl = drone_lvl > (int32_t)DRONE_FALL ? drone_lvl - (int32_t)DRONE_FALL : 0;
+    for (k = 0; k < DRONE_N; k++) {
+        uint32_t p = drone_ph[k], d = DRONE_INC[k];
+        int32_t a = ((int32_t)(DRONE_AMP[k] >> 16) * drone_lvl) >> 15;
+        for (i = 0; i < CLK_SUB; i++) {
+            p += d;
+            acc[i] += SINT[p >> 18] * a;
+        }
+        drone_ph[k] = p;
+    }
+}
+
 static uint32_t clk_now(void);
 
 static void eng_event(const ev_t *e)
@@ -311,6 +333,7 @@ static void eng_event(const ev_t *e)
 #endif
         break;
     case EV_DOOR: eng_door = e->arg; break;
+    case EV_RUN: drone_on = (int32_t)e->arg; break;
     case EV_FLASH:
         eng_hits++;
 #ifdef ENG_ON_FLASH
@@ -344,6 +367,7 @@ static void eng_render(int32_t *out, uint32_t n, const ev_t *ev, uint32_t nev)
         p = gong_plain(acc, K_FM, ng);
         if (p > pk) pk = p;
         pipes_render(acc);
+        drone_render(acc);
         tick_render(&tbank[0], ta);
         tick_render(&tbank[1], tb);
         for (i = 0; i < CLK_SUB; i++) {

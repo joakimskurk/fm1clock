@@ -12,7 +12,10 @@ The cuckoo clock's, against its own recording (tests/ref/cuckoo_features.json, t
   parity.py ck_call CALLS.wav N [MAX]     N calls (clk_render ck_call): the gong and both pipes, 0.5 s from the hit
                                           (the last 0.1 s before the next is shown, not held to it: there the
                                           recording's slow tail is under its pipes, longer than the analysis saw)
-  parity.py ck_tick WAV N [MAX]           its ticks (clk_render ck_tick), as the wall clock's but to 130 ms: it rings on
+  parity.py ck_tick WAV N [MAX]           its ticks (clk_render ck_tick), as the wall clock's but to 130 ms: it rings on;
+                                          and under 400 Hz its case's knock, its energy within 2 dB of the recording's
+  parity.py ck_drone WAV                  the train's drone while it runs (clk_render ck_run): its energy 40-450 Hz
+                                          within 2 dB of the recording's (running less still)
   parity.py ck_pre|ck_post WAV N [MAX]    the train's clicks: their peak above 3 kHz within MAX dB (1.5) of the
                                           recording's (under them there the gong and the pipes ring)
 """
@@ -101,6 +104,13 @@ def cuckoo(what, fs, x):
         limit = float(sys.argv[3]) if len(sys.argv) > 3 else 2.0
         synth = band_energies(m, fs, onset(m, fs, 2205 / fs), C["gong_windows"]) - G_B
         return 0 if report("cuckoo gong", synth, np.array(C["gong"]), noise, C["gong_windows"], limit) else 1
+    if what == "ck_drone":                      # (clk_render ck_run: the train runs from 0.1 s to 1.1 s)
+        sel = (np.fft.rfftfreq(len(m), 1 / fs) >= 40) & (np.fft.rfftfreq(len(m), 1 / fs) <= 450)
+        b = np.fft.irfft(np.fft.rfft(m) * sel, len(m))
+        e = 10 * np.log10(np.mean(b[int(0.4 * fs):int(1.0 * fs)] ** 2)) - G_B
+        d = e - C["drone_db"]
+        print(f"cuckoo drone (40-450 Hz): {e:.1f} dB, the recording's {C['drone_db']:.1f}: {d:+.2f} dB (limit 2)")
+        return 0 if abs(d) <= 2 else 1
     n = int(sys.argv[3])
     limit = float(sys.argv[4]) if len(sys.argv) > 4 else 3.0
     if what == "ck_call":
@@ -111,6 +121,7 @@ def cuckoo(what, fs, x):
         report("  (and before the next call)", synth[7:], np.array(C["call"])[7:], noise, C["call_windows"][7:], 99)
         return 0 if ok else 1
     ch = x[:, 0]                                           # (the tick from the left; the train's from the middle)
+    centers = np.sqrt(np.array(BANDS[:-1]) * np.array(BANDS[1:]))
     if what in ("ck_pre", "ck_post"):
         limit = float(sys.argv[4]) if len(sys.argv) > 4 else 1.5
         ref = json.loads((ROOT / "tools" / "ref_cuckoo.json").read_text())["ticks"][what[3:]]["peak_hf"]
@@ -126,8 +137,16 @@ def cuckoo(what, fs, x):
     E = [10 ** (band_energies(h, fs, t, C["tick_windows"]) / 10) for t in ons]
     synth = 10 * np.log10(np.mean(E, axis=0)) - G_B
     name = what[3:]
-    centers = np.sqrt(np.array(BANDS[:-1]) * np.array(BANDS[1:]))
     ref = np.where(centers[None, :] < 400, -200, np.array(C[name]))   # (the analysis is high-passed at 400 Hz)
+    if name == "tick":                          # under 400 Hz the case's knock: its energy over 80 ms, as the ticks'
+        lo_ = (np.fft.rfftfreq(len(ch), 1 / fs) >= 80) & (np.fft.rfftfreq(len(ch), 1 / fs) <= 450)   # average had it
+        kb = np.fft.irfft(np.fft.rfft(ch) * lo_, len(ch))
+        e = 10 * np.log10(np.mean([np.mean(kb[int(o * fs):int((o + 0.08) * fs)] ** 2) for o in ons])) - G_B
+        d = e - C["knock_db"]
+        print(f"cuckoo knock (80-450 Hz, 80 ms): {e:.1f} dB, the recording's {C['knock_db']:.1f}: {d:+.2f} dB (limit 2)")
+        if abs(d) > 2:
+            report(f"cuckoo {name}", synth, ref, np.array(C["tick_noise"]), C["tick_windows"], limit)
+            return 1
     return 0 if report(f"cuckoo {name}", synth, ref, np.array(C["tick_noise"]), C["tick_windows"], limit) else 1
 
 

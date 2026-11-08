@@ -382,6 +382,18 @@ repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_fea
   on for seconds), above 400 Hz, against the quiet just before each, and its levels are fitted by their ratios
   (Itakura-Saito), so that its quiet tail counts as much as its loud start. The same tick at each end of the
   swing, from the left and from the right: in the recording the two are alike.
+- **The case's knock.** Under 400 Hz the room is as loud as the tick, so a tick on its own cannot show what is
+  there. But the knock of the wooden case comes back the same with every tick, and the room does not: the seven
+  ticks before the calls, averaged sample by sample, keep the knock and leave the room 8.5 dB down. Its modes, by
+  matrix pencil: 182, 243, 281 and 316 Hz, ringing 18 to 42 ms. They are four operators more in the tick's bank
+  (68 then; the wall clock's banks are filled up with silent ones), at the level that gives the whole tick the
+  recording's energy at 80–450 Hz.
+- **The train's drone.** While the cuckoo's train runs, from the warning to the door shutting, its wheels and its
+  air brake (the fly) whir: a drone at 74 Hz, with 60, 93 and 115 Hz under and over it and partials up to 1.2 kHz,
+  15 to 30 dB over the train standing still. In the recording it is the loudest thing below 200 Hz, and it is
+  where the cuckoo's depth comes from. Its 12 partials are measured from the warnings (the train running, no gong
+  and no pipe yet) against the quiet before them, and sound in the firmware from the first warning click to the
+  door shutting, up in 60 ms, down in 100 ms: 12 sine operators, computed all the time.
 - **Winding** is the click wheel: the tick's sound, softer, every 84 ms while the chains are pulled.
 - **All of it at once.** The engine holds one clock's operators at a time. When ALGORITHM changes the clock, the
   interrupt loads the other one's gong into the same carriers (all still), and its governor carries on. The pipes
@@ -404,7 +416,10 @@ octave, the root mean square over the bands that stand 6 dB over the recording's
 
 | The mean of 24 | −2–4 ms | 4–10 | 10–20 | 20–35 | 35–60 | 60–90 |
 |---|---|---|---|---|---|---|
-| ticks | 1.50 dB | 2.58 | 1.93 | 1.31 | 2.51 | 1.05 |
+| ticks (above 400 Hz) | 1.54 dB | 2.47 | 2.07 | 1.38 | 2.55 | 1.08 |
+
+The case's knock (80–450 Hz, its first 80 ms) is within 0.5 dB of the recording's, the train's drone (40–450 Hz)
+within 0.1 dB.
 
 The warning and the door's clicks are within 1 dB of the recording's peaks. The calls are not as close as the
 wall clock's gong. The recording's calls overlap: a pipe is still breathing out, and the gong is still ringing in
@@ -441,8 +456,9 @@ included):
 | All interrupts, of the whole chip | 75.0 % (180.0 million instructions a second) | 74.4 % (178.5 million) |
 | What is left | the pendulum at 50 frames a second, the hands, USB, the panel | the same, the door and the bird, the chains |
 
-The two pipes (each a carrier and a modulator, the low one with four partials of its body) are computed for both
-clocks, all the time, so the wall clock's governor now renders 243 carriers where it rendered 257 before them.
+The two pipes (each a carrier and a modulator, the low one with four partials of its body) and the train's drone
+(12 partials) are computed for both clocks, all the time, and the tick banks have 68 operators each (the cuckoo's
+knock), so the governor renders fewer of the gong's carriers than the 257 it rendered before the cuckoo came.
 
 On a computer the engine costs about 9.6 x86 instructions per carrier per frame and about 1470 per frame for the
 two tick banks.
@@ -521,7 +537,8 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 - the app compiles without a warning (gcc and clang, `-Werror`);
 - the sound against the recordings, as in the tables above: the wall clock's every window within 2 dB, its ticks
   within 1.6 dB; the cuckoo's gong within 3.5 dB, its calls within 6 dB over their first 0.5 s (with the 243
-  carriers of the chip 4 and 6.5 dB), its ticks within 3 dB to 90 ms, its train's clicks within 1.5 dB;
+  carriers of the chip 4 and 6.5 dB), its ticks within 3 dB to 90 ms and its case's knock within 2 dB, its
+  train's drone within 2 dB, its train's clicks within 1.5 dB;
 - and, running the whole app on a computer from scripts (`tests/scripts/`):
 
 | Script | What must happen |

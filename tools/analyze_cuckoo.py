@@ -166,6 +166,70 @@ def clicks(m, fs, times, seed_name):
     return ons, dict(peaks=peaks, envelope=env3, peak_hf=peak), mean_bands(h, fs, ons, TICK_WIN)
 
 
+
+def case_knock(m, fs, ons, lo=80.0, hi=450.0, lead=0.10, span=0.08):
+    """the case's knock under the tick: under 400 Hz the room rumbles as loud as it, but the knock comes back the
+    same with every tick and the rumble does not, so the ticks before the train, averaged sample by sample, keep it
+    and leave the rumble 8.5 dB down. Its modes by matrix pencil (the average's lo..hi Hz, as an analytic signal,
+    decimated), and its energy over span s above the average's floor before the tick (dB, for the tests)"""
+    L = int(0.25 * fs)
+    ca = np.mean([m[int((o - lead) * fs):int((o - lead) * fs) + L] for o in ons], axis=0)
+    X = np.fft.fft(ca)
+    f = np.fft.fftfreq(L, 1 / fs)
+    X[(f < lo) | (f > hi)] = 0                                  # the band, positive frequencies only: analytic
+    za = np.fft.ifft(X) * 2
+    dec = 24
+    seg = za[int(lead * fs):int((lead + span) * fs):dec]
+    modes = []
+    for z, amp in matrix_pencil(seg, 10, dec / fs):
+        fr = float(np.angle(z) / (2 * np.pi) * fs / dec)
+        a_ = -np.log(abs(z)) * fs / dec
+        if lo <= fr <= hi and a_ > 0 and 1 / a_ > 0.002:
+            modes.append(dict(f=fr, tau=float(min(1 / a_, 0.2)), a=float(abs(amp))))
+    re = np.real(za)
+    e_tick = np.mean(re[int(lead * fs):int((lead + span) * fs)] ** 2)
+    e_floor = np.mean(re[int((lead - 0.09) * fs):int((lead - 0.01) * fs)] ** 2)
+    return sorted(modes, key=lambda d: -d["a"] ** 2 * d["tau"])[:8], float(10 * np.log10(max(e_tick - e_floor, 1e-20)))
+
+
+RUN = [(4.80, 5.35), (1.55, 2.20)]                  # the train running, no gong, no pipe: the warning before a call
+IDLE = [(3.05, 3.45), (3.50, 3.88), (3.92, 4.30)]   # the train still: the ticks only
+
+
+def train_drone(m, fs, n_max=12):
+    """the striking train's drone while it runs (its wheels, its fly: 74 Hz and up, 15-30 dB over the train
+    still): the peaks of the running spectrum that stand 6 dB over the still one, each its level from a narrow band
+    round it (running less still), and the drone's energy 40-450 Hz over the still (dB, for the tests)"""
+    N = 1 << 16
+    def psd(segs):
+        acc = 0
+        for a, b in segs:
+            x = m[int(a * fs):int(b * fs)]
+            w = np.hanning(len(x))
+            acc = acc + np.abs(np.fft.rfft(x * w, N)) ** 2 / np.sum(w ** 2)
+        return acc / len(segs)
+    f = np.fft.rfftfreq(N, 1 / fs)
+    pr, pi = psd(RUN), psd(IDLE)
+    db, over = 10 * np.log10(pr + 1e-30), 10 * np.log10(pr + 1e-30) - 10 * np.log10(pi + 1e-30)
+    sel = (f > 40) & (f < 1200)
+    pk, _ = sg.find_peaks(np.where(sel, db, -300), prominence=6, distance=4)
+    pk = sorted([p for p in pk if over[p] > 6], key=lambda p: -db[p])[:n_max]
+    n = len(m)
+    X = np.fft.rfft(m)
+    fx = np.fft.rfftfreq(n, 1 / fs)
+    def rms(lo, hi, segs):
+        Y = X.copy()
+        Y[(fx < lo) | (fx > hi)] = 0
+        y = np.fft.irfft(Y, n)
+        return np.mean([np.mean(y[int(a * fs):int(b * fs)] ** 2) for a, b in segs])
+    parts = []
+    for p in sorted(pk):
+        e = rms(f[p] - 3, f[p] + 3, RUN) - rms(f[p] - 3, f[p] + 3, IDLE)
+        if e > 0:
+            parts.append(dict(f=float(f[p]), a=float(np.sqrt(2 * e))))
+    e_db = 10 * np.log10(max(rms(40, 450, RUN) - rms(40, 450, IDLE), 1e-20))
+    return parts, float(e_db)
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -192,16 +256,19 @@ def main():
     b4, a4 = sg.butter(4, 400 / (fs / 2), "high")
     h4 = sg.filtfilt(b4, a4, m)
     tick_noise = mean_bands(h4, fs, [onset(m, fs, t) - 0.10 for t in TICKS_CLEAN], [(0.0, 0.09)])[0]
+    knock, knock_db = case_knock(m, fs, tick_ons[:7])
+    drone, drone_db = train_drone(m, fs)
     model = dict(fs=fs, hit=hit, modes=modes, pipes=dict(high=hi_p, low=lo_p),
                  call=dict(period=float(np.median(np.diff(train))), hit_to_high=float(np.median(d_hi[1:])),
                            first_hit_to_high=float(d_hi[0]), high_to_low=float(np.median(d_lo))),
                  mech=dict(pre=[p - train[0] for p in pre_ons[1:]] + [pre_ons[0] - hit],
                            post=[p - lo_p["starts"][-1] for p in post_ons[1:]] + [post_ons[0] - hit]),
-                 beat=beat, ticks=dict(tick=tick, pre=pre, post=post))
+                 beat=beat, ticks=dict(tick=tick, pre=pre, post=post, knock=knock), drone=drone)
     feats = dict(bands=BANDS, call_windows=CALL_WIN, gong_windows=GONG_WIN, tick_windows=TICK_WIN,
                  gong=band_energies(m, fs, hit, GONG_WIN).tolist(),
                  call=mean_bands(m, fs, train[1:], CALL_WIN), call_times=train[1:],
-                 tick=tick_bands, pre=pre_bands, post=post_bands, noise=noise.tolist(), tick_noise=tick_noise)
+                 tick=tick_bands, pre=pre_bands, post=post_bands, noise=noise.tolist(), tick_noise=tick_noise,
+                 knock_db=knock_db, drone_db=drone_db)
     (ROOT / "tools" / "ref_cuckoo.json").write_text(json.dumps(model, indent=1) + "\n")
     (ROOT / "tests" / "ref" / "cuckoo_features.json").write_text(json.dumps(feats, indent=1) + "\n")
     print(f"gong hit {hit:.4f} s, {len(modes)} modes; beat {beat:.4f} s; call every {model['call']['period']:.3f} s, "
