@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* FM1 Clock's pictures, for two clocks, both on one panel wall. The wall clock: the design as the background
+/* FM-1 Clock's pictures, for two clocks, both on one panel wall. The wall clock: the design as the background
  * (firmware/gen/clk_art.h, tools/gen_art.py), and over it what moves: the hands (polygons, 4 x 4 samples a pixel) and the pendulum (the rod,
  * the bob with its own shading, both behind the glass: its reflections and the gold go over them). The cuckoo clock:
  * this firmware's own, carved in walnut (firmware/gen/clk_art_cuckoo.h, tools/gen_art_cuckoo.py), with its big ivory

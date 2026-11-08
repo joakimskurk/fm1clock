@@ -12,7 +12,7 @@ of it (`tools/ref_model.json`, `tests/ref/features.json`), made by `tools/analyz
 
 | Time | What is in it |
 |---|---|
-| 0–15.5 s | The clock ticking. Its tick and tock come 0.578 s and 0.511 s apart in turn: that clock is a little out of beat. FM1 Clock ticks evenly, every 0.5 s. |
+| 0–15.5 s | The clock ticking. Its tick and tock come 0.578 s and 0.511 s apart in turn: that clock is a little out of beat. FM-1 Clock ticks evenly, every 0.5 s. |
 | 15.65 s | **One strike, on its own** (a half hour). This is what the gong's model is measured from. |
 | 25.6–37.5 s | **Eleven strikes** (eleven o'clock), 1.192 s apart. This is what the strike train is measured from. |
 
@@ -65,7 +65,7 @@ A ringing mode is a *damped sinusoid*: a frequency, a level, a phase, and a deca
 into *sidebands* above and below it, spaced by the modulator's frequency, and the sound gets brighter and harsher.
 A classic FM bell uses a handful of operators at strange ratios and lets the index fall after the attack.
 
-FM1 Clock does the same thing, at a much larger scale:
+FM-1 Clock does the same thing, at a much larger scale:
 
 - **Every measured mode is a carrier**, at its own frequency, level, phase and decay: up to 742 carriers.
 - **The 32 strongest have a modulator each.** Their index is high at the moment the hammer hits and falls within
@@ -135,7 +135,7 @@ noise counted. The numbers are the root mean square of the differences over the 
 
 A difference of 1 dB in a band is about the smallest change of loudness most people can hear.
 
-<p align="center"><img src="screens/gong-spectrogram.png" width="820" alt="Two spectrograms side by side, the recording and FM1 Clock, the first five seconds after a strike, 0 to 6 kHz: the same series of partials and the same decay; the recording also shows its ticks as vertical lines and the room's noise"></p>
+<p align="center"><img src="screens/gong-spectrogram.png" width="820" alt="Two spectrograms side by side, the recording and FM-1 Clock, the first five seconds after a strike, 0 to 6 kHz: the same series of partials and the same decay; the recording also shows its ticks as vertical lines and the room's noise"></p>
 
 ## Using the whole chip
 

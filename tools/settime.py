@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Set FM1 Clock to this computer's time over USB-MIDI: CC 20 the hours, CC 21 the minutes, CC 22 the seconds (any
+"""Set FM-1 Clock to this computer's time over USB-MIDI: CC 20 the hours, CC 21 the minutes, CC 22 the seconds (any
 channel), the seconds sent the moment that second begins. The clock takes the time when the seconds come (to its
 half second: the pendulum keeps its swing).
 

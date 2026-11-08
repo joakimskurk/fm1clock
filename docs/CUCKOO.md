@@ -149,9 +149,9 @@ repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_fea
   - **How much like noise**: the spectral flatness, the spectrum's geometric mean over its arithmetic mean (white
     noise about 0.56, a few steady tones near 0), in four bands from 0.5 to 14 kHz and three windows to 120 ms,
     where the tick stands over the room. The recording's tick: 0.13 to 0.46. The earlier one: 0.01 to 0.32, and
-    0.05 and under above 3 kHz. FM1 Clock's now: 0.24 to 0.46.
+    0.05 and under above 3 kHz. FM-1 Clock's now: 0.24 to 0.46.
 
-<p align="center"><img src="screens/cuckoo-clicks.png" width="820" alt="Waveforms and spectrograms, the recording against FM1 Clock: the tick, a sharp crack and a burst of noise gone in about 20 ms, the same in both, with no steady tones in FM1 Clock's spectrogram; the door opening, its wood struck three times in 20 ms, at 0, 10 and 19 ms, in both"></p>
+<p align="center"><img src="screens/cuckoo-clicks.png" width="820" alt="Waveforms and spectrograms, the recording against FM-1 Clock: the tick, a sharp crack and a burst of noise gone in about 20 ms, the same in both, with no steady tones in FM-1 Clock's spectrogram; the door opening, its wood struck three times in 20 ms, at 0, 10 and 19 ms, in both"></p>
 - **The train's drone.** Under its rattle the running train whirs: 70 and 75 Hz the loudest, a little at 93, 155
   and 248 Hz, and a comb from 283 to 439 Hz with its partials about 12.6 Hz apart, which beats. In the recording it
   is the loudest thing below 100 Hz, and much of the cuckoo's depth. Its 12 partials are found in the train running

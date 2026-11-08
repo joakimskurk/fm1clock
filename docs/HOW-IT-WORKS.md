@@ -124,7 +124,7 @@ job of `.github/workflows/build.yml` on every push to the default branch.
 
 - **The installer** talks to the FM-1 over Web MIDI (Chrome, Edge): the update protocol the FM-1's own updater,
   M-UPGRADE, speaks. The running firmware reads parts of the package and starts the update loader; the loader reads
-  all of it and writes it; the FM-1 comes back as FM1 Clock, and the page checks that it says so. An install cut off
+  all of it and writes it; the FM-1 comes back as FM-1 Clock, and the page checks that it says so. An install cut off
   is finished by pressing Install again. The protocol is SLOOP's (`web/fm1pkg.js`, `web/fm1ota.js`, unchanged), as
   Dinghy keeps SLOOP's platform: the USB port's name ("Felucca") and the loader's identity (`ota-FM-1_940`) are what
   it looks for.

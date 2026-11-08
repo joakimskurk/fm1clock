@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""FM1 Clock's own cuckoo clock, drawn from nothing, and the panel wall all its clocks hang on:
+"""FM-1 Clock's own cuckoo clock, drawn from nothing, and the panel wall all its clocks hang on:
 firmware/gen/clk_art_cuckoo.h.
 
   python3 tools/gen_art_cuckoo.py [--check] [--preview OUT.png]     (Pillow, numpy)

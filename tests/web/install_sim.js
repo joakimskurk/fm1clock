@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // The site's installer (web/make_site.py, web/index.html) against a simulated FM-1 on Web MIDI: the update
 // protocol's two steps (the running firmware reads some of the package and stages the loader; the loader reads all
-// of it), then the FM-1 back as FM1 Clock. Every byte the page sends is checked against the package's image. Then
+// of it), then the FM-1 back as FM-1 Clock. Every byte the page sends is checked against the package's image. Then
 // an install cut off: the FM-1 already in update mode, the page finishes it.
 //
 //   node tests/web/install_sim.js SITE_DIR        (Playwright and its Chromium)

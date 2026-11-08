@@ -1,14 +1,14 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: GPL-3.0-only
-     FM1 Clock's page and installer (web/make_site.py makes the site). The install flow follows SLOOP's installer
+     FM-1 Clock's page and installer (web/make_site.py makes the site). The install flow follows SLOOP's installer
      page (web/index_pkg.html, Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments; isod89),
      its protocol is SLOOP's own, unchanged: web/fm1pkg.js, web/fm1ota.js. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FM1 Clock</title>
-<meta name="description" content="FM1 Clock: firmware for the M-VAVE FM-1. A pendulum wall clock and a cuckoo clock, every sound synthesised in FM. Install it from the browser.">
+<title>FM-1 Clock</title>
+<meta name="description" content="FM-1 Clock: firmware for the M-VAVE FM-1. A pendulum wall clock and a cuckoo clock, every sound synthesised in FM. Install it from the browser.">
 <meta name="theme-color" content="#14100c">
 <link rel="icon" href="screens/icon.png">
 <style>
@@ -73,10 +73,10 @@
 </head>
 <body>
 <main>
-  <h1>FM1 Clock</h1>
+  <h1>FM-1 Clock</h1>
   <p class="tag">Firmware for the M-VAVE FM-1: a pendulum wall clock and a cuckoo clock.</p>
 
-  <p class="warn" role="note"><b>⚠ Not yet tried on a real FM-1.</b> FM1 Clock is built and tested on every change,
+  <p class="warn" role="note"><b>⚠ Not yet tried on a real FM-1.</b> FM-1 Clock is built and tested on every change,
     in CI and in the FM-1 emulator, but it has not been tried on an actual device. Install it at your own risk.</p>
 
   <div class="hero">
@@ -146,7 +146,7 @@ python3 tools/settime.py</pre>
   </ul>
 
   <footer>
-    <p>FM1 Clock is free software under the GPL-3.0, with no warranty. It runs on
+    <p>FM-1 Clock is free software under the GPL-3.0, with no warranty. It runs on
       <a href="https://github.com/zvenson/dinghy">Dinghy</a> (zvenson), built on
       <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) and the platform of
       <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89), whose installer this page uses.</p>
@@ -164,7 +164,7 @@ const TEXT = {
   nomidi: "This browser cannot talk to the FM-1. Open the page in Chrome or Edge on a computer.",
   loadfail: "Could not load the firmware: ", badpkg: "The firmware file is damaged. Reload the page.",
   start: "Starting", verify: "Checking", loader: "Switching the FM-1 to update mode", write: "Writing",
-  reboot: "Restarting", done: "Done: FM1 Clock is installed.",
+  reboot: "Restarting", done: "Done: FM-1 Clock is installed.",
   stopped: "Stopped. Replug the USB cable and press Install again.",
   error: "Error: ",
   denied: "MIDI (SysEx) was not allowed. Allow MIDI in the site settings (the address bar) and press Install again.",
@@ -184,7 +184,7 @@ const lock = (on) => { writing = on; $("go").disabled = on || !image; };
 window.addEventListener("beforeunload", (e) => { if (writing) { e.preventDefault(); e.returnValue = TEXT.leave; } });
 $("dl").href = meta.pkg;
 $("dl").setAttribute("download", meta.pkg.split("/").pop());
-$("pkg").textContent = `FM1 Clock ${meta.version} · ${meta.product} · SHA-256 ${meta.sha256}`;
+$("pkg").textContent = `FM-1 Clock ${meta.version} · ${meta.product} · SHA-256 ${meta.sha256}`;
 (async () => {
   try {
     const sha = async (b) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", b))].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -199,7 +199,7 @@ $("pkg").textContent = `FM1 Clock ${meta.version} · ${meta.product} · SHA-256 
     if (productOf(pkg) !== meta.product || (check && (await sha(pkg)) !== meta.sha256)) { say("badpkg", "", "bad"); return; }
     image = logicalImage(pkg);
     if (!navigator.requestMIDIAccess) { say("nomidi", "", "bad"); return; }
-    say(`Ready: FM1 Clock ${meta.version}.`);
+    say(`Ready: FM-1 Clock ${meta.version}.`);
     lock(false);
   } catch (e) { say("loadfail", e.message, "bad"); }
 })();

@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Dinghy's host tests, on FM1 Clock's build (no hardware). Run from the repo root after building, the SMK-37 first, the FM-1 last
+# Dinghy's host tests, on FM-1 Clock's build (no hardware). Run from the repo root after building, the SMK-37 first, the FM-1 last
 # (both boards write the same build/ intermediates; the tests expect the FM-1 binaries):
 #   BOARD=smk37 sh build.sh; BOARD=smk37 MODEL=elite sh build.sh; BOARD=smk37 MODEL=mke sh build.sh; sh build.sh
 #   sh tests/run_tests.sh

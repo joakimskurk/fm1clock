@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# FM1 Clock's package in fm1-emu: 6 s of the real firmware. SEQ at 0.5 s (the operators on the screen), PLAY at
+# FM-1 Clock's package in fm1-emu: 6 s of the real firmware. SEQ at 0.5 s (the operators on the screen), PLAY at
 # 4.5 s (the repeat: it strikes ten; the ticks are checked before it, the gong's top end would hide them); then 5 s
 # of the cuckoo clock (ALGORITHM, PLAY: it calls ten).
 # Then, from its report, its sound and its screens (build/emu/):

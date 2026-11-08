@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
-"""Build FM1 Clock on Dinghy (on Felucca / SLOOP's platform): the app, the update loader and an installable .fwsc package.
+"""Build FM-1 Clock on Dinghy (on Felucca / SLOOP's platform): the app, the update loader and an installable .fwsc package.
 
   tools/build.py [--release X.Y[-suffix]] [--board fm1|smk37] [--model pro|elite|mke]
 
@@ -61,7 +61,7 @@ MODELS = {"pro": "SMK-37 Pro", "elite": "SMK-37 Elite", "mke": "MKE-P37"}   # sm
 DATA_FAMILY = "FMCLOCK"             # the SMK store's owner tag (store.h): 1..7 of A-Z 0-9
 SCREEN_NAME = "FM1 CLOCK"              # the update loader's screen (FM-1, ldr_screen.c): the name and its colour (RGB565)
 SCREEN_COLOUR = 0xE526              # brass, #E0A430 (the pendulum bob)
-PRODUCT = "FM-1_940"                # FM1 Clock: 94N, not in Dinghy's list of taken ones (OUR_LOADER wants FM-1_9NN)
+PRODUCT = "FM-1_940"                # FM-1 Clock: 94N, not in Dinghy's list of taken ones (OUR_LOADER wants FM-1_9NN)
 VERSION = None                      # APP_VER for release builds
 
 
@@ -197,7 +197,7 @@ def build_app():
                                ("common/bin/objdump", "-d", elf),
                                ("common/bin/objdump", "-d", "-j", ".ram_text", elf))
     (OUT / "fm1clock.dis").write_text(dis)
-    (OUT / "fm1clock.syms").write_text(syms)    # (FM1 Clock: tools/emu_check.sh reads the engine's state by its address)
+    (OUT / "fm1clock.syms").write_text(syms)    # (FM-1 Clock: tools/emu_check.sh reads the engine's state by its address)
 
     def symv(name):
         return int(re.search(r"^([0-9a-f]+) .*\s" + name + r"$", syms, re.M).group(1), 16)

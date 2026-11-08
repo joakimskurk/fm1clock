@@ -1,4 +1,4 @@
-# FM1 Clock for the M-VAVE FM-1
+# FM-1 Clock for the M-VAVE FM-1
 
 Before we know it the FM-1 will be an almost forgotten treasure. So here is something that looks completely
 useless now, and may one day turn out to be its only useful function: a clock.
@@ -12,8 +12,10 @@ wall.
 <p align="center"><img src="docs/screens/pendulum.gif" width="360" alt="The clock on the FM-1's screen, on a pine panel wall: the hands at ten past ten, the pendulum swinging from side to side behind the glass">
 <img src="docs/screens/cuckoo.gif" width="200" alt="The cuckoo clock at three o'clock on the same wall: a carved house in dark red walnut, leaves along its roof and a crest of leaves at the peak, vines round an ivory dial with serif numbers, turned columns, fretwork under its shelf; its bird comes out and calls, its leaf-shaped pendulum swings"></p>
 
-> **Status: 0.1, in progress.** Built and run in CI (in fm1-emu, the FM-1 emulator), the sound tested against the
-> recordings on a computer, and now being tried on a real FM-1.
+> [!CAUTION]
+> **Not yet tried on a real FM-1.** Version 0.1, in progress: built and tested on every change, in CI and in
+> fm1-emu (the FM-1 emulator), the sound tested against the recordings on a computer, but it has not been tried on
+> an actual device. Install it at your own risk.
 
 A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 [VaveHero](https://github.com/joakimskurk/fm1vavehero), [RoboSeq](https://github.com/joakimskurk/fm1roboseq) and
@@ -97,7 +99,7 @@ python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page
 - **[How it works](docs/HOW-IT-WORKS.md):** keeping time from the crystal, drawing the picture, the tests and CI,
   the web page and its installer, making the tables again, and what is where.
 
-<p align="center"><img src="docs/screens/gong-spectrogram.png" width="820" alt="Two spectrograms side by side, the recording and FM1 Clock, the first five seconds after a strike, 0 to 6 kHz: the same series of partials and the same decay; the recording also shows its ticks as vertical lines and the room's noise"></p>
+<p align="center"><img src="docs/screens/gong-spectrogram.png" width="820" alt="Two spectrograms side by side, the recording and FM-1 Clock, the first five seconds after a strike, 0 to 6 kHz: the same series of partials and the same decay; the recording also shows its ticks as vertical lines and the room's noise"></p>
 
 ## Platform, licence and credits
 
@@ -110,3 +112,5 @@ python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page
   clock. Only measurements of them are here.
 - **Thanks** to joakimeriksson for [fm1-emu](https://github.com/joakimeriksson/fm1-emu).
 - **Trademarks.** "M-VAVE" and "FM-1" belong to their owners. This is a fan project, not an official M-VAVE product.
+
+<p align="center"><a href="https://buymeacoffee.com/skurk"><img alt="Buy Me a Coffee" src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-skurk-FFDD00?logo=buymeacoffee&logoColor=black"></a></p>

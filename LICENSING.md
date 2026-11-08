@@ -1,6 +1,6 @@
 # Licensing
 
-FM1 Clock, like Dinghy under it, is free software under the GNU General Public License, version 3 only (`GPL-3.0-only`, full text in
+FM-1 Clock, like Dinghy under it, is free software under the GNU General Public License, version 3 only (`GPL-3.0-only`, full text in
 `LICENSE`). You may use, study, change and share it. If you give someone a firmware built from it, give them its
 complete source under the same licence too.
 
@@ -15,7 +15,7 @@ complete source under the same licence too.
 | From OberVave: the storage (blobs, slots), `LCD_IDLE`, the SMK-37 wiring of `platform.c`, `store.h`, the pad event queue in `smk_input.h`, `tests/smk_flash_test.c`, `tests/run_tests.sh`, the CI workflow | Copyright (C) 2026 zvenson |
 | The wiring `platform.c`, the host mode `tests/host.c`, Dinghy's docs (`docs/`) | zvenson |
 | The browser installer's protocol: `web/fm1pkg.js`, `web/fm1ota.js` (unchanged, from [SLOOP](https://github.com/isod89/sloop-fm1) `bac9c05`); the install flow of `web/index.html` and the shape of `web/make_site.py`, after SLOOP's `web/index_pkg.html` and `web/make_site.py` | Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca), with the changes of SLOOP (isod89) |
-| FM1 Clock: `firmware/src/fm1clock.c` (from Dinghy's `dinghy.c`), `clk_engine.h`, `clk_draw.h`, `firmware/gen/clk_*.h`, `tools/analyze_ref.py`, `features.py`, `fit_model.py`, `gen_tables.py`, `gen_art.py`, `settime.py`, `emu_ci.sh`, `emu_check.sh`, `tests/run_clock.sh`, `tests/clk/`, `tests/scripts/` (the clock's), `tests/ref/`, `tests/web/`, the page `web/index.html` and `web/make_site.py` (but for what is SLOOP's in them, above), `README.md`, `docs/SOUND.md`, `docs/CUCKOO.md`, `docs/HOW-IT-WORKS.md`, `docs/screens/`, `PLATFORM.md` | Copyright (C) 2026 Joakim (joakimskurk) |
+| FM-1 Clock: `firmware/src/fm1clock.c` (from Dinghy's `dinghy.c`), `clk_engine.h`, `clk_draw.h`, `firmware/gen/clk_*.h`, `tools/analyze_ref.py`, `features.py`, `fit_model.py`, `gen_tables.py`, `gen_art.py`, `settime.py`, `emu_ci.sh`, `emu_check.sh`, `tests/run_clock.sh`, `tests/clk/`, `tests/scripts/` (the clock's), `tests/ref/`, `tests/web/`, the page `web/index.html` and `web/make_site.py` (but for what is SLOOP's in them, above), `README.md`, `docs/SOUND.md`, `docs/CUCKOO.md`, `docs/HOW-IT-WORKS.md`, `docs/screens/`, `PLATFORM.md` | Copyright (C) 2026 Joakim (joakimskurk) |
 
 ## Third-party material
 
@@ -26,7 +26,7 @@ complete source under the same licence too.
 
 ## The design and the recording
 
-`assets/design.png` is FM1 Clock's design, by its author (joakimskurk); `firmware/gen/clk_art.h` is made from it
+`assets/design.png` is FM-1 Clock's design, by its author (joakimskurk); `firmware/gen/clk_art.h` is made from it
 (`tools/gen_art.py`) and goes with the firmware under its licence.
 
 The sound is fitted to a recording, *Clock Strike Chime Sound 31x Day BEACON Pendulum Wall Item 1125*, by Adelaide
@@ -37,9 +37,9 @@ them (`tools/clk_model.json`). No sample of it is in the firmware: every sound i
 ## The logo
 
 `assets/logo.svg` / `logo.png` carry the designburg signet: Copyright (C) designburg, all rights reserved, not under
-the GPL. It marks Dinghy itself; FM1 Clock does not use it as its own.
+the GPL. It marks Dinghy itself; FM-1 Clock does not use it as its own.
 
 ## Trademarks
 
 "Felucca" and "Hügelton Instruments" are names of Hügelton Instruments; "M-VAVE", "FM-1", "SMK-37" and "MKE-P37"
-belong to their owners. Dinghy and FM1 Clock are not made or endorsed by them.
+belong to their owners. Dinghy and FM-1 Clock are not made or endorsed by them.

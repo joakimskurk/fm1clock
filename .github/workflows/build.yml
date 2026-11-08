@@ -1,4 +1,4 @@
-# Every push and pull request: FM1 Clock's host tests, Dinghy's platform tests and the real FM-1 package, built and
+# Every push and pull request: FM-1 Clock's host tests, Dinghy's platform tests and the real FM-1 package, built and
 # attested by the shared zvenson/fm1-build workflow (JieLi toolchain + AC79 SDK), as VaveHero, RoboSeq and SkurkyMello
 # do. Then fm1-emu runs the package and says how much of the chip the clock uses (tools/emu_ci.sh). A tag vX.Y also
 # publishes the release.
@@ -24,7 +24,7 @@ jobs:
       test: python3 -m pip install -q numpy && sh tests/run_clock.sh && sh tests/run_tests.sh && sh tools/emu_ci.sh
       packages: build/fm1clock*.fwsc
 
-  # The site (GitHub Pages, https://joakimskurk.github.io/fm1clock/): FM1 Clock's page and its installer in the
+  # The site (GitHub Pages, https://joakimskurk.github.io/fm1clock/): FM-1 Clock's page and its installer in the
   # browser (Web MIDI), with the package this run built and tested (web/make_site.py). From the default branch only.
   # GitHub Pages has to be switched on once, by the repository's owner: Settings -> Pages -> Build and deployment ->
   # Source: GitHub Actions. Until then this job says so and publishes nothing (the build stays green).

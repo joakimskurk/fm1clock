@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* FM1 Clock: the most useless firmware for the M-VAVE FM-1. Two clocks that keep the time, swing their pendulums and
+/* FM-1 Clock: the most useless firmware for the M-VAVE FM-1. Two clocks that keep the time, swing their pendulums and
  * tick at both ends of the swing. The wall clock (a 31-day pendulum clock) ticks every half second and strikes the
  * hours (and one at the half hour) on an FM gong fitted to a recording of a real one. The cuckoo clock (a Black
  * Forest 1-day clock) beats faster, and at the hour opens its door: the bird calls the hours on two FM pipes (one

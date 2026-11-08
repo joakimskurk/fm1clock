@@ -1,4 +1,4 @@
-# FM1 Clock: the everyday commands. The firmware itself is built by ./build.sh (docs/DINGHY_README.md: the toolchain).
+# FM-1 Clock: the everyday commands. The firmware itself is built by ./build.sh (docs/DINGHY_README.md: the toolchain).
 #   make test       the clock's host tests: the sound against the reference, the time, the strike, the screen
 #   make host       the app on the host with Dinghy's default script: build/host/fm1clock.wav and its screens
 #   make tables     firmware/gen/clk_tables.h from tools/clk_model.json and tools/clk_cuckoo.json
