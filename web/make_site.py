@@ -25,7 +25,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 BLOCKS, BLK, KEEP = 20, 0x30, 0x2F
-SCREENS = ("pendulum.gif", "cuckoo.gif", "cuckoo-classic.gif", "icon.png")   # (the icon: the cuckoo clock's house, its dial)
+SCREENS = ("pendulum.gif", "cuckoo.gif", "icon.png")   # (the icon: the cuckoo clock's house, its dial)
 
 
 def product_of(raw):

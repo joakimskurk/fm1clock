@@ -31,7 +31,7 @@ The screen is 240 × 240 pixels.
 
 - **The background** is the design (`assets/design.png`, 1254 × 1254) scaled to the screen, the clock cut out of
   its black (the black joined to the picture's edge; the black inside it, the numerals and the keyholes, is the
-  clock's) and hung on the cuckoo clocks' panel wall with its soft shadow. Only the clock and its shadow are stored
+  clock's) and hung on the cuckoo clock's panel wall with its soft shadow. Only the clock and its shadow are stored
   (136 × 239 pixels, RGB565, 64 KB of flash); the wall round it is drawn from its tile. What the firmware draws over
   it is first taken out of the design, at the design's own resolution (`tools/gen_art.py`):
   - **The hands and the hub.** On the wood, the grey and dark pixels in a wide area round each hand are replaced
@@ -48,8 +48,7 @@ The screen is 240 × 240 pixels.
   minute). Each is two convex shapes, a shaft and a spear or arrow, filled with 4 × 4 samples per pixel for smooth
   edges, darker on one side and lighter on the other. Each has a soft shadow 1.2 px to the right and 1.6 px down.
   The brass hub goes over them. Only the round the hands can reach goes to the screen, row by row, not the square
-  round it: on the cuckoo clock the square's corners hold the windows' inner shutters, and sent again and again
-  (unchanged) they flickered on the panel while the bird was out.
+  round it: the square's corners, sent again and again unchanged, flickered on the panel while the bird was out.
 - **The pendulum** is drawn 50 times a second, in its window (78 × 56 pixels):
   - the back panel, darkened by the pendulum's own shadow, 3 px to the right and 2.5 px down (the light falls from
     the top left, as on the bob and on the glass), sampled four times for a soft edge;
@@ -57,20 +56,19 @@ The screen is 240 × 240 pixels.
   - the bob, cut out of the design with its shading as a 35 × 35 sprite with transparency, placed between pixels
     (bilinear) so it glides instead of jumping a pixel at a time;
   - over everything, the glass's reflections and the gold.
-- **The cuckoo clocks** are drawn the same way, in three regions of their own: the dial's middle each second, the
-  door when it or the bird moves, and the space under the house (72 × 94 pixels) 50 times a second, where only the
+- **The cuckoo clock** is drawn the same way, in three regions of its own: the dial's middle each second, the door
+  when it or the bird moves, and the space under the house (72 × 94 pixels) 50 times a second, where only the
   columns the pendulum touches now or touched last time are made again, unless a chain has run (see
-  [What moves](CUCKOO.md#what-moves)). Both have one layout and their own pictures (the firmware takes the one or the
-  other's). Behind them, and behind the wall clock, is the panel wall: the screen is filled from a tile of it, the
-  house is stored on it with its shadow, and under the house the pendulum, the chains and the weights go over the
-  wall kept for that region; the words in the margins are drawn over whatever is behind them, their edges blended
-  in.
+  [What moves](CUCKOO.md#what-moves)). Behind it, and behind the wall clock, is the panel wall: the screen is filled
+  from a tile of it, the house is stored on it with its shadow, and under the house the pendulum, the chains and the
+  weights go over the wall kept for that region; the words in the margins are drawn over whatever is behind them,
+  their edges blended in.
 - **The screen only takes data from RAM** (its DMA cannot read flash), so every picture is assembled in a RAM
   buffer and sent while the next is made.
 
 | Memory | Used | Of |
 |---|---|---|
-| Code, tables and pictures of the three clocks (flash) | 434 KB | 568 KB |
+| Code, tables and pictures of the two clocks (flash) | 434 KB | 568 KB |
 | RAM | 21 KB | 96 KB |
 | Pool (big buffers: the sine table, the operators, the screen buffers, the cuckoo's layers) | 151 KB | 336 KB |
 
@@ -99,7 +97,7 @@ The screen is 240 × 240 pixels.
 | (all) | A tick every half second to within 3 ms, left and right in turn, and **nothing between two ticks**. |
 | `cuckoo.txt` | ALGORITHM, then 2:59:56: three calls, each a blow, the high pipe 0.11 s on (0.22 s the first), the low 0.19 s after it, 0.665 s apart, the first 0.87 s after the hour; a tick every 0.4286 s; the pendulum moves; at the hour the door is open and the bird out, after it the door is shut again; the hands at 3:00. |
 | `cuckoo_silent.txt` | The cuckoo, FX and GLO (the keys on the hour): three o'clock without a call or a blow, the door shut, the keys flashing three times; at the half hour nothing. |
-| `classic.txt` | ALGORITHM twice, the classic cuckoo: three calls at three, the first 0.87 s after the hour; its own house (not the chalet's); its pendulum moves, its door opens and shuts; the hands at 3:00. |
+| `back.txt` | ALGORITHM twice, one way and back: the wall clock again, as it was at power-on. |
 
 **CI** (`.github/workflows/build.yml`, using the shared `zvenson/fm1-build` workflow) builds the package on every
 push and attests it, runs these tests and Dinghy's own platform tests, then builds fm1-emu and runs the package in

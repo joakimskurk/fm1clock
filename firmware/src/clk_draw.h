@@ -1,16 +1,16 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* FM1 Clock's pictures, for three clocks, all on one panel wall. The wall clock: the design as the background
+/* FM1 Clock's pictures, for two clocks, both on one panel wall. The wall clock: the design as the background
  * (firmware/gen/clk_art.h, tools/gen_art.py), and over it what moves: the hands (polygons, 4 x 4 samples a pixel) and the pendulum (the rod,
- * the bob with its own shading, both behind the glass: its reflections and the gold go over them). The cuckoo clocks:
- * this firmware's own chalet and classic (firmware/gen/clk_art_cuckoo.h, tools/gen_art_cuckoo.py) with their big
- * dials and the same hands; its door, turned on its hinge in perspective, and the bird, coming forward out of the dark and bowing
+ * the bob with its own shading, both behind the glass: its reflections and the gold go over them). The cuckoo clock:
+ * this firmware's own, carved in walnut (firmware/gen/clk_art_cuckoo.h, tools/gen_art_cuckoo.py), with its big ivory
+ * dial and the same hands; its door, turned on its hinge in perspective, and the bird, coming forward out of the dark and bowing
  * to its call; and below the house what hangs from it: the pendulum (a stick and its bob, swinging behind the rest,
  * close to the wall), the two chains over their sprockets, each with a pine-cone weight on one end and a ring on the
  * other, and the house's balcony and apron in front of it all. The regions are drawn again, each into a buffer of
  * its own and sent by DMA: the dial's middle when the hands move, the window (or the space under the house) when the
  * pendulum does, the door when it or the bird moves.
  *
- *   draw_clock                        the clock to draw: 0 the wall clock, 1 the chalet cuckoo, 2 the classic one
+ *   draw_clock                        the clock to draw: 0 the wall clock, 1 the cuckoo clock
  *   draw_all()                        the whole screen once
  *   draw_dial(hour, minute)           the hands at these angles (2^32 = a turn, from 12 clockwise)
  *   draw_window(theta)                the wall clock's pendulum at this angle (2^32 = a turn, + = to the right)
@@ -32,22 +32,11 @@ typedef struct {
     int32_t bx, by, bw, bh, hx, hy, r, scale;
     uint32_t lit, dark;
 } face_t;
-static const face_t FACES[3] = {
+static const face_t FACES[2] = {
     {BG_SW, BG_X, BG_Y, BG_W, BG_H, HUB_X256, HUB_Y256, 36, 256, RGB(74, 70, 82), RGB(18, 16, 22)},
-    {CK0_HOUSE, CB_X, CB_Y, CB_W, CB_H, CK_HUB_X256, CK_HUB_Y256, 26, 194, RGB(92, 64, 42), RGB(34, 22, 14)},
-    {CK1_HOUSE, CB_X, CB_Y, CB_W, CB_H, CK_HUB_X256, CK_HUB_Y256, 26, 194, RGB(92, 64, 42), RGB(34, 22, 14)},
+    {CK_HOUSE, CB_X, CB_Y, CB_W, CB_H, CK_HUB_X256, CK_HUB_Y256, 26, 194, RGB(92, 64, 42), RGB(34, 22, 14)},
 };
-/* the two cuckoo clocks: one layout (clk_art_cuckoo.h), their pictures their own; both on the panel wall */
-typedef struct {
-    const uint16_t *house, *lowall, *drbg;      /* the house on the wall, the wall below it, round the door open */
-    const uint8_t *front, *leaf, *bob;          /* the house in front of what hangs, the door's leaf, the bob */
-    uint8_t stick[6];                           /* the pendulum's stick: its lit side, its other (R G B) */
-} ck_art_t;
-static const ck_art_t CK_ART[2] = {
-    {CK0_HOUSE, CK0_LOWALL, CK0_DRBG, CK0_FRONT, CK0_LEAF, CK0_BOB, {196, 132, 72, 138, 84, 40}},   /* the chalet */
-    {CK1_HOUSE, CK1_LOWALL, CK1_DRBG, CK1_FRONT, CK1_LEAF, CK1_BOB, {150, 70, 44, 88, 34, 20}},    /* the classic */
-};
-static const ck_art_t *ck = &CK_ART[0];
+static const uint8_t CK_STICK[6] = {150, 70, 44, 88, 34, 20};   /* the cuckoo's pendulum stick: its lit side, its other */
 static uint32_t draw_clock;
 static const face_t *face = &FACES[0];
 
@@ -81,7 +70,7 @@ static inline uint32_t pack(int32_t r, int32_t g, int32_t b)
 static uint32_t lo_dirty;                       /* the cuckoo's window: everything again */
 
 /* what is behind everything drawn over the clock (the margins' words): the clock's picture where it is, round it
- * the panel wall all three clocks hang on */
+ * the panel wall both clocks hang on */
 static inline uint16_t bg_px(uint32_t x, uint32_t y)
 {
     if (x - (uint32_t)face->bx < (uint32_t)face->bw && y - (uint32_t)face->by < (uint32_t)face->bh)
@@ -105,11 +94,10 @@ static void bg_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h)   /* (in str
 static void draw_all(void)
 {
     uint32_t y, i, bw, bh;
-    face = &FACES[draw_clock < 3u ? draw_clock : 0u];
+    face = &FACES[draw_clock ? 1 : 0];
     bw = (uint32_t)face->bw;
     bh = (uint32_t)face->bh;
     lcd_sync();
-    ck = &CK_ART[draw_clock == 2u ? 1 : 0];
     bg_fill(0, 0, 240, 240);                    /* the panel wall the clock hangs on, all of the screen */
     for (y = 0; y < bh; y += 32u) {             /* in strips through RAM: the screen's DMA reads RAM only (lcd.c) */
         uint32_t h = bh - y < 32u ? bh - y : 32u;
@@ -393,7 +381,7 @@ static void draw_window(uint32_t th)
 /* ---- the cuckoo clock: below the house. Back to front: the wall, the pendulum, the chains with their weights
  * and rings, the house's lowest leaves (its front). All but the pendulum change only when a chain runs: they are
  * made into lo_front then (premultiplied), and lo_bg is that over the wall (the panel wall, the house's shadow on
- * it: ck->lowall); each frame the pendulum goes between. */
+ * it: CK_LOWALL); each frame the pendulum goes between. */
 #define LO_X CK_LO_X
 #define LO_Y CK_FRONT_Y
 #define LO_W CK_LO_W
@@ -488,13 +476,13 @@ static void draw_chains(uint32_t d_go, uint32_t d_ck)
     lo_weight(c3, CK_W_TOP + k);
     for (y = LO_Y; y < CB_Y + CB_H; y++)        /* the house's lowest leaves in front */
         for (x = LO_X; x < LO_X + LO_W; x++) {
-            const uint8_t *q = &ck->front[4 * ((y - CK_FRONT_Y) * CB_W + (x - CB_X))];
+            const uint8_t *q = &CK_FRONT[4 * ((y - CK_FRONT_Y) * CB_W + (x - CB_X))];
             if (q[3])
                 lo_over(x, y, q[0], q[1], q[2], q[3]);
         }
     for (i = 0; i < LO_W * LO_H; i++) {         /* over the wall */
         int32_t r, g, b, a = lo_front[4 * i + 3];
-        unpack(unsw(ck->lowall[i]), &r, &g, &b);
+        unpack(unsw(CK_LOWALL[i]), &r, &g, &b);
         lo_bg[i] = (uint16_t)unsw(pack(lo_front[4 * i] + ((r * (255 - a)) >> 8), lo_front[4 * i + 1] + ((g * (255 - a)) >> 8),
                                        lo_front[4 * i + 2] + ((b * (255 - a)) >> 8)));
     }
@@ -540,9 +528,9 @@ static void draw_lower(uint32_t th)
             cov = CK_STICK_W / 2 - (u < 0 ? -u : u) + FX / 2;   /* the stick: wood, its left edge lit */
             if (t < CK_PEND_L256 && cov > 0) {
                 cov = cov > FX ? 255 : cov;
-                r = ck->stick[u < 0 ? 0 : 3] * cov >> 8;
-                g = ck->stick[u < 0 ? 1 : 4] * cov >> 8;
-                b = ck->stick[u < 0 ? 2 : 5] * cov >> 8;
+                r = CK_STICK[u < 0 ? 0 : 3] * cov >> 8;
+                g = CK_STICK[u < 0 ? 1 : 4] * cov >> 8;
+                b = CK_STICK[u < 0 ? 2 : 5] * cov >> 8;
                 a = cov;
             }
             {                                   /* the leaf: its sprite turned with the stick, between its pixels */
@@ -550,7 +538,7 @@ static void draw_lower(uint32_t th)
                 int32_t syp = (((px - bx) * s + (py - by) * c) >> 15) + CK_BOB_H * 128 - 128;
                 if (sxp >= 0 && syp >= 0 && (sxp >> 8) < CK_BOB_W - 1 && (syp >> 8) < CK_BOB_H - 1) {
                     int32_t ix = sxp >> 8, iy = syp >> 8, fx = sxp & 255, fy = syp & 255, ch, v[4];
-                    const uint8_t *p0 = &ck->bob[4 * (iy * CK_BOB_W + ix)], *p1 = p0 + 4 * CK_BOB_W;
+                    const uint8_t *p0 = &CK_BOB[4 * (iy * CK_BOB_W + ix)], *p1 = p0 + 4 * CK_BOB_W;
                     for (ch = 0; ch < 4; ch++) {
                         int32_t top = p0[ch] * (256 - fx) + p0[ch + 4] * fx, bot = p1[ch] * (256 - fx) + p1[ch + 4] * fx;
                         v[ch] = (top * (256 - fy) + bot * fy) >> 16;
@@ -567,7 +555,7 @@ static void draw_lower(uint32_t th)
             }
             {                                   /* the wall behind it */
                 int32_t wr, wg, wb;
-                unpack(unsw(ck->lowall[i]), &wr, &wg, &wb);
+                unpack(unsw(CK_LOWALL[i]), &wr, &wg, &wb);
                 r += (wr * (255 - a)) >> 8;
                 g += (wg * (255 - a)) >> 8;
                 b += (wb * (255 - a)) >> 8;
@@ -626,10 +614,10 @@ static void draw_door(uint32_t open, uint32_t out, uint32_t bow, uint32_t beak)
             int32_t X = CK_DR_X + x, Y = CK_DR_Y + y, px = (X << 8) + 128, py = (Y << 8) + 128, r, g, b, v[4];
             uint16_t *o = &door_px[y * CK_DR_W + x];
             if (!open && !out) {                /* shut: the house as it is */
-                *o = ck->house[(Y - CB_Y) * CB_W + (X - CB_X)];
+                *o = CK_HOUSE[(Y - CB_Y) * CB_W + (X - CB_X)];
                 continue;
             }
-            unpack(unsw(ck->drbg[y * CK_DR_W + x]), &r, &g, &b);   /* the gable, the doorway open */
+            unpack(unsw(CK_DRBG[y * CK_DR_W + x]), &r, &g, &b);   /* the gable, the doorway open */
             if (out && (out > 170u || in_hole(px, py))) {   /* the bird: 2 x 2 samples of it turned and scaled */
                 int32_t acc[4] = {0, 0, 0, 0}, k;
                 for (k = 0; k < 4; k++) {
@@ -654,7 +642,7 @@ static void draw_door(uint32_t open, uint32_t out, uint32_t bow, uint32_t beak)
                     int32_t u = (int32_t)(((int64_t)dxh * inv_c) >> 15);   /* across the leaf, from the hinge */
                     if (u >= 0 && u < CK_LEAF_W * 256) {
                         int32_t vy = py - ((((py - yc) * persp) >> 8) * u) / (CK_LEAF_W * 256);
-                        spr_at(ck->leaf, CK_LEAF_W, CK_LEAF_H, u - 128, vy - CK_LEAF_Y * 256 - 128, v);
+                        spr_at(CK_LEAF, CK_LEAF_W, CK_LEAF_H, u - 128, vy - CK_LEAF_Y * 256 - 128, v);
                         if (v[3]) {
                             int32_t l = c > 0 ? 190 + ((66 * c) >> 15) : 100 + ((-40 * c) >> 15);   /* its back darker */
                             r = ((v[0] * l) >> 8) + ((r * (255 - v[3])) >> 8);

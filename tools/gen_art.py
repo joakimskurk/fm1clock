@@ -11,7 +11,7 @@ What the firmware draws over a picture is taken out of it first, at the design's
     and a front layer, the gold scrollwork and the frame (opaque) and the two reflections in the glass
     (partly transparent): the pendulum swings between the two.
 Then everything is scaled to the screen (240 x 240, the design's square as it is), the clock cut out of the design's
-black (what is black and joined to its edge) and hung on the panel wall the cuckoo clocks hang on (tools/
+black (what is black and joined to its edge) and hung on the panel wall the cuckoo clock hangs on (tools/
 gen_art_cuckoo.py), its soft shadow on it, and written as RGB565 in the byte order the screen takes: the box the clock
 and its shadow are in (the firmware draws the wall round it). The bob is cut out of the design with its shading, as a sprite with alpha; the rod
 is drawn by the firmware, its colours across are measured here. --check: fail if the header is not what this makes.

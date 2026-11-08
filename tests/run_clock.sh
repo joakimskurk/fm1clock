@@ -59,7 +59,7 @@ run "its train's warning click, its door opening (its wood struck three times), 
      build/clk_render ck_shut build/audio/ck_shut.wav 12 && python3 tests/clk/parity.py ck_fine_door_shut build/audio/ck_shut.wav 12 6.0"
 
 # the clock: the time, the strike, the panel (host mode, 200 carriers: quicker, the same events)
-for s in hour half silent turn repeat twelve cuckoo cuckoo_silent classic; do
+for s in hour half silent turn repeat twelve cuckoo cuckoo_silent back; do
     run "the clock on the host: tests/scripts/$s.txt" sh -c "CLK_NG=200 $OUT/fm1clock $OUT/$s tests/scripts/$s.txt > $OUT/$s.log"
 done
 run "three o'clock: three blows, the first 40 ms after the hour, 1.19 s apart" python3 $P hits $OUT/hour.log 1 14.9 3 10.04
@@ -87,14 +87,9 @@ run "the cuckoo's hands at 3:00 when it calls" python3 $P hands $OUT/cuckoo-5230
 run "silent: no call and no blow at three" sh -c "python3 $P events $OUT/cuckoo_silent.log PIPE 0 9 0 && python3 $P hits $OUT/cuckoo_silent.log 0 9 0"
 run "silent: the door stays shut" python3 $P same $OUT/cuckoo-1000.ppm $OUT/cuckoo_silent-5230.ppm $D 0
 run "silent, the keys on the hour: three flashes at three, none at the half hour" python3 $P events $OUT/cuckoo_silent.log FLASH 3 9 3
-# the classic cuckoo clock (ALGORITHM twice): the chalet's layout, its own pictures, the same sound
-run "the classic: three calls at three, the first 0.87 s after the hour" sh -c \
-    "python3 $P calls $OUT/classic.log 4 8 3 && python3 $P hits $OUT/classic.log 4 8 3 4.87 0.665"
-run "the classic is its own house (not the chalet's)" python3 $P differ $OUT/cuckoo-1000.ppm $OUT/classic-1000.ppm 48 0 150 146 4000
-run "the classic's pendulum swings, its door opens at the hour and shuts after" sh -c \
-    "python3 $P moved $OUT/classic-1000.ppm $OUT/classic-1200.ppm cuckoo && \
-     python3 $P differ $OUT/classic-1000.ppm $OUT/classic-5230.ppm $D 150 && python3 $P same $OUT/classic-1000.ppm $OUT/classic-8000.ppm $D 0"
-run "the classic's hands at 3:00 when it calls" python3 $P hands $OUT/classic-5230.ppm 3 0 cuckoo
+# ALGORITHM again: the wall clock (two clocks), on its wall, as at power-on
+run "ALGORITHM twice: the wall clock again, as it was (but the minute hand's edge: drawn at another second)" \
+    python3 $P same $OUT/repeat-1000.ppm $OUT/back-1000.ppm 0 0 240 240 60
 
 # the site (GitHub Pages): made from the package (CI builds it before the tests; here, if it is there), its installer
 # against a simulated FM-1 if Playwright is there

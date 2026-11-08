@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""FM1 Clock's own two cuckoo clocks, drawn from nothing, and the panel wall they hang on: firmware/gen/clk_art_cuckoo.h.
+"""FM1 Clock's own cuckoo clock, drawn from nothing, and the panel wall all its clocks hang on:
+firmware/gen/clk_art_cuckoo.h.
 
   python3 tools/gen_art_cuckoo.py [--check] [--preview OUT.png]     (Pillow, numpy)
 
-One layout (the dial, the bird's door, the pendulum, the chains and the weights in the same places), two houses:
-  - the chalet: a painted Black Forest house, a shingled roof with a carved barge board and a turned finial, the
-    bird's door in the gable, a big cream dial (Arabic numerals, a carved bezel), two shuttered windows with
-    geraniums, a balcony of sawn boards;
-  - the classic: carved, in dark red walnut, leaves along its roof boards and a crest of leaves at the peak, vines
-    round an ivory dial with serif numerals, turned columns on a shelf, fretwork under it, a leaf for a bob.
-Both hang on a wall of pine boards (a tile four boards wide, across the screen), each its soft shadow on it.
+The classic: carved, in dark red walnut, leaves along its roof boards and a crest of leaves at the peak, vines round
+an ivory dial with serif numerals, turned columns on a shelf, fretwork under it with a leaf hanging from it, a leaf
+for a bob. It hangs on a wall of pine boards (a tile four boards wide, across the screen), its soft shadow on it;
+the wall clock (tools/gen_art.py) hangs on the same wall.
 Everything is drawn 8 times over (polygons, ellipses, wood grain from smoothed noise) and box-filtered down to the
 screen, so its edges are soft.
 
@@ -18,10 +16,10 @@ What moves is the firmware's (firmware/src/clk_draw.h), from sprites made here:
   - the door: its leaf, turned about its hinge in perspective; the gable behind it with the doorway open (dark);
   - the bird, in two poses (its beak shut, open), at twice the screen's resolution: the firmware scales it as it
     comes forward out of the dark and turns it as it bows to its call;
-  - the pendulum's bob (the chalet's a wooden disc with a brass rim and an edelweiss; the classic's a carved leaf);
+  - the pendulum's bob, a carved leaf;
   - a pine-cone weight (cast iron), for both chains; the rings and the chains themselves are drawn by the firmware.
-The houses' lowest rows (the balcony and its apron; the shelf's fretwork) are a front layer over the chains and the
-pendulum, and the wall behind those (the house's shadow on it) is kept for each.
+The house's lowest rows (the shelf's fretwork) are a front layer over the chains and the pendulum, and the wall
+behind those (the house's shadow on it) is kept.
 """
 import argparse
 import sys
@@ -32,7 +30,6 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "firmware" / "gen" / "clk_art_cuckoo.h"
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 K = 8                                       # drawn at 8 x 8 samples a screen pixel
 
 # the layout, in screen pixels
@@ -49,12 +46,8 @@ STRANDS = (100.0, 110.0, 130.0, 140.0)      # the chains: the going weight, its 
 W_TOP = 169                                 # a weight's hook, wound up
 TRAVEL = 66                                 # and how far it goes down in a run (the ring as far up)
 
-WOOD_L, WOOD_M, WOOD_D, WOOD_X = (204, 148, 88), (156, 100, 56), (100, 62, 32), (62, 38, 20)
-PLASTER = (238, 228, 204)
-GREEN = (66, 112, 70)
-ROOF_A, ROOF_B = (92, 58, 40), (70, 44, 32)
+WOOD_M, WOOD_D = (156, 100, 56), (100, 62, 32)          # (the bird's perch)
 BRASS = (206, 166, 76)
-RED = (206, 44, 40)
 
 
 # ---- drawing at K times, premultiplied RGBA floats (0..1)
@@ -154,150 +147,6 @@ def numerals(cv, cx, cy, r, font_file, size, col, narrow=1.0):
         cv.paint(cv.mask(num), col)
 
 
-def house():
-    cv = Canvas(240, 240)
-    # the facade behind the roof: the gable's boards above the beam, the plaster below it
-    cv.poly([(72, 66), (72, 62), (120, 18), (168, 62), (168, 66)], wood(WOOD_M, WOOD_D, True, 3, period=3.0))
-    for x in range(78, 166, 6):                                       # the boards' joints, under the roof
-        top = 18 + abs(x - CX) * 44 / 48
-        cv.line([(x, top), (x, 66)], 0.35, WOOD_X, 0.6)
-    cv.rect(72, 66, 168, 152, lambda *b: np.array(PLASTER, np.float32) / 255 * (0.94 + 0.06 * noise(b[3] - b[1], b[2] - b[0], 2 * K, 9)[..., None]))
-    # the timber: a beam under the gable, the corner posts, braces
-    cv.rect(70, 63, 170, 68, wood(WOOD_D, WOOD_X, False, 4))
-    cv.rect(71, 66, 76, 152, wood(WOOD_D, WOOD_X, True, 5))
-    cv.rect(164, 66, 169, 152, wood(WOOD_D, WOOD_X, True, 6))
-    for s in (-1, 1):                                                 # the windows, shuttered, with geraniums
-        x0 = CX + s * 33 - 8
-        cv.rect(x0 + 3.5, 71, x0 + 12.5, 87, WOOD_X)
-        cv.rect(x0 + 4.5, 72, x0 + 11.5, 86, (44, 58, 80))
-        cv.poly([(x0 + 4.5, 72), (x0 + 7.5, 72), (x0 + 4.5, 77)], (120, 140, 170), 0.6)   # the sky in the glass
-        cv.rect(x0 + 7.6, 72, x0 + 8.4, 86, WOOD_L)
-        cv.rect(x0 + 4.5, 78.6, x0 + 11.5, 79.4, WOOD_L)
-        for sx in (x0, x0 + 12.5):                                    # the shutters, slatted
-            cv.rect(sx, 70.5, sx + 3.5, 87.5, GREEN)
-            for y in np.arange(72, 87, 1.5):
-                cv.line([(sx + 0.4, y), (sx + 3.1, y)], 0.3, shade(GREEN, 0.6))
-        cv.rect(x0 + 2.5, 86.5, x0 + 13.5, 90, wood(WOOD_M, WOOD_D, False, 8))   # the flower box
-        rng = np.random.default_rng(int(x0))
-        for i in range(9):
-            fx, fy = x0 + 3.5 + i * 1.2 + rng.random() * 0.4, 85.4 + rng.random() * 1.2
-            cv.ellipse(fx, fy + 1.3, 0.9, 0.7, (60, 120, 52))
-            cv.ellipse(fx, fy, 0.75, 0.75, RED if i % 3 else (236, 96, 90))
-    # the balcony: eighteen sawn boards side by side between the posts, a round hole and a slot cut where every
-    # other two meet (nine, the middle one on the clock's middle), rails, posts
-    cv.rect(76, 132, 164, 150, (48, 30, 16))
-    bw = 88 / 18
-    for k in range(18):
-        xb = 76 + k * bw
-        cv.rect(xb, 135, xb + bw, 146.5, wood(WOOD_L, WOOD_M, True, 60 + k, period=1.6))
-        cv.line([(xb + bw - 0.35, 135.4), (xb + bw - 0.35, 146.2)], 0.3, WOOD_D, 0.7)   # its edge, in shadow
-    for k in range(1, 18, 2):                                          # the cut-outs, on the joints
-        xb = 76 + k * bw
-        cv.ellipse(xb, 140.6, 1.35, 1.35, (40, 25, 13))
-        cv.rect(xb - 0.45, 136.6, xb + 0.45, 139.4, (40, 25, 13))
-        cv.rect(xb - 0.45, 141.8, xb + 0.45, 144.8, (40, 25, 13))
-        cv.ellipse(xb - 0.4, 140.2, 0.5, 0.5, WOOD_X, 0.6)
-    cv.rect(74, 131, 166, 135.5, wood(WOOD_L, WOOD_M, False, 11))      # the top rail
-    cv.rect(74, 146, 166, 150, wood(WOOD_M, WOOD_D, False, 12))       # the floor
-    for x in (74, 162):                                               # the end posts, turned
-        cv.rect(x, 129, x + 4, 150, wood(WOOD_M, WOOD_D, True, 13))
-        cv.ellipse(x + 2, 128.5, 2.4, 2.0, WOOD_L)
-    # the apron under it, carved: scallops, and a drop in the middle (a heart)
-    cv.rect(73, 150, 167, 158, wood(WOOD_M, WOOD_D, False, 14))
-    for j in range(-7, 8):                                            # (fifteen, the middle one under the drop)
-        cv.ellipse(CX + j * 6.3, 158, 3.2, 3.0, wood(WOOD_M, WOOD_D, False, 15))
-    cv.line([(73, 151), (167, 151)], 0.5, WOOD_L, 0.8)
-    cv.ellipse(117.6, 160.5, 3.0, 3.0, WOOD_M)
-    cv.ellipse(122.4, 160.5, 3.0, 3.0, WOOD_M)
-    cv.poly([(114.8, 161.5), (125.2, 161.5), (120, HOUSE_BOT)], WOOD_M)
-    cv.ellipse(117.9, 159.8, 1.0, 0.8, WOOD_L, 0.8)
-    # the dial: a carved bezel, a brass bead, the cream face, its numerals and minutes
-    cx, cy = DIAL_C
-    cv.ellipse(cx + 1.0, cy + 1.4, DIAL_R + 0.4, DIAL_R + 0.4, (0, 0, 0), 0.35)
-    cv.ellipse(cx, cy, DIAL_R, DIAL_R, wood(WOOD_D, WOOD_X, False, 16))
-    for i in range(48):                                               # the bezel's notches
-        a = np.radians(i * 7.5)
-        cv.line([(cx + 27.6 * np.sin(a), cy - 27.6 * np.cos(a)), (cx + 30.4 * np.sin(a), cy - 30.4 * np.cos(a))], 0.7,
-                WOOD_L if i % 2 else WOOD_X, 0.7)
-    cv.ellipse(cx, cy, 27.2, 27.2, BRASS)
-    cv.ellipse(cx, cy, FACE_R, FACE_R, lambda x0, y0, x1, y1: face_fill(x0, y0, x1, y1))
-    for mnt in range(60):
-        a = np.radians(mnt * 6)
-        r0 = 22.6 if mnt % 5 else 21.4
-        cv.line([(cx + r0 * np.sin(a), cy - r0 * np.cos(a)), (cx + 24.6 * np.sin(a), cy - 24.6 * np.cos(a))],
-                0.45 if mnt % 5 else 0.9, (70, 50, 36))
-    numerals(cv, cx, cy, 17.4, FONT, 5.9, (52, 34, 24))
-    # the roof: shingles on a thick edge, a scalloped barge board under them, a finial at the peak
-    outer = [(52, 62), (120, 7), (188, 62)]
-    inner = [(65, 64), (120, 19), (175, 64)]
-    cv.poly([(52, 62), (120, 7), (188, 62), (175, 65), (120, 19.5), (65, 65)], shingles)
-    for s in (-1, 1):                                                 # the barge board along each slope
-        p0, p1 = np.array([120, 19.5]), np.array([120 + s * 55, 65])
-        dvec = (p1 - p0) / np.linalg.norm(p1 - p0)
-        nrm = np.array([-dvec[1], dvec[0]]) * (1 if s < 0 else -1)
-        if nrm[1] < 0:
-            nrm = -nrm
-        q0, q1 = p0 + nrm * 2.4, p1 + nrm * 2.4
-        cv.poly([tuple(p0), tuple(p1), tuple(q1), tuple(q0)], wood(WOOD_L, WOOD_M, False, 20 + s))
-        L = np.linalg.norm(p1 - p0)
-        for t in np.arange(3.0, L - 1, 4.6):
-            c = p0 + dvec * t + nrm * 2.4
-            cv.ellipse(c[0], c[1], 1.7, 1.7, wood(WOOD_L, WOOD_M, False, 22))
-            cv.ellipse(c[0] + nrm[0] * 0.6, c[1] + nrm[1] * 0.6, 0.6, 0.6, WOOD_X, 0.7)
-    cv.line([outer[0], outer[1], outer[2]], 0.7, (40, 24, 16), 0.8)
-    cv.rect(118.6, 2.5, 121.4, 9, wood(WOOD_M, WOOD_D, True, 23))     # the finial: a post, a ball, a point
-    cv.ellipse(120, 3.6, 2.4, 2.2, WOOD_L)
-    cv.poly([(119.2, 1.8), (120.8, 1.8), (120, 0.0)], WOOD_M)
-    # the bird's doorway: its frame, a sill, the door shut
-    hx, hy = HOLE_C
-    cv.ellipse(hx, hy, HOLE_R + 2.0, HOLE_R + 2.0, wood(WOOD_D, WOOD_X, False, 24))
-    cv.rect(hx - HOLE_R - 2.0, hy, hx + HOLE_R + 2.0, HOLE_BOT + 0.5, wood(WOOD_D, WOOD_X, True, 25))
-    cv.rect(hx - HOLE_R - 3.5, HOLE_BOT, hx + HOLE_R + 3.5, HOLE_BOT + 2.4, wood(WOOD_L, WOOD_M, False, 26))
-    return cv
-
-
-def face_fill(x0, y0, x1, y1):
-    yy, xx = np.mgrid[y0:y1, x0:x1].astype(np.float32) / K
-    r = np.hypot(xx - DIAL_C[0] + 6, yy - DIAL_C[1] + 8) / 40
-    base = np.array((244, 236, 214), np.float32) / 255
-    return base * (1.02 - 0.12 * np.clip(r, 0, 1))[..., None]
-
-
-def shingles(x0, y0, x1, y1):
-    """the roof's edge: rows of shingles along the slope, each its own shade"""
-    yy, xx = np.mgrid[y0:y1, x0:x1].astype(np.float32) / K
-    s = np.sign(xx - CX)
-    along = np.abs(xx - CX) * 0.78 + (yy - 7) * 0.62                # down the slope
-    across = (yy - 7) * 0.78 - np.abs(xx - CX) * 0.62               # into the roof's edge
-    row = np.floor(across / 3.2)
-    col = np.floor((along + row * 1.7) / 3.4)
-    rng = np.random.default_rng(5)
-    tab = rng.random(4096).astype(np.float32)
-    v = tab[((row * 61 + col * 17 + (s > 0) * 7).astype(np.int64)) % 4096]
-    a, b = np.array(ROOF_A, np.float32) / 255, np.array(ROOF_B, np.float32) / 255
-    c = a * v[..., None] + b * (1 - v[..., None])
-    edge = ((across % 3.2) < 0.45) | (((along + row * 1.7) % 3.4) < 0.35)
-    c[edge] *= 0.55
-    return c
-
-
-def door_leaf():
-    """the door, shut, as a sprite of its own (the hinge on its left): an arched board, a carved heart"""
-    w, h = int(2 * HOLE_R + 1), int(HOLE_BOT - (HOLE_C[1] - HOLE_R)) + 1
-    cv = Canvas(w, h)
-    ox, oy = HOLE_C[0] - HOLE_R - 0.5, HOLE_C[1] - HOLE_R - 0.5
-    hx, hy = HOLE_C[0] - ox, HOLE_C[1] - oy
-    cv.ellipse(hx, hy, HOLE_R + 0.5, HOLE_R + 0.5, wood(WOOD_M, WOOD_D, True, 30))
-    cv.rect(hx - HOLE_R - 0.5, hy, hx + HOLE_R + 0.5, h, wood(WOOD_M, WOOD_D, True, 30))
-    cv.ellipse(hx, hy, HOLE_R - 1.6, HOLE_R - 1.6, wood(WOOD_L, WOOD_M, True, 31))   # the panel, raised
-    cv.rect(hx - HOLE_R + 1.6, hy, hx + HOLE_R - 1.6, h - 1.8, wood(WOOD_L, WOOD_M, True, 31))
-    cv.ellipse(hx - 1.3, hy + 4.2, 1.6, 1.6, WOOD_X)                  # the heart, cut through
-    cv.ellipse(hx + 1.3, hy + 4.2, 1.6, 1.6, WOOD_X)
-    cv.poly([(hx - 2.85, hy + 4.7), (hx + 2.85, hy + 4.7), (hx, hy + 8.2)], WOOD_X)
-    cv.ellipse(hx + HOLE_R - 2.6, hy + 9.5, 0.8, 0.8, BRASS)          # the knob
-    return cv.down(), (ox, oy)
-
-
 def doorway(cv_house):
     """the gable round the door, the doorway open: dark inside, lit a little from the front"""
     cv = Canvas(240, 240)
@@ -351,23 +200,6 @@ def bird(beak_open):
     return pix
 
 
-def bob():
-    """the pendulum's bob: a wooden disc, a brass rim, an edelweiss"""
-    r = 11.0
-    n = int(2 * r + 3)
-    cv = Canvas(n, n)
-    c = n / 2
-    cv.ellipse(c, c - r - 0.4, 1.4, 1.6, BRASS)                       # its eye on the stick
-    cv.ellipse(c, c, r, r, BRASS)
-    cv.ellipse(c, c, r - 1.3, r - 1.3, wood(WOOD_M, WOOD_D, False, 50))
-    cv.ellipse(c - 2.5, c - 2.8, r - 6, r - 7, (255, 255, 255), 0.10)  # the light on it
-    for i in range(8):                                                # the edelweiss: felted petals, a yellow eye
-        a = np.radians(i * 45 + 10)
-        cv.ellipse(c + 3.6 * np.sin(a), c - 3.6 * np.cos(a), 1.7, 1.7, (236, 234, 224))
-    cv.ellipse(c, c, 1.7, 1.7, (226, 186, 60))
-    return cv.down()
-
-
 def weight():
     """a pine cone in cast iron on its hook: rows of scales, the light from the top left"""
     w, h = 16, 40
@@ -392,8 +224,7 @@ def weight():
     return cv.down()
 
 
-# ---- the classic: a carved Black Forest house of its own, in dark walnut, in the chalet's very layout (its dial,
-# its door, its pendulum, its chains and weights where the chalet has them)
+# ---- the house: a carved Black Forest house of its own, in dark walnut
 WN_L, WN_M, WN_D, WN_X = (164, 82, 52), (112, 48, 30), (72, 28, 18), (40, 14, 9)   # (a dark, red walnut)
 IVORY = (238, 226, 198)
 SERIF = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
@@ -459,7 +290,7 @@ def turned(cv, x0, x1, y0, y1, seed):
     cv.ellipse(cx - w * 0.15, mid - 1.2, w * 0.3, 3.2, WN_L, 0.45)
 
 
-def house_classic():
+def house():
     cv = Canvas(240, 240)
     # the body: one carved board, the gable above it, behind everything
     cv.poly([(78, 146), (78, 64), (120, 21), (162, 64), (162, 146)], wood(WN_M, WN_D, True, 101, period=2.6))
@@ -501,9 +332,13 @@ def house_classic():
         carved_line(cv, [(CX + s_ * 46, 139.5)] + sc, 1.5)
         carved_leaf(cv, CX + s_ * 38, 147.5, 4.6, s_ * 120)
         carved_leaf(cv, CX + s_ * 9, 143.5, 3.6, s_ * 200)
-        cv.line([(CX + s_ * 30, 139.2), (CX + s_ * 4, 139.2)], 1.2, WN_D)
-    carved_leaf(cv, CX, 156, 7.2, 180)                                # the drop: a leaf, its tip down
-    cv.ellipse(CX, 145.5, 2.2, 2.2, wood(WN_M, WN_D, False, 140))
+        cv.line([(CX + s_ * 30, 139.2), (CX + s_ * 1, 139.2)], 1.2, WN_D)
+    # the drop: a leaf, its tip down, on a carved stem from under the shelf (a bead on it), the pendulum behind it
+    carved_line(cv, [(CX, 138.6), (CX, 153.6)], 2.6)
+    cv.ellipse(CX + 0.3, 145.8, 2.5, 2.4, WN_X)
+    cv.ellipse(CX, 145.5, 2.3, 2.2, wood(WN_M, WN_D, False, 140))
+    cv.ellipse(CX - 0.6, 144.8, 0.9, 0.8, WN_L, 0.7)
+    carved_leaf(cv, CX, 156, 7.2, 180)
     # the dial: a carved bezel, a brass bead, the ivory face, its hours and minutes
     cx, cy = DIAL_C
     cv.ellipse(cx + 1.0, cy + 1.4, DIAL_R + 0.6, DIAL_R + 0.6, (0, 0, 0), 0.45)
@@ -566,8 +401,8 @@ def ivory_fill(x0, y0, x1, y1):
     return base * (1.03 - 0.14 * np.clip(r, 0, 1))[..., None]
 
 
-def door_leaf_classic():
-    """the classic's door, shut: an arched board in walnut, a raised panel, a small carved leaf, a brass knob"""
+def door_leaf():
+    """the door, shut: an arched board in walnut, a raised panel, a small carved leaf, a brass knob"""
     w, h = int(2 * HOLE_R + 1), int(HOLE_BOT - (HOLE_C[1] - HOLE_R)) + 1
     cv = Canvas(w, h)
     ox, oy = HOLE_C[0] - HOLE_R - 0.5, HOLE_C[1] - HOLE_R - 0.5
@@ -581,8 +416,8 @@ def door_leaf_classic():
     return cv.down(), (ox, oy)
 
 
-def bob_classic():
-    """the classic's bob: a carved leaf in walnut, its tip down, a brass eye on the stick"""
+def bob():
+    """the bob: a carved leaf in walnut, its tip down, a brass eye on the stick"""
     r = 11.0
     n = int(2 * r + 3)
     cv = Canvas(n, n)
@@ -638,23 +473,17 @@ def shut_door(scr, leaf, at):
     return shut
 
 
-DESIGNS = (("chalet", house, door_leaf, bob), ("classic", house_classic, door_leaf_classic, bob_classic))
-
-
 def build():
     tile = wall_tile()
     wall = np.concatenate([tile] * (240 // WALL_TW + 1), axis=1)[:, :240]
-    out = dict(tile=tile, wall=wall, bird0=bird(False), bird1=bird(True), weight=weight(), designs=[])
-    for name, mk_house, mk_leaf, mk_bob in DESIGNS:
-        cvh = mk_house()
-        leaf, (lox, loy) = mk_leaf()
-        at = (int(round(lox)), int(round(loy)))
-        scr = shut_door(cvh.down(), leaf, at)
-        opened = doorway(cvh).down()
-        out["designs"].append(dict(name=name, scr=scr, opened=opened, leaf=leaf, leaf_at=at, bob=mk_bob(),
-                                   on_wall=on_wall(scr, wall), opened_on_wall=on_wall(opened, wall),
-                                   wall_sh=shadowed(scr, wall)))
-    return out
+    cvh = house()
+    leaf, (lox, loy) = door_leaf()
+    at = (int(round(lox)), int(round(loy)))
+    scr = shut_door(cvh.down(), leaf, at)
+    opened = doorway(cvh).down()
+    return dict(tile=tile, wall=wall, bird0=bird(False), bird1=bird(True), weight=weight(), scr=scr, opened=opened,
+                leaf=leaf, leaf_at=at, bob=bob(), on_wall=on_wall(scr, wall), opened_on_wall=on_wall(opened, wall),
+                wall_sh=shadowed(scr, wall))
 
 
 def rgb565(c):
@@ -681,21 +510,16 @@ def rgba8(a):
 
 def header(a):
     wall = a["wall"]
-    box = None                                  # the box both houses (their shadows too) are in, the wall round it
-    for d in a["designs"]:
-        diff = np.abs(d["on_wall"] - wall).max(axis=2) > 0.5
-        ys, xs = np.where(diff)
-        b = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
-        box = b if box is None else (min(box[0], b[0]), min(box[1], b[1]), max(box[2], b[2]), max(box[3], b[3]))
-    bx0, by0, bx1, by1 = box
+    ys, xs = np.where(np.abs(a["on_wall"] - wall).max(axis=2) > 0.5)   # the box the house and its shadow are in
+    bx0, by0, bx1, by1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
     dx, dy, dw, dh = DOOR_RGN
     s256 = lambda v: int(round(v * 256))
     sw = lambda img: swapped(rgb565(img)).ravel()
-    d0 = a["designs"][0]
+    d = a
     out = ["/* SPDX-License-Identifier: GPL-3.0-only */",
            "/* generated by tools/gen_art_cuckoo.py: do not edit */",
            "#pragma once", "#include <stdint.h>",
-           "/* the two cuckoo clocks, the chalet (0) and the classic (1): one layout, their pictures their own */",
+           "/* the cuckoo clock: the box its house and shadow are in, the layout */",
            f"#define CB_X {bx0}", f"#define CB_Y {by0}", f"#define CB_W {bx1 - bx0}", f"#define CB_H {by1 - by0}",
            f"#define CK_HUB_X256 {s256(DIAL_C[0])}", f"#define CK_HUB_Y256 {s256(DIAL_C[1])}",
            f"#define CK_DIAL_R256 {s256(FACE_R)}",
@@ -711,33 +535,31 @@ def header(a):
            f"#define CK_HOLE_X256 {s256(HOLE_C[0])}   /* the doorway: an arch round this, down to CK_HOLE_BOT256 */",
            f"#define CK_HOLE_Y256 {s256(HOLE_C[1])}", f"#define CK_HOLE_R256 {s256(HOLE_R)}",
            f"#define CK_HOLE_BOT256 {s256(HOLE_BOT)}",
-           f"#define CK_LEAF_X {d0['leaf_at'][0]}   /* the door's leaf, its hinge on its left edge */",
-           f"#define CK_LEAF_Y {d0['leaf_at'][1]}", f"#define CK_LEAF_W {d0['leaf'].shape[1]}",
-           f"#define CK_LEAF_H {d0['leaf'].shape[0]}",
+           f"#define CK_LEAF_X {d['leaf_at'][0]}   /* the door's leaf, its hinge on its left edge */",
+           f"#define CK_LEAF_Y {d['leaf_at'][1]}", f"#define CK_LEAF_W {d['leaf'].shape[1]}",
+           f"#define CK_LEAF_H {d['leaf'].shape[0]}",
            f"#define CK_BIRD_W {a['bird0'].shape[1]}   /* the bird, at twice the screen's size */",
            f"#define CK_BIRD_H {a['bird0'].shape[0]}",
            "#define CK_BIRD_FX2 26   /* its feet in the sprite (x 2) */", "#define CK_BIRD_FY2 40",
-           f"#define CK_BOB_W {d0['bob'].shape[1]}", f"#define CK_BOB_H {d0['bob'].shape[0]}",
+           f"#define CK_BOB_W {d['bob'].shape[1]}", f"#define CK_BOB_H {d['bob'].shape[0]}",
            f"#define CK_WT_W {a['weight'].shape[1]}", f"#define CK_WT_H {a['weight'].shape[0]}",
            f"#define CK_WALL_TW {WALL_TW}   /* the panel wall they hang on: a tile this wide, the screen's height */"]
     for i, x in enumerate(STRANDS):
         out.append(f"#define CK_STRAND{i}_X256 {s256(x)}")
     out.append("/* the wall: pine boards, RGB565 in the screen's byte order, CK_WALL_TW x 240, across the screen again */")
     out.append(carray("CK_WALL_SW", "uint16_t", sw(a["tile"])))
-    for i, d in enumerate(a["designs"]):
-        assert d["leaf"].shape == d0["leaf"].shape and d["leaf_at"] == d0["leaf_at"] and d["bob"].shape == d0["bob"].shape
-        out.append(f"/* ---- {d['name']} ({i}): the house, its door shut, on the wall (its shadow on it), RGB565 */")
-        out.append(carray(f"CK{i}_HOUSE", "uint16_t", sw(d["on_wall"][by0:by1, bx0:bx1])))
-        out.append(f"/* its house from CK_FRONT_Y down, premultiplied R G B A: over the pendulum and the chains */")
-        out.append(carray(f"CK{i}_FRONT", "uint8_t", rgba8(d["scr"][FRONT_Y:by1, bx0:bx1]).reshape(-1, 4).ravel(), 32))
-        out.append(f"/* the wall behind what hangs below it (the house's shadow on it), RGB565 */")
-        out.append(carray(f"CK{i}_LOWALL", "uint16_t", sw(d["wall_sh"][FRONT_Y:240, LO_X:LO_X + LO_W])))
-        out.append(f"/* round the door: the gable with the doorway open (and the leaf away), on the wall, RGB565 */")
-        out.append(carray(f"CK{i}_DRBG", "uint16_t", sw(d["opened_on_wall"][dy:dy + dh, dx:dx + dw])))
-        out.append(f"/* the door's leaf, the bob: premultiplied R G B A */")
-        out.append(carray(f"CK{i}_LEAF", "uint8_t", rgba8(d["leaf"]).reshape(-1, 4).ravel(), 32))
-        out.append(carray(f"CK{i}_BOB", "uint8_t", rgba8(d["bob"]).reshape(-1, 4).ravel(), 32))
-    out.append("/* the bird (its beak shut, open; x 2), a weight: premultiplied R G B A, both clocks' */")
+    out.append("/* the house, its door shut, on the wall (its shadow on it), RGB565 */")
+    out.append(carray("CK_HOUSE", "uint16_t", sw(d["on_wall"][by0:by1, bx0:bx1])))
+    out.append("/* the house from CK_FRONT_Y down, premultiplied R G B A: over the pendulum and the chains */")
+    out.append(carray("CK_FRONT", "uint8_t", rgba8(d["scr"][FRONT_Y:by1, bx0:bx1]).reshape(-1, 4).ravel(), 32))
+    out.append("/* the wall behind what hangs below it (the house's shadow on it), RGB565 */")
+    out.append(carray("CK_LOWALL", "uint16_t", sw(d["wall_sh"][FRONT_Y:240, LO_X:LO_X + LO_W])))
+    out.append("/* round the door: the gable with the doorway open (and the leaf away), on the wall, RGB565 */")
+    out.append(carray("CK_DRBG", "uint16_t", sw(d["opened_on_wall"][dy:dy + dh, dx:dx + dw])))
+    out.append("/* the door's leaf, the bob: premultiplied R G B A */")
+    out.append(carray("CK_LEAF", "uint8_t", rgba8(d["leaf"]).reshape(-1, 4).ravel(), 32))
+    out.append(carray("CK_BOB", "uint8_t", rgba8(d["bob"]).reshape(-1, 4).ravel(), 32))
+    out.append("/* the bird (its beak shut, open; x 2), a weight: premultiplied R G B A */")
     out.append(carray("CK_BIRD0_RGBA", "uint8_t", rgba8(a["bird0"]).reshape(-1, 4).ravel(), 32))
     out.append(carray("CK_BIRD1_RGBA", "uint8_t", rgba8(a["bird1"]).reshape(-1, 4).ravel(), 32))
     out.append(carray("CK_WT_RGBA", "uint8_t", rgba8(a["weight"]).reshape(-1, 4).ravel(), 32))
@@ -755,7 +577,7 @@ def paste(img, spr, x0, y0):
 
 
 def preview(a, path):
-    """both clocks as the firmware shows them, on the wall, at rest and with the bird out (3 x)"""
+    """the clock as the firmware shows it, on the wall, at rest and with the bird out (3 x)"""
     def scene(d, bird_out):
         img = d["wall_sh"].copy()
         px, py = PIVOT
@@ -775,9 +597,8 @@ def preview(a, path):
             small = b.reshape(b.shape[0] // 2, 2, b.shape[1] // 2, 2, 4).mean(axis=(1, 3))
             paste(img, small, 120 - 13, int(HOLE_BOT) - 20)
         return img
-    rows = [np.concatenate([scene(d, False), scene(d, True)], axis=1) for d in a["designs"]]
-    both = np.concatenate(rows, axis=0)
-    Image.fromarray(np.clip(both, 0, 255).astype(np.uint8)).resize((1440, 1440), Image.LANCZOS).save(path)
+    both = np.concatenate([scene(a, False), scene(a, True)], axis=1)
+    Image.fromarray(np.clip(both, 0, 255).astype(np.uint8)).resize((1440, 720), Image.LANCZOS).save(path)
 
 
 def main():

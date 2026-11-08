@@ -1,0 +1,5 @@
+# ALGORITHM twice: the cuckoo clock, then the wall clock again (two clocks, turn and turn about), as it was at power-on
+100 enc 1 1
+500 enc 1 -1
+1000 shot
+1100 end

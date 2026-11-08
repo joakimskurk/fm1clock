@@ -6,7 +6,7 @@
  * call at the half hour) while a wire gong is struck, and its weights go down on their chains through the day. The
  * whole chip goes into the ticking, the gongs and the pipes.
  *
- *   ALGORITHM    the clock: the wall clock, the chalet cuckoo clock, the classic one
+ *   ALGORITHM    the clock: the wall clock or the cuckoo clock
  *   SELECT       the minute hand (turned forward past the hour or the half hour, the clock strikes it, as a real one)
  *   PRESETS      the hour hand
  *   SEL          to the nearest minute (press it at :00 of a clock you trust)
@@ -483,6 +483,8 @@ static void app_main(void)
         set.info > 1u || set.clock > 2u || set.keys > KEYS_OFF) {
         set.tick = 16; set.gong = 16; set.silent = 0; set.digits = 0; set.info = 0; set.clock = 0; set.keys = KEYS_SWING;
     }
+    if (set.clock > 1u)                         /* (a build before had two cuckoo clocks: either is this one) */
+        set.clock = 1u;
     apply_set();
 #ifdef DINGHY_HOST
     {
@@ -502,9 +504,9 @@ static void app_main(void)
         platform_poll();
         midi_in();
 
-        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0 && (!t_clock || fm1_ms - t_clock > 300u)) {   /* the next clock (a turn:
-                                                   one): the wall clock, the chalet cuckoo, the classic, round */
-            set.clock = (set.clock + (e > 0 ? 1u : 2u)) % 3u;
+        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0 && (!t_clock || fm1_ms - t_clock > 300u)) {   /* the other clock (a turn:
+                                                   one), either way */
+            set.clock ^= 1u;
             t_clock = fm1_ms;
             dirty = 1; t_change = fm1_ms;
         }
