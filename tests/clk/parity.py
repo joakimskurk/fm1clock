@@ -16,8 +16,8 @@ The cuckoo clock's, against its own recording (tests/ref/cuckoo_features.json, t
                                           and under 400 Hz its case's knock, its energy within 2 dB of the recording's
   parity.py ck_drone WAV                  the train running (clk_render ck_run): its drone's energy 40-450 Hz and its
                                           rattle's above 800 Hz, each within 2 dB of the recording's (running less still)
-  parity.py ck_pre|ck_post WAV N [MAX]    the train's clicks: their peak above 3 kHz within MAX dB (1.5) of the
-                                          recording's (under them there the gong and the pipes ring)
+  parity.py ck_fine_NAME WAV N [MAX]     a click (tick, warning, door, door_shut; clk_render ck_tick ...) at 1/12
+                                          of an octave against tests/ref/cuckoo_clicks.json, every window within MAX
 """
 import json
 import sys
@@ -127,16 +127,26 @@ def cuckoo(what, fs, x):
         return 0 if ok else 1
     ch = x[:, 0]                                           # (the tick from the left; the train's from the middle)
     centers = np.sqrt(np.array(BANDS[:-1]) * np.array(BANDS[1:]))
-    if what in ("ck_pre", "ck_post"):
-        limit = float(sys.argv[4]) if len(sys.argv) > 4 else 1.5
-        ref = json.loads((ROOT / "tools" / "ref_cuckoo.json").read_text())["ticks"][what[3:]]["peak_hf"]
-        h3 = hp(ch, fs, 3000.0)
+    if what.startswith("ck_fine_"):               # at 1/12 of an octave (tools/clicks.py), the click as measured
+        import clicks as K
+        name = what[8:]
+        fine = json.loads((ROOT / "tests" / "ref" / "cuckoo_clicks.json").read_text())[name]
+        E, N = np.array(fine["E"]), np.array(fine["N"])
+        lo = 400.0 if name == "tick" else 300.0
         ons = [onset(ch, fs, (441 + k * 8820) / fs) for k in range(n)]
-        pk = float(np.mean([np.abs(h3[int(o * fs):int((o + 0.015) * fs)]).max() for o in ons])) / GAIN_B
-        d = 20 * np.log10(pk / ref)
-        print(f"cuckoo {what[3:]}: its peak above 3 kHz {20 * np.log10(pk):.1f} dB FS, the recording's "
-              f"{20 * np.log10(ref):.1f}: {d:+.2f} dB (limit {limit})")
-        return 0 if abs(d) <= limit else 1
+        Es = K.band_env(ch / GAIN_B, fs, ons)[0]
+        ok = True
+        print(f"cuckoo {name} at 1/12 octave: synth - recording per window (rms over the bands 6 dB over the floor), "
+              f"limit {limit} dB")
+        last = 0.06 if name == "warning" else 1.0      # (after the warning click its train rattles on: its own sound)
+        hi = 16000.0 if name == "tick" else 13500.0        # (what each was fitted to: tools/fit_cuckoo.py)
+        for (a, b), (rms, mean, nb) in zip(K.WINDOWS, K.compare(Es, E, N, lo=lo, hi=hi)):
+            if nb and a < last:
+                flag = "" if rms <= limit else "   <-- over"
+                ok &= rms <= limit
+                print(f"  {1000 * a:6.0f} .. {1000 * b:4.0f} ms  {rms:5.2f} dB   (mean {mean:+5.2f}, {nb} bands){flag}")
+        print(f"cuckoo {name}: {'pass' if ok else 'FAIL'}")
+        return 0 if ok else 1
     h = hp(ch, fs)
     ons = [onset(ch, fs, (441 + k * 8820) / fs) for k in range(n)]
     E = [10 ** (band_energies(h, fs, t, C["tick_windows"]) / 10) for t in ons]

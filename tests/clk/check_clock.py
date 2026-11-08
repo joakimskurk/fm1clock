@@ -65,8 +65,9 @@ def onset(x, fs, t0, t1):
     return (i0 + j) / fs, float(e5[i0 + j] / (e20[i0 + j - 882] + 1e-10))
 
 
-def tick_events(x, fs):
-    """the ticks: energy above 3 kHz (FFT filter), its peaks; and which side is louder"""
+def tick_events(x, fs, t0=None, t1=None):
+    """the ticks: energy above 3 kHz (FFT filter), its peaks; and which side is louder (the threshold from the
+    stretch t0..t1 alone, if given: a louder sound elsewhere, the cuckoo's door, would raise it)"""
     out = []
     for ch in (0, 1):
         X = np.fft.rfft(x[:, ch])
@@ -76,7 +77,8 @@ def tick_events(x, fs):
     hp = (out[0] ** 2 + out[1] ** 2) / 2
     env = np.sqrt(np.convolve(hp, np.ones(44) / 44, "same"))
     ev, i = [], 0
-    thr = np.percentile(env, 99.5) * 0.12                    # (low enough for a click 9 dB under a tick)
+    part = env[int(t0 * fs):int(t1 * fs)] if t0 is not None else env
+    thr = np.percentile(part, 99.5) * 0.12                   # (low enough for a click 9 dB under a tick)
     while i < len(env):
         if env[i] > thr:
             seg = slice(i, i + int(0.015 * fs))
@@ -146,7 +148,7 @@ def main():
         t0, t1 = float(sys.argv[3]), float(sys.argv[4])
         P = float(sys.argv[5]) if len(sys.argv) > 5 else 0.5
         tol = float(sys.argv[6]) / 1000 if len(sys.argv) > 6 else 0.003
-        ev = [(t, lr) for t, lr in tick_events(x, fs) if t0 <= t <= t1]
+        ev = [(t, lr) for t, lr in tick_events(x, fs, t0, t1) if t0 <= t <= t1]
         # the ticks' place in the half second: where most of them are (fm1-emu's sound starts a little after the
         # power-on, the host's with it); one click at each end, nothing between
         ph = np.array([t % P for t, _ in ev])

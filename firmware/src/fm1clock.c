@@ -125,12 +125,13 @@ static void train_start(uint32_t n, uint32_t at, uint32_t mute)
         uint32_t h = at + CK_RUN0_FRAMES, lo = h;
         if (!mute) {                            /* the warning: the train runs, clicks twice, catches on its pin */
             tr_put(at, EV_RUN, 1);
-            tr_put(h - CK_PRE_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
-            tr_put(h - CK_PRE1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
+            tr_put(h - CK_PRE_FRAMES, EV_CLICK, CLICK_ARG(SND_B_WARN, 32767u));
+            tr_put(h - CK_PRE1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_WARN, 32767u));
             tr_put(h - CK_STOP_FRAMES, EV_RUN, 0);
-            tr_put(h - CK_PRE2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));   /* the release: the door opens, */
-            tr_put(h - CK_PRE2_FRAMES, EV_DOOR, 1);                             /* the train runs on */
-            tr_put(h - CK_PRE2_FRAMES, EV_RUN, 1);
+            tr_put(h - CK_PRE2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_DOOR, 32767u));   /* the release: the door opens */
+            tr_put(h - CK_PRE2_FRAMES + CK_DOOR2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_DOOR2, 32767u));   /* to its stop */
+            tr_put(h - CK_PRE2_FRAMES, EV_DOOR, 1);
+            tr_put(h - CK_PRE2_FRAMES, EV_RUN, 1);                              /* the train runs on */
         }
         for (k = 0; k < n; k++) {
             uint32_t hi = h + jit(k ? CK_HIT_TO_HIGH : CK_FIRST_HIT_TO_HIGH, 7);
@@ -143,9 +144,9 @@ static void train_start(uint32_t n, uint32_t at, uint32_t mute)
             h += jit(CK_CALL_FRAMES, 7);
         }
         if (!mute) {
-            tr_put(lo + CK_POST0_FRAMES, EV_CLICK, CLICK_ARG(SND_B_POST, 32767u));
+            tr_put(lo + CK_POST0_FRAMES, EV_CLICK, CLICK_ARG(SND_B_SHUT, 32767u));   /* (as loud as the door shutting) */
             tr_put(lo + CK_POST0_FRAMES, EV_DOOR, 0);   /* the bird goes in; the door shuts on the next click */
-            tr_put(lo + CK_POST1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_POST, 32767u));
+            tr_put(lo + CK_POST1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_SHUT, 32767u));
             tr_put(lo + CK_POST1_FRAMES, EV_RUN, 0);   /* and stops */
         }
     }
@@ -218,7 +219,7 @@ static void app_audio(int32_t *out, uint32_t n)
         }
         if (ck_wind && (int32_t)(wind_t - frames) < (int32_t)n) {   /* the chains pulled: the click wheel */
             uint32_t off = (int32_t)(wind_t - frames) < 0 ? 0 : wind_t - frames;
-            ev_add(ev, &nev, off, EV_CLICK, CLICK_ARG(SND_B_PRE, 9000u + (eng_rnd() & 2047u)));
+            ev_add(ev, &nev, off, EV_CLICK, CLICK_ARG(SND_B_WARN, 5000u + (eng_rnd() & 2047u)));
             wind_t = frames + off + WIND_FRAMES + (eng_rnd() & 511u);
         } else if (!ck_wind) {
             wind_t = frames;

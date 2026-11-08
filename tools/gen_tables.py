@@ -62,7 +62,7 @@ def build():
          f"#define NG {len(modes)}u            /* the gong's modes, strongest first (their energy a^2 tau) */",
          f"#define K_FM {K}u            /* the first K_FM carry a modulator */",
          f"#define NT {NT}u            /* operators per tick bank */",
-         "#define NSND 5u            /* click sounds: the wall clock's tick, tock; the cuckoo's tick, its train, its door */",
+         "#define NSND 7u            /* click sounds: the wall clock's tick, tock; the cuckoo's tick, warning, door (two), door shut */",
          f"#define CLK_SUB {SUB}u", f"#define CLK_TSTEP {TSTEP}u", f"#define CLK_BLOCK {BLOCK}u",
          f"#define TRAIN_FRAMES {int(round(m['train']['interval'] * FS))}u   /* hit to hit in a strike train */",
          f"#define CLICK_FRAMES {int(round(m['click_before'] * FS))}u    /* the release click before a hit */"]
@@ -87,10 +87,14 @@ def build():
     h.append(carray("HAMMER", "uint32_t", [int(round(32767 * v)) for v in gains]))
     c = json.loads((ROOT / "tools" / "clk_cuckoo.json").read_text())
     sounds = [(m, "tick", GAIN, "the wall clock's tick"), (m, "tock", GAIN, "the wall clock's tock"),
-              (c, "tick", GAIN_B, "the cuckoo clock's tick"), (c, "pre", GAIN_B, "the cuckoo's train before a strike"),
-              (c, "post", GAIN_B, "its door shutting after it")]
+              (c, "tick", GAIN_B, "the cuckoo clock's tick"), (c, "warning", GAIN_B, "its train's warning clicks"),
+              (c, "door", GAIN_B, "its door opening: the latch"), (c, "door_b", GAIN_B, "and the door to its stop"),
+              (c, "door_shut", GAIN_B, "its door shutting (and the bird going in)")]
     h.append("/* the click sounds' rise: 1 - e^(-t / ta), per frame towards 1 by this much (Q15) */")
     h.append(carray("T_ATK", "uint32_t", [int(round(32768 * (1 - math.exp(-1 / (FS * src[n + "_attack"]))))) for src, n, _, _ in sounds]))
+    h.append("/* each operator's frequency, every time the sound starts: +- 2^-T_JSH (the wall clock's 0.1 %; the cuckoo's")
+    h.append(" * 3 %, as its clicks are measured, a twelfth of an octave a band: no two alike) */")
+    h.append(carray("T_JSH", "uint32_t", [10 if src is m else 5 for src, _, _, _ in sounds]))
     for k, (src, name, g, what) in enumerate(sounds):
         b = list(src[name]) + [dict(f=1000.0, tau=0.001, a=0.0)] * (NT - len(src[name]))
         h.append(f"/* {what}: phase step, level (Q31), decay per CLK_TSTEP frames (Q32) */")
@@ -151,6 +155,7 @@ def build():
     h.append(f"#define RATTLE_P16 {int(round(ra['rate'] * SUB / FS * 65536))}u   /* a click starts in CLK_SUB frames with this chance (Q16) */")
     h.append(f"#define RATTLE_AMP {q31(ra['a'], GAIN_B)}u   /* its full level (Q31) */")
     h.append(f"#define RATTLE_DEC {dec(ra['tau'], TSTEP)}u   /* its decay per CLK_TSTEP frames (Q32) */")
+    h.append(f"#define CK_DOOR2_FRAMES {sec(c['door_split'])}u   /* the door: from its latch to its second impact */")
     h.append(f"#define CK_RUN0_FRAMES {sec(-ra['start'])}u   /* the train starts to run before the first blow */")
     h.append(f"#define CK_STOP_FRAMES {sec(-ra['stop'])}u   /* and stops, on its warning pin, until the release */")
     h.append(carray("RATTLE_INC", "uint32_t", [inc(f) for f in ra["f"]]))

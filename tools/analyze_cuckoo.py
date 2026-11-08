@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 from analyze_ref import matrix_pencil  # noqa: E402
 from features import BANDS, band_energies  # noqa: E402
+import clicks as K  # noqa: E402
 
 HALF_HIT = 2.232                                    # (by eye; refined below) the half hour's gong
 TRAIN = [5.387, 6.147, 6.772, 7.397, 8.048, 8.718, 9.384, 10.055, 10.719, 11.385]
@@ -276,6 +277,35 @@ def train_rattle(m, fs, h0, n_max=10):
     e_db = 10 * np.log10(max(e(RUNS) - e(QUIET), 1e-20))
     return dict(start=float(t_run - h0), stop=float(t_stop - h0), grains=grains), float(e_db)
 
+
+# the mechanism's clicks, each its own sound (tools/clicks.py): when, and the quiet before each (its floor)
+CLICKS = {
+    "tick": (TICKS_CLEAN, (-0.060, -0.035)),
+    "warning": ([1.492, 4.652, 4.732], (-0.016, -0.004)),   # (the train rattles before them: its floor right before)
+    "door": ([5.000], (-0.060, -0.035)),                   # the release: the door opens (the train still before it)
+    "door_shut": ([11.940, 2.825], (-0.060, -0.035)),
+}
+# (the bird going in, 11.784 s, sounds on the low pipe's note, so its own sound cannot be measured: above 3 kHz,
+# where the pipe is quiet, it is as loud as the door shutting, within 1.2 dB; the firmware makes it that sound)
+DOOR_SPLIT = 0.013                  # the door is two impacts at least: the latch, then the door and its stop
+DOOR_A_WIN = [(-0.002, 0.003), (0.003, 0.008), (0.008, DOOR_SPLIT)]
+
+
+def fine_clicks(m, fs):
+    """every click type's power per twelfth of an octave over time (tools/clicks.py); the door's first impact on
+    its own (up to DOOR_SPLIT), and the door from DOOR_SPLIT on"""
+    out = dict(edges=K.edges(), windows=K.WINDOWS, door_split=DOOR_SPLIT, door_a_windows=DOOR_A_WIN)
+    for name, (ts, quiet) in CLICKS.items():
+        ons = [onset(m, fs, t) for t in ts]
+        E, N = K.band_env(m, fs, ons, quiet=quiet)
+        out[name] = dict(ons=ons, E=E.tolist(), N=N.tolist())
+        if name == "door":
+            Ea, _ = K.band_env(m, fs, ons, wins=DOOR_A_WIN, quiet=quiet)
+            Eb, _ = K.band_env(m, fs, [o + DOOR_SPLIT for o in ons], quiet=(quiet[0] - DOOR_SPLIT, quiet[1] - DOOR_SPLIT))
+            out["door_a"] = dict(ons=ons, E=Ea.tolist(), N=N.tolist())
+            out["door_b"] = dict(ons=[o + DOOR_SPLIT for o in ons], E=Eb.tolist(), N=N.tolist())
+    return out
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -319,6 +349,7 @@ def main():
                  tick=tick_bands, pre=pre_bands, post=post_bands, noise=noise.tolist(), tick_noise=tick_noise,
                  knock_db=knock_db, drone_db=drone_db, rattle_db=rattle_db)
     (ROOT / "tools" / "ref_cuckoo.json").write_text(json.dumps(model, indent=1) + "\n")
+    (ROOT / "tests" / "ref" / "cuckoo_clicks.json").write_text(json.dumps(fine_clicks(m, fs)) + "\n")
     (ROOT / "tests" / "ref" / "cuckoo_features.json").write_text(json.dumps(feats, indent=1) + "\n")
     print(f"gong hit {hit:.4f} s, {len(modes)} modes; beat {beat:.4f} s; call every {model['call']['period']:.3f} s, "
           f"hit -> high pipe {model['call']['hit_to_high']:.3f} s (the train's first {d_hi[0]:.3f}), high -> low "

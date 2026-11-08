@@ -375,20 +375,30 @@ repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_fea
   rattles (below), and clicks twice, 0.75 and 0.66 s before the first call. 0.55 s before it, it catches on its
   warning pin and stops; only the pendulum ticks on. 0.40 s before it, the release: a click, the door opens, and the
   train runs again, rattling, until the door shuts after the last call (the bird goes in on one click, the door
-  shuts on another). The first blow comes 0.87 s after the hour. The clicks are the tick's sound at their own
-  level (in the recording the gong and the pipes ring under them): their peaks above 3 kHz are 6.6 and 14.9 dB over
-  a tick's.
+  shuts on another). The first blow comes 0.87 s after the hour.
+- **The mechanism's clicks are each its own sound**, measured as the tick is (below): the warning clicks; the door
+  opening, which is no click but at least two impacts, the latch letting go and 13 ms later the door swinging to
+  its stop, 20 to 30 dB louder than a tick in the middle (its strongest at 1.3 kHz) and ringing for 100 ms, made by
+  two sounds 13 ms apart, the latch's short, their levels fitted together against the whole door; and the door
+  shutting, one sharp impact, strongest at 1.8 kHz. The bird going in sounds on the low pipe's note, so its own
+  sound cannot be measured; above 3 kHz, where the pipe is quiet, it is as loud as the door shutting, and that is
+  its sound.
 - **The rattle.** While the train runs, its wheels and its fly rattle: an irregular click every 2 to 10 ms, 1.2
   to 1.4 kHz the strongest, and 0.8–1 kHz, 2 kHz and 4.7–5.2 kHz, as loud above 800 Hz as a tick. In the firmware
   it is clicks at random, 250 a second, each a sine at one of the ten measured frequencies (as often as its share of
   the power), 0.4 to 1 of the full level, ringing 1.5 ms: eight operators, computed all the time.
-- **The tick.** 64 sine operators, fitted as the wall clock's tick (two decays a band, all levels together, a hard
-  rise of 1 ms: the pallet striking the tooth), but over its first 130 ms: a cuckoo clock's tick does not stop at a click, it rings on in its wooden case and its
-  steel, falling 15 to 20 dB in the first 30 ms and then slowly. It is measured from the five ticks of the
-  recording that have nothing else under them (before the half hour the warning comes, after a call the gong rings
-  on for seconds), above 400 Hz, against the quiet just before each, and its levels are fitted by their ratios
-  (Itakura-Saito), so that its quiet tail counts as much as its loud start. The same tick at each end of the
-  swing, from the left and from the right: in the recording the two are alike.
+- **The tick, at a twelfth of an octave** (`tools/clicks.py`). Measured in thirds of an octave, as the wall
+  clock's is, the fit could put a band's energy on one sine anywhere in it: the cuckoo's tick, whose strongest
+  part is a broad 1.1–1.3 kHz, came out as a few pitched pings with holes 25 to 48 dB deep between them. So it is
+  measured every twelfth of an octave from 400 Hz to 16 kHz: the recording band-passed by FFT round each of the five
+  ticks that have nothing under them, its mean power in eight windows to 130 ms, less the quiet before each. Each
+  fine band gets an operator at its centre, its decay from a grid to follow the band in dB; the spare ones go to
+  the bands that a second decay helps the most (it falls 15 to 20 dB in 30 ms, then rings on in its case and its
+  steel); then all the levels together, each operator's template rendered as the engine plays it (Itakura-Saito:
+  by ratio, so a quiet tail counts as the loud start). A hard rise of 1 ms (the pallet striking the tooth). And
+  every time it sounds, each operator moves ±3 % at random, within its band: the recording's ticks are not one
+  waveform (aligned to a tenth of a sample, only 20 to 50 % of a tick is the same from one to the next), so no two
+  of these are alike either. The same tick at each end of the swing: in the recording the two are alike.
 - **The case's knock.** Under 400 Hz the room is as loud as the tick, so a tick on its own cannot show what is
   there. But the knock of the wooden case comes back the same with every tick, and the room does not: the seven
   ticks before the calls, averaged sample by sample, keep the knock and leave the room 8.5 dB down. Its modes, by
@@ -422,12 +432,23 @@ octave, the root mean square over the bands that stand 6 dB over the recording's
 
 | The mean of 24 | −2–4 ms | 4–10 | 10–20 | 20–35 | 35–60 | 60–90 |
 |---|---|---|---|---|---|---|
-| ticks (above 400 Hz) | 1.95 dB | 2.71 | 2.41 | 1.54 | 2.68 | 1.46 |
+| ticks (above 400 Hz, in thirds of an octave) | 4.50 dB | 3.13 | 4.39 | 3.15 | 5.00 | 4.29 |
+
+At a twelfth of an octave (`tests/ref/cuckoo_clicks.json`), every window, over the bands 6 dB over the floor:
+
+| | −2–3 ms | 3–8 | 8–15 | 15–25 | 25–40 | 40–60 | 60–90 | 90–130 |
+|---|---|---|---|---|---|---|---|---|
+| the tick (24) | 4.14 dB | 3.17 | 3.02 | 4.08 | 3.32 | 3.59 | 3.59 | |
+| the warning click | 3.89 | 3.61 | 4.92 | 2.74 | 2.72 | 1.36 | | |
+| the door opening | 5.21 | 4.38 | 4.61 | 3.87 | 3.79 | 4.50 | 2.30 | 1.99 |
+| the door shutting | 3.13 | 3.45 | 4.07 | 5.26 | 4.68 | 3.23 | | 3.81 |
 
 The case's knock (80–450 Hz, its first 80 ms) is within 0.5 dB of the recording's, the running train's drone
 (40–450 Hz) and its rattle (above 800 Hz) within 0.3 dB.
 
-The warning and the door's clicks are within 1 dB of the recording's peaks. The calls are not as close as the
+The recording has five clean ticks, three warning clicks, one door opening and two door shuttings: at a twelfth
+of an octave a single click differs from the next by a few dB a band, and that is about what is left. The calls are
+not as close as the
 wall clock's gong: the recording's calls overlap (a pipe is still breathing out and the gong still ringing when the
 next call starts), and the gong could be watched for only 0.17 s round the pipes' pitches. The running train's
 rattle filled much of what was missing between the calls: the last tenth of a second before the next call, 8 dB
@@ -546,7 +567,8 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 - the sound against the recordings, as in the tables above: the wall clock's every window within 2 dB, its ticks
   within 1.6 dB; the cuckoo's gong within 3.5 dB, its calls within 6 dB over their first 0.5 s (with the 208
   carriers of the chip 5.5 and 6.5 dB), its ticks within 3 dB to 90 ms and its case's knock within 2 dB, its running
-  train's drone and rattle within 2 dB, its train's clicks within 1.5 dB;
+  train's drone and rattle within 2 dB; its tick, warning click, door opening and door shutting at a twelfth of
+  an octave within 5 to 6 dB every window;
 - and, running the whole app on a computer from scripts (`tests/scripts/`):
 
 | Script | What must happen |
@@ -612,6 +634,7 @@ the USB rescue, where an installer always works. Installing firmware is at your 
 | [tools/fit_model.py](tools/fit_model.py), [tools/fit_cuckoo.py](tools/fit_cuckoo.py) | Fit the FM attacks, the pipes and the ticks to the measurements |
 | [tools/gen_tables.py](tools/gen_tables.py) | The models as integer tables |
 | [tools/gen_art.py](tools/gen_art.py) | The design without hands or pendulum, the window's layers, the bob |
+| [tools/clicks.py](tools/clicks.py) | Clicks measured and fitted at a twelfth of an octave (the cuckoo's tick, warning, door) |
 | [tools/gen_art_cuckoo.py](tools/gen_art_cuckoo.py) | The cuckoo clock, drawn: the house, the door, the bird, the bob, a weight |
 | [tools/settime.py](tools/settime.py) | Sets the clock to the computer's time over MIDI |
 | [tools/emu_ci.sh](tools/emu_ci.sh), [tools/emu_check.sh](tools/emu_check.sh) | The package in fm1-emu |

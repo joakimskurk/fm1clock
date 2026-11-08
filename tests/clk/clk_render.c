@@ -10,7 +10,8 @@
  * the cuckoo clock's:
  *   clk_render ck_strike OUT.wav [NG]   one blow on its wire gong at 50 ms, 3 s
  *   clk_render ck_call N OUT.wav [NG]   N calls (the gong, the high pipe, the low), CK_CALL_FRAMES apart
- *   clk_render ck_tick|ck_pre|ck_post OUT.wav [N]   N of its ticks (left), or its train's clicks (the middle)
+ *   clk_render ck_tick|ck_warning|ck_door|ck_shut OUT.wav [N]   N of its ticks (left), or of its train's warning
+ *                                     clicks, its door opening (both its impacts), its door shutting (the middle)
  *   clk_render ck_run OUT.wav            its train running, its drone, from 0.1 to 1.1 s */
 #include <stdint.h>
 #include <stdio.h>
@@ -116,17 +117,22 @@ int main(int argc, char **argv)
         eng_load(1);
         run(44100u * 3u / 2u, at, ty, ar, 2);
         write_wav(argv[2]);
-    } else if ((!strcmp(mode, "ck_tick") || !strcmp(mode, "ck_pre") || !strcmp(mode, "ck_post")) && argc > 2) {
-        uint32_t n = argc > 3 ? (uint32_t)atoi(argv[3]) : 1u, at[64], ty[64], ar[64], i;
-        uint32_t snd = mode[3] == 't' ? SND_B_TICK : mode[4] == 'r' ? SND_B_PRE : SND_B_POST;
+    } else if ((!strcmp(mode, "ck_tick") || !strcmp(mode, "ck_warning") || !strcmp(mode, "ck_door") ||
+                !strcmp(mode, "ck_shut")) && argc > 2) {
+        uint32_t n = argc > 3 ? (uint32_t)atoi(argv[3]) : 1u, at[128], ty[128], ar[128], i, k = 0;
+        uint32_t snd = mode[3] == 't' ? SND_B_TICK : mode[3] == 'w' ? SND_B_WARN : mode[3] == 'd' ? SND_B_DOOR : SND_B_SHUT;
         eng_want = 1;
         eng_load(1);
-        for (i = 0; i < n && i < 64u; i++) {
-            at[i] = 441u + i * 8820u;
-            ty[i] = snd == SND_B_TICK ? EV_TICK : EV_CLICK;
-            ar[i] = snd == SND_B_TICK ? snd : snd | 32767u << 8;
+        for (i = 0; i < n && i < 60u; i++) {
+            at[k] = 441u + i * 8820u;
+            ty[k] = snd == SND_B_TICK ? EV_TICK : EV_CLICK;
+            ar[k] = snd == SND_B_TICK ? snd : snd | 32767u << 8;
+            k++;
+            if (snd == SND_B_DOOR) {            /* the door: its latch, then 13 ms on the door to its stop */
+                at[k] = 441u + i * 8820u + CK_DOOR2_FRAMES; ty[k] = EV_CLICK; ar[k] = SND_B_DOOR2 | 32767u << 8; k++;
+            }
         }
-        run(441u + i * 8820u, at, ty, ar, i);
+        run(441u + i * 8820u, at, ty, ar, k);
         write_wav(argv[2]);
     } else if (!strcmp(mode, "bench")) {
         uint32_t at[] = {100, 2205, 22050, 44100}, ty[] = {EV_TICK, EV_HIT, EV_TOCK, EV_TICK}, ar[] = {SND_A_TICK, HAMMER[0], SND_A_TOCK, SND_A_TICK};

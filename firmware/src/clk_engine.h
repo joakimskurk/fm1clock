@@ -41,10 +41,10 @@ static const gong_tab_t GONGS[2] = {
     {NG, G_INC, G_AMP, G_DEC, G_DEC_BLOCK, G_PH, F_INC, F_I0, F_DEC, F_B},          /* the wall clock's coil gong */
     {NGB, GB_INC, GB_AMP, GB_DEC, GB_DEC_BLOCK, GB_PH, FB_INC, FB_I0, FB_DEC, FB_B},   /* the cuckoo's wire gong */
 };
-enum { SND_A_TICK, SND_A_TOCK, SND_B_TICK, SND_B_PRE, SND_B_POST };
-static const uint32_t *const SND_INC[NSND] = {T0_INC, T1_INC, T2_INC, T3_INC, T4_INC};
-static const uint32_t *const SND_AMP[NSND] = {T0_AMP, T1_AMP, T2_AMP, T3_AMP, T4_AMP};
-static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4_DEC};
+enum { SND_A_TICK, SND_A_TOCK, SND_B_TICK, SND_B_WARN, SND_B_DOOR, SND_B_DOOR2, SND_B_SHUT };
+static const uint32_t *const SND_INC[NSND] = {T0_INC, T1_INC, T2_INC, T3_INC, T4_INC, T5_INC, T6_INC};
+static const uint32_t *const SND_AMP[NSND] = {T0_AMP, T1_AMP, T2_AMP, T3_AMP, T4_AMP, T5_AMP, T6_AMP};
+static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4_DEC, T5_DEC, T6_DEC};
 #define NG_MAX (NG > NGB ? NG : NGB)
 
 static op_t gop[NG_MAX] __attribute__((section(".pool")));
@@ -163,7 +163,7 @@ static void eng_tick(uint32_t snd, uint32_t g15, int32_t gl, int32_t gr)   /* a 
         op_t *o = &b->o[k];
         int32_t dp = (int32_t)(eng_rnd() & 255u) - 128;
         o->ph = eng_rnd();
-        o->inc = I[k] + (uint32_t)(((int32_t)(I[k] >> 10) * dp) >> 7);    /* +-0.1 % */
+        o->inc = I[k] + (uint32_t)(int32_t)(((int64_t)(I[k] >> 1) * dp) >> (T_JSH[snd] + 6));   /* +- 2^-T_JSH */
         o->amp = (uint32_t)(((uint64_t)A[k] * ((g * (28672u + (eng_rnd() & 8191u))) >> 15)) >> 15);   /* 0.88 .. 1.12 */
         o->dec = D[k];
     }
