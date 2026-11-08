@@ -58,6 +58,11 @@ jobs:
             echo "::notice title=GitHub Pages is off::Settings -> Pages -> Build and deployment -> Source: GitHub Actions, then run the build again"
             echo "on=0" >> "$GITHUB_OUTPUT"
           fi
+      - name: The clock for the browser (WebAssembly)
+        run: |
+          command -v wasm-ld >/dev/null || command -v wasm-ld-18 >/dev/null || \
+            { sudo apt-get update -q && sudo apt-get install -y -q lld; }
+          APP_VER="dev-${GITHUB_SHA::7}" sh web/app/build.sh build/web/fm1clock.wasm
       - name: The site
         run: python3 web/make_site.py build/fm1clock.fwsc "dev-${GITHUB_SHA::7}" _site
       - uses: actions/upload-pages-artifact@v3

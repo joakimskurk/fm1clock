@@ -132,6 +132,16 @@ job of `.github/workflows/build.yml` on every push to the default branch.
 - **Tested** (`tests/run_clock.sh`, with Playwright): the page against a simulated FM-1 on Web MIDI, the whole
   install from the official firmware and an install cut off; every byte the page sends is checked against the
   package. Dinghy's own `tests/install_test.py` checks `web/fm1pkg.js` against `tools/fm1pkg_make.py`.
+- **Try it here** is the clock itself in the page: `firmware/src/fm1clock.c`, unchanged, compiled to WebAssembly
+  (`web/app/build.sh`: clang for wasm32, no C library, no imports) on `web/app/web_host.c` instead of the chip, as
+  the host build runs on `tests/host.c`. The browser's sound is its time base, as the audio interrupt is on the
+  FM-1: an AudioWorklet (`web/app/worklet.js`) asks it for each quantum's frames, and it runs its main loop a pass
+  for each millisecond those are worth, the sound in its blocks of 256 frames. Its screen and its keys' lights go
+  to the page about 30 times a second (`web/app/clock.js`), and the page's buttons are the FM-1's controls (a turn
+  of ALGORITHM, PLAY, FX, ENV, HOME, GLO, SEQ, SELECT and PRESETS a detent). It starts at the computer's time,
+  sent as the MIDI CCs 20 to 22; it renders the 206 carriers the chip does; it runs about 40 times faster than it
+  has to. Tested: in Node (`tests/web/app_test.mjs`: its ticks every half second, the screen, ALGORITHM, PLAY, the
+  hour struck after the time is set) and the page in Chromium (`tests/web/app_page.js`).
 - **To switch it on** (once, the repository's owner): on GitHub, *Settings → Pages → Build and deployment →
   Source: GitHub Actions*. Then the next push (or *Actions → build → Run workflow*) publishes it. Until then the
   `site` job says that Pages is off, and the build stays green.
@@ -165,6 +175,7 @@ job of `.github/workflows/build.yml` on every push to the default branch.
 | [tools/settime.py](../tools/settime.py) | Sets the clock to the computer's time over MIDI |
 | [tools/emu_ci.sh](../tools/emu_ci.sh), [tools/emu_check.sh](../tools/emu_check.sh) | The package in fm1-emu |
 | [web/](../web/) | The web page and its installer: `index.html`, `make_site.py`, SLOOP's `fm1pkg.js` and `fm1ota.js` |
+| [web/app/](../web/app/) | The clock in the browser: `build.sh` (the firmware to WebAssembly), `web_host.c` (the page's FM-1), `worklet.js`, `clock.js` |
 | [tests/run_clock.sh](../tests/run_clock.sh), [tests/clk/](../tests/clk/), [tests/scripts/](../tests/scripts/) | The tests |
 | [assets/design.png](../assets/design.png) | The design |
 | [PLATFORM.md](../PLATFORM.md) | Which Dinghy, and what is changed from it |

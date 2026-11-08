@@ -7,9 +7,11 @@
   firmware/fm1clock-VER.fwsc   the package the page installs (its SHA-256 in the page: a damaged download is
                                never offered)
   screens/                     the pictures and the icon (docs/screens)
+  app/                         the clock itself in the browser: fm1clock.wasm (web/app/build.sh, the firmware compiled
+                               to WebAssembly), worklet.js (it, in the audio thread), clock.js (its screen, its controls)
   .nojekyll                    (served as it is)
 
-  python3 web/make_site.py build/fm1clock.fwsc VERSION OUT_DIR
+  python3 web/make_site.py build/fm1clock.fwsc VERSION OUT_DIR [build/web/fm1clock.wasm | -]
 
 The package must be an FM-1 Clock one: its identity FM-1_94N, its Felucca update loader in it (which the installer
 talks to). Made after SLOOP's web/make_site.py (Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton
@@ -38,7 +40,7 @@ def strip_module(src):
     return re.sub(r"^import .*?;\n", "", src, flags=re.M)
 
 
-def main(pkg, version, out):
+def main(pkg, version, out, wasm="build/web/fm1clock.wasm"):
     pkg, out = Path(pkg), Path(out)
     raw = pkg.read_bytes()
     product = product_of(raw)
@@ -60,16 +62,28 @@ def main(pkg, version, out):
         shutil.rmtree(out)
     (out / "firmware").mkdir(parents=True)
     (out / "screens").mkdir()
+    (out / "app").mkdir()
+    if wasm == "-":                             # (the tests, where no clang for WebAssembly is: the page, no clock)
+        print("site: no app/fm1clock.wasm: the page's Try it here will not start")
+        wasm_n = 0
+    else:
+        wasm = Path(wasm)
+        if not wasm.exists():
+            raise SystemExit(f"{wasm}: not there (sh web/app/build.sh makes it)")
+        shutil.copy(wasm, out / "app" / "fm1clock.wasm")
+        wasm_n = wasm.stat().st_size
+    for f in ("clock.js", "worklet.js"):
+        shutil.copy(HERE / "app" / f, out / "app" / f)
     shutil.copy(pkg, out / "firmware" / name)
     for f in SCREENS:
         shutil.copy(ROOT / "docs" / "screens" / f, out / "screens" / f)
     (out / "index.html").write_text(html, encoding="utf-8")
     (out / ".nojekyll").write_text("")
     print(f"site: {out}: index.html ({len(html)} B), firmware/{name} ({len(raw)} B, {product}), "
-          f"{len(SCREENS)} pictures")
+          f"{len(SCREENS)} pictures, app/ ({wasm_n} B of WebAssembly)")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 5):
         sys.exit(__doc__)
     main(*sys.argv[1:])

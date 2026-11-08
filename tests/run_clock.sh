@@ -93,17 +93,31 @@ run "ALGORITHM, a turn of five detents over 0.4 s: one switch, the cuckoo clock 
 run "ALGORITHM again, the other way: the wall clock, as at power-on (its top)" \
     python3 $P same $OUT/repeat-1000.ppm $OUT/back-2000.ppm 0 0 240 55 0
 
+# the clock for the browser (web/app/): the firmware compiled to WebAssembly (where clang and wasm-ld are), run in Node
+WASM=-
+if sh web/app/build.sh build/web/fm1clock.wasm >/dev/null 2>&1; then
+    WASM=build/web/fm1clock.wasm
+    run "the clock for the browser (WebAssembly, no imports): its ticks, its screen, ALGORITHM, PLAY, the time over MIDI" \
+        node tests/web/app_test.mjs $WASM
+else
+    echo "== the clock for the browser: skipped (no clang with wasm-ld: apt install clang lld)"
+fi
+
 # the site (GitHub Pages): made from the package (CI builds it before the tests; here, if it is there), its installer
-# against a simulated FM-1 if Playwright is there
+# against a simulated FM-1 and its Try it here in Chromium if Playwright is there
 if [ -f build/fm1clock.fwsc ]; then
-    run "the site: the page, its installer and the package (web/make_site.py)" sh -c \
-        "python3 web/make_site.py build/fm1clock.fwsc test build/site && test -s build/site/index.html && \
+    run "the site: the page, its installer, the package and the clock for the browser (web/make_site.py)" sh -c \
+        "python3 web/make_site.py build/fm1clock.fwsc test build/site $WASM && test -s build/site/index.html && \
          test -s build/site/firmware/fm1clock-test.fwsc && test -s build/site/screens/cuckoo.png"
     if node -e "require('playwright')" 2>/dev/null; then
         run "the site's installer against a simulated FM-1: both steps, every byte, and an install cut off" \
             node tests/web/install_sim.js build/site
+        if [ "$WASM" != - ]; then
+            run "the site's Try it here in Chromium: Start, the clock, its key's light, the cuckoo, PLAY" \
+                node tests/web/app_page.js build/site
+        fi
     else
-        echo "== the site's installer against a simulated FM-1: skipped (no Playwright)"
+        echo "== the site's installer and its Try it here in Chromium: skipped (no Playwright)"
     fi
 else
     echo "== the site: skipped (no build/fm1clock.fwsc: make fw)"

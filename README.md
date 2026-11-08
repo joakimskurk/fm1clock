@@ -66,8 +66,9 @@ The settings (the clock, the levels, the strike, the lights, the digits) are kep
 **Install it from the browser:** [joakimskurk.github.io/fm1clock](https://joakimskurk.github.io/fm1clock/), in Chrome
 or Edge on a computer, the FM-1 on USB. One button; it always offers the latest build that passed its tests.
 
-**Try it without an FM-1:** download `packages` from a run under *Actions* on GitHub, unzip `fm1clock.fwsc`, and
-open it in [fm1-emu](https://joakimeriksson.github.io/fm1-emu/) in a browser.
+**Try it without an FM-1:** *Try it here* on [the page](https://joakimskurk.github.io/fm1clock/#try), in any recent
+browser, phones too: the firmware itself compiled for the browser, its sound, its screen and its keys' lights, at
+your time. Or the package in [fm1-emu](https://joakimeriksson.github.io/fm1-emu/), the FM-1 emulator.
 
 **Or install it** from a computer with Python:
 
@@ -85,7 +86,8 @@ make test     # the clock's tests on a computer: no FM-1, no toolchain (Python 3
 make fw       # the FM-1 package, build/fm1clock.fwsc (the JieLi toolchain and the AC79 SDK: docs/DINGHY_README.md)
 make emu      # the package in fm1-emu
 make host     # the app on a computer: build/host/fm1clock.wav and screenshots
-python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page with its installer
+sh web/app/build.sh   # the clock for the browser: build/web/fm1clock.wasm (clang and lld)
+python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page: its installer, the clock to try
 ```
 
 ## How it is made

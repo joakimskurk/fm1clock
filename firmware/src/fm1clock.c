@@ -30,6 +30,8 @@
 #include "platform.c"
 #ifdef DINGHY_HOST
 static uint32_t frames;
+#endif
+#if defined(DINGHY_HOST) && !defined(DINGHY_WEB)
 #define ENG_ON_HIT(e) printf("%6u ms  HIT at %.4f s, strength %u\n", fm1_ms, (frames + (e)->frame) / 44100.0, (e)->arg)
 #define ENG_ON_PIPE(e) printf("%6u ms  PIPE %s at %.4f s\n", fm1_ms, (e)->arg ? "low" : "high", (frames + (e)->frame) / 44100.0)
 #define ENG_ON_FLASH(e) printf("%6u ms  FLASH at %.4f s\n", fm1_ms, (frames + (e)->frame) / 44100.0)
@@ -473,11 +475,22 @@ static void keys_show(uint32_t lit, const uint32_t *white)
     shown = lit;
 }
 
+#ifdef DINGHY_WEB
+#define APP_STATE static                        /* in a browser (web/app/): a pass a call, its state kept between */
+#else
+#define APP_STATE
+#endif
 static void app_main(void)
 {
-    uint32_t last_dial = ~0u, t_win = 0, white[16], nw = 0, k, shown_clock = ~0u, bow_seen = 0, t_pipe = 0, t_high = 0;
-    uint32_t hits_seen = 0, t_flash = 0, wind_h = 0, calls = 0, calls_seen = 0, shown_go = ~0u, shown_ck = ~0u;
-    uint32_t show_go = 0, show_ck = 0, winding = 0, d_open = 0, d_out = 0, d_bow = 0, d_shown = ~0u;
+    APP_STATE uint32_t last_dial = ~0u, t_win = 0, white[16], nw = 0, k, shown_clock = ~0u, bow_seen = 0, t_pipe = 0;
+    APP_STATE uint32_t t_high = 0, hits_seen = 0, t_flash = 0, wind_h = 0, calls = 0, calls_seen = 0, shown_go = ~0u;
+    APP_STATE uint32_t shown_ck = ~0u, show_go = 0, show_ck = 0, winding = 0, d_open = 0, d_out = 0, d_bow = 0;
+    APP_STATE uint32_t d_shown = ~0u;
+#ifdef DINGHY_WEB
+    static int started;
+    if (!started) {
+        started = 1;
+#endif
     eng_init();
     if (settings_load(&set, sizeof set) || set.tick > 32u || set.gong > 32u || set.silent > 1u || set.digits > 1u ||
         set.info > 1u || set.clock > 2u || set.keys > KEYS_OFF) {
@@ -486,7 +499,9 @@ static void app_main(void)
     if (set.clock > 1u)                         /* (a build before had two cuckoo clocks: either is this one) */
         set.clock = 1u;
     apply_set();
-#ifdef DINGHY_HOST
+#if defined(DINGHY_WEB)
+    eng_fixed_ng = web_ng;                      /* the page renders as many carriers as the chip (206) */
+#elif defined(DINGHY_HOST)
     {
         const char *e = getenv("CLK_NG");       /* the host renders a fixed number of carriers (all, by default) */
         eng_fixed_ng = e ? (uint32_t)atoi(e) : NG_MAX;
@@ -494,7 +509,12 @@ static void app_main(void)
 #endif
     for (k = 0; k < 27u; k++)
         if (!is_black(k)) white[nw++] = k;
+#ifdef DINGHY_WEB
+    }
+    do {                                        /* one pass (a millisecond) a call */
+#else
     for (;;) {
+#endif
         uint32_t h, sub, beat, bsub, tod, rel, b, ph, th, lit;
         int32_t e, cosq;
 #ifndef DINGHY_HOST
@@ -667,5 +687,18 @@ static void app_main(void)
             settings_save(&set, sizeof set);
             dirty = 0;
         }
+#ifdef DINGHY_WEB
+    } while (0);
+#else
     }
+#endif
 }
+
+#ifdef DINGHY_WEB
+/* the page (web/app/): the clock, silent, digits, the keys' lights, the operators shown: bits 0, 1, 2, 3-4, 5 */
+WEB_EXPORT(web_state) uint32_t web_state(void)
+{
+    return set.clock | (uint32_t)set.silent << 1 | (uint32_t)set.digits << 2 | (uint32_t)set.keys << 3 |
+           (uint32_t)set.info << 5;
+}
+#endif

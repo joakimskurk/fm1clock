@@ -24,7 +24,9 @@ Kept small, so a later Dinghy can be merged by diffing these files.
 | `.github/workflows/release.yml` | replaced by `build.yml` (zvenson/fm1-build, as VaveHero, RoboSeq and SkurkyMello), with a job for the site (GitHub Pages) |
 | `web/` (Dinghy has none) | the site: `fm1pkg.js` and `fm1ota.js` from SLOOP (`bac9c05`, unchanged: the update protocol over Web MIDI; Dinghy's `tests/install_test.py` checks `fm1pkg.js` against `tools/fm1pkg_make.py`), FM-1 Clock's own page and `make_site.py` |
 
-Nothing in `firmware/hal/`, `firmware/loader/`, `firmware/app.ld`, `platform.c` or `tests/host.c` is changed.
+Nothing in `firmware/hal/`, `firmware/loader/`, `firmware/app.ld` or `tests/host.c` is changed. `platform.c` has one
+change: with `DINGHY_WEB` (and `DINGHY_HOST`) it includes `web/app/web_host.c`, the page's FM-1, instead of
+`tests/host.c` (the clock in the browser: `web/app/`).
 
 ## Updating Dinghy
 
