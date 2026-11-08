@@ -6,8 +6,8 @@
 
 A painted Black Forest chalet, of this firmware's own: a shingled roof with a carved barge board and a turned
 finial, the bird's door in the gable, a big cream dial (Arabic numerals, a carved bezel), two shuttered windows with
-geraniums, and a balcony whose railing is a little keyboard (it is an FM-1's clock). Everything is drawn 8 times over
-(polygons, ellipses, wood grain from smoothed noise) and box-filtered down to the screen, so its edges are soft.
+geraniums, and a balcony of sawn boards. Everything is drawn 8 times over (polygons, ellipses, wood grain from
+smoothed noise) and box-filtered down to the screen, so its edges are soft.
 
 What moves is the firmware's (firmware/src/clk_draw.h), from sprites made here:
   - the door: its leaf, turned about its hinge in perspective; the gable behind it with the doorway open (dark);
@@ -153,19 +153,20 @@ def house():
             fx, fy = x0 + 3.5 + i * 1.2 + rng.random() * 0.4, 85.4 + rng.random() * 1.2
             cv.ellipse(fx, fy + 1.3, 0.9, 0.7, (60, 120, 52))
             cv.ellipse(fx, fy, 0.75, 0.75, RED if i % 3 else (236, 96, 90))
-    # the balcony: posts, rails, and between them a keyboard
+    # the balcony: sawn boards side by side, a round hole and a slot cut between each two, rails, posts
     cv.rect(76, 132, 164, 150, (48, 30, 16))
-    xk = 80.0
-    keys = []
-    while xk + 2 < 160:
-        keys.append(xk)
-        xk += 3.0
-    for x in keys:
-        cv.rect(x, 135.5, x + 2.4, 146, (240, 238, 230))
-        cv.rect(x, 144.6, x + 2.4, 146, (204, 200, 190))
-    for i, x in enumerate(keys[:-1]):
-        if i % 7 not in (2, 6):                                       # two, three, two, three: the black keys
-            cv.rect(x + 1.6, 135.5, x + 3.8, 141.5, (26, 24, 22))
+    xb = 76.0
+    while xb < 164:
+        cv.rect(xb, 135, min(xb + 5.0, 164), 146.5, wood(WOOD_L, WOOD_M, True, int(xb), period=1.6))
+        cv.line([(xb + 4.6, 135.4), (xb + 4.6, 146.2)], 0.3, WOOD_D, 0.7)          # its edge, in shadow
+        xb += 5.0
+    xb = 81.0
+    while xb < 160:                                                    # the cut-outs, on the boards' joints
+        cv.ellipse(xb, 140.6, 1.35, 1.35, (40, 25, 13))
+        cv.rect(xb - 0.45, 136.6, xb + 0.45, 139.4, (40, 25, 13))
+        cv.rect(xb - 0.45, 141.8, xb + 0.45, 144.8, (40, 25, 13))
+        cv.ellipse(xb - 0.4, 140.2, 0.5, 0.5, WOOD_X, 0.6)
+        xb += 10.0
     cv.rect(74, 131, 166, 135.5, wood(WOOD_L, WOOD_M, False, 11))      # the top rail
     cv.rect(74, 146, 166, 150, wood(WOOD_M, WOOD_D, False, 12))       # the floor
     for x in (74, 162):                                               # the end posts, turned

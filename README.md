@@ -14,7 +14,7 @@ the hours on two FM pipes fitted to a real Black Forest cuckoo clock, bowing to 
 modes is struck under it. Its pendulum beats faster, and its pine-cone weights sink on their chains through the day.
 
 <p align="center"><img src="docs/screens/pendulum.gif" width="360" alt="The clock on the FM-1's screen: the hands at ten past ten, the pendulum swinging from side to side behind the glass">
-<img src="docs/screens/cuckoo.gif" width="240" alt="The cuckoo clock at three o'clock: a painted chalet with a cream dial and a keyboard for a balcony railing; its door swings open, the bird comes out, bows and calls with its beak open, goes back in and the door shuts, while the pendulum swings behind the chains and their pine-cone weights"></p>
+<img src="docs/screens/cuckoo.gif" width="240" alt="The cuckoo clock at three o'clock: a painted chalet with a cream dial and a balcony of sawn boards; its door swings open, the bird comes out, bows and calls with its beak open, goes back in and the door shuts, while the pendulum swings behind the chains and their pine-cone weights"></p>
 
 > **Status: 0.1, in progress.** The FM-1 package is built in CI and run there in fm1-emu, the FM-1 emulator. The
 > sound is tested against the recording on a computer. It has not yet been tried on a real FM-1.
@@ -287,8 +287,7 @@ photograph: a painted Black Forest chalet.
   cuckoo clock's dial is small; on a 240 px screen it has to be bigger to be read. The hands are the wall clock's,
   smaller, dark on cream.
 - Two windows with green slatted shutters and red geraniums in their flower boxes.
-- A balcony whose railing is **a little keyboard**, white keys and black keys in twos and threes: it is an FM-1's
-  clock.
+- A balcony of sawn boards, a round hole and a slot cut where each two meet, as on the chalets of the Black Forest.
 - A carved apron under it, scalloped, with a heart for a drop.
 
 Everything is drawn eight times over (polygons, ellipses, and wood grain made from smoothed noise, the boards'
