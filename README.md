@@ -5,11 +5,13 @@ useless now, and may one day turn out to be its only useful function: a clock.
 
 Not just any clock. Its bell is a real 31-day pendulum wall clock striking its coil gong, taken apart into 742
 ringing modes and rebuilt as an FM synthesiser of some four hundred operators, which keeps the whole chip busy every
-frame, all day long. Turn ALGORITHM and there is a second one: **a cuckoo clock**, a painted chalet whose bird comes
-out on the hour and calls on two FM pipes over a wire gong, fitted to a real Black Forest clock.
+frame, all day long. Turn ALGORITHM and there are two more: **cuckoo clocks**, a painted chalet and a classic carved
+one, hanging on a panel wall, whose bird comes out on the hour and calls on two FM pipes over a wire gong, fitted to
+a real Black Forest clock.
 
 <p align="center"><img src="docs/screens/pendulum.gif" width="360" alt="The clock on the FM-1's screen: the hands at ten past ten, the pendulum swinging from side to side behind the glass">
-<img src="docs/screens/cuckoo.gif" width="240" alt="The cuckoo clock at three o'clock: a painted chalet with a cream dial and a balcony of sawn boards; its door swings open, the bird comes out, bows and calls with its beak open, goes back in and the door shuts, while the pendulum swings behind the chains and their pine-cone weights"></p>
+<img src="docs/screens/cuckoo.gif" width="200" alt="The chalet cuckoo clock at three o'clock on a pine panel wall: a painted chalet with a cream dial and a balcony of sawn boards; its door swings open, the bird comes out, bows and calls, goes back in, while the pendulum swings behind the chains and their pine-cone weights">
+<img src="docs/screens/cuckoo-classic.gif" width="200" alt="The classic cuckoo clock at three o'clock on the same wall: a carved house in dark red walnut, leaves along its roof and a crest of leaves at the peak, vines round a Roman-numeral dial, turned columns, fretwork under its shelf; its bird comes out and calls, its leaf-shaped pendulum swings"></p>
 
 > **Status: 0.1, in progress.** Built and run in CI (in fm1-emu, the FM-1 emulator), the sound tested against the
 > recordings on a computer, and now being tried on a real FM-1.
@@ -23,8 +25,8 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 - **Two clocks, one time**, kept by the FM-1's crystal. ALGORITHM switches; the FM-1 remembers which.
 - **The wall clock** ticks every half second (the tick from the left, the tock from the right), strikes the hours
   on its gong and once at the half hour. Turn the minute hand past the hour and it strikes, as a real clock does.
-- **The cuckoo clock** calls the hours: its train warns, the door opens, the bird comes out, bows and calls, and goes
-  in again. Its pendulum beats faster, and its pine-cone weights sink on their chains through the day.
+- **The cuckoo clocks**, the chalet and the classic, call the hours: the train warns, the door opens, the bird comes
+  out, bows and calls, and goes in again. Its pendulum beats faster, and its pine-cone weights sink on their chains through the day.
 - **Everything you hear is synthesised.** No sample of either recording is in the firmware.
 - **The keys' lights** follow the pendulum, or flash the hours (also with the strike off: a silent clock you can
   read across the room). Playing the keys does nothing: this is a clock.
@@ -33,7 +35,7 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 
 | Control | What it does |
 |---|---|
-| **ALGORITHM** | The wall clock or the cuckoo clock. |
+| **ALGORITHM** | The wall clock, the chalet cuckoo clock or the classic one, in turn. |
 | **SELECT** | The minute hand, a minute a detent. Turned forward past the hour, it strikes it when you stop. |
 | **PRESETS** | The hour hand, an hour a detent. |
 | **SEL** | Rounds the time to the nearest minute (press it at :00 seconds). |
@@ -91,7 +93,7 @@ python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page
 - **[The sound, and the engine](docs/SOUND.md):** the wall clock's recording taken apart into 742 modes and rebuilt
   as FM, its strike train, its tick and tock, the engine in integers and the governor that keeps the chip full.
   Every third of an octave of a strike is within about 1–2 dB of the recording.
-- **[The cuckoo clock](docs/CUCKOO.md):** its own design, what moves, why its chains are not a counterweight, and its
+- **[The cuckoo clocks](docs/CUCKOO.md):** their own two designs on their panel wall, what moves, why its chains are not a counterweight, and its
   sound: the wire gong, the two pipes, the train's warning and rattle, and clicks made of a crack and noise.
 - **[How it works](docs/HOW-IT-WORKS.md):** keeping time from the crystal, drawing the picture, the tests and CI,
   the web page and its installer, making the tables again, and what is where.
@@ -104,7 +106,7 @@ python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page
   built on [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton Instruments) and carried by
   [SLOOP](https://github.com/isod89/sloop-fm1) (isod89). The package's identity is `FM-1_94N` (N the minor version).
 - **Licence.** GPL-3.0 ([LICENSE](LICENSE); who made what: [LICENSING.md](LICENSING.md)). The design
-  (`assets/design.png`) is the author's; the cuckoo clock's is this firmware's own.
+  (`assets/design.png`) is the author's; the cuckoo clocks' are this firmware's own.
 - **The recordings.** The wall clock's belongs to Adelaide Clocks; the cuckoo clock's is of a small Black Forest
   clock. Only measurements of them are here.
 - **Thanks** to joakimeriksson for [fm1-emu](https://github.com/joakimeriksson/fm1-emu).

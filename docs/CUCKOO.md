@@ -1,17 +1,21 @@
-# The cuckoo clock
+# The cuckoo clocks
 
 [Back to the README](../README.md) · [The sound](SOUND.md) · [How it works](HOW-IT-WORKS.md)
 
 Turn ALGORITHM and the wall clock gives way to a cuckoo clock, the other kind of clock everybody can hear in their
-head. It shares the time, the panel and the engine with the wall clock; its picture, its motion and its sound are
-its own.
+head; turn it again and there is the other cuckoo clock. They share the time, the panel and the engine with the wall
+clock; their pictures, their motion and their sound are their own.
 
-<p align="center"><img src="screens/cuckoo.gif" width="300" alt="The cuckoo clock calling three o'clock: the door opens, the bird comes out, bows and calls, goes in, the door shuts"></p>
+## Its own design: two of them, on a panel wall
 
-## Its own design
+There are two cuckoo clocks, and ALGORITHM turns from the wall clock to the one and then the other. Both houses are
+this firmware's own, drawn by code (`tools/gen_art_cuckoo.py`) and not taken from any real clock or photograph, and
+they have **one layout**: the dial, the bird's door, the pendulum, the chains and the weights are in the same places,
+so everything that moves, and every sound, is the same for both.
 
-The house is this firmware's own, drawn by code (`tools/gen_art_cuckoo.py`) and not taken from any real clock or
-photograph: a painted Black Forest chalet.
+<p align="center"><img src="screens/cuckoo.gif" width="240" alt="The chalet calling three o'clock on the panel wall"> <img src="screens/cuckoo-classic.gif" width="240" alt="The classic calling three o'clock on the panel wall"></p>
+
+**The chalet**, a painted Black Forest house:
 
 - A roof of shingles on a thick edge, a scalloped barge board under them, a turned finial at the peak.
 - The bird's door in the gable: an arched board with a heart cut through it and a brass knob.
@@ -23,15 +27,33 @@ photograph: a painted Black Forest chalet.
   the Black Forest.
 - A carved apron under it, scalloped, with a heart for a drop.
 
+**The classic**, carved, in dark red walnut, as the old carved cuckoo clocks are:
+
+- A roof of two carved boards, arches cut under them, carved leaves along their tops, turned out from the roof in
+  turn, and a crest of three leaves at the peak; a turned knob at each end of the eaves.
+- Vines climbing either side of the dial, their leaves and a bunch of grapes on each.
+- An ivory dial, as big as the chalet's (62 px), with **Roman numerals** round it, each turned to the centre (VI
+  upside down, IIII for four, as on the old dials), a minute track, a bezel of carved beads and a brass ring.
+- Turned columns either side, standing on a shelf with turned ends, their drops hanging under it.
+- Under the shelf, fretwork: two scrolls curling in from the columns, leaves on them, a leaf hanging in the middle,
+  open between, so the chains and the pendulum hang through it.
+- The bird's door: a walnut board with a raised panel and a carved leaf; a carved leaf over the doorway.
+- Its bob is a carved leaf, its stick walnut.
+
+**The panel wall.** Both hang on a wall of tongue-and-groove pine boards, stained honey, a V at each joint, lit a little
+from above, and each casts a soft shadow on it (3 px to the right, 4 down). The words in the screen's margins are
+burnt into the wood, dark, instead of light on black. (The wall clock stays on black: its picture, from the design, has
+no edge of its own to put on a wall.)
+
 Everything is drawn eight times over (polygons, ellipses, and wood grain made from smoothed noise, the boards'
-grain vertical, the beams' horizontal) and averaged down to the screen, so the edges are soft. The house is
-stored once (138 × 166 px); what moves is drawn by the firmware from sprites made at the same time
-(`firmware/gen/clk_art_cuckoo.h`).
+grain vertical, the beams' horizontal) and averaged down to the screen, so the edges are soft. Each house is
+stored once, on the wall with its shadow (150 × 174 px), the wall as a tile four boards wide; what moves is drawn by
+the firmware from sprites made at the same time (`firmware/gen/clk_art_cuckoo.h`).
 
 ## What moves
 
 - **The pendulum** hangs from behind the dial: a wooden stick, and a bob that is a wooden disc with a brass rim and
-  an edelweiss. It swings 7° each way, one beat every 0.4286 s, a tick at each end. On a cuckoo clock the pendulum
+  an edelweiss (the classic's: a carved leaf). It swings 7° each way, one beat every 0.4286 s, a tick at each end. On a cuckoo clock the pendulum
   hangs close to the wall, **behind the chains**, and so it is drawn: its stick and its bob, the bob turned with
   the stick and sampled between pixels so it glides, then the chains, the weights and the rings over it, then the
   house's balcony and apron over all of it.

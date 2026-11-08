@@ -55,10 +55,13 @@ The screen is 240 × 240 pixels.
   - the bob, cut out of the design with its shading as a 35 × 35 sprite with transparency, placed between pixels
     (bilinear) so it glides instead of jumping a pixel at a time;
   - over everything, the glass's reflections and the gold.
-- **The cuckoo clock** is drawn the same way, in three regions of its own: the dial's middle each second, the
+- **The cuckoo clocks** are drawn the same way, in three regions of their own: the dial's middle each second, the
   door when it or the bird moves, and the space under the house (72 × 94 pixels) 50 times a second, where only the
   columns the pendulum touches now or touched last time are made again, unless a chain has run (see
-  [What moves](CUCKOO.md#what-moves)).
+  [What moves](CUCKOO.md#what-moves)). Both have one layout and their own pictures (the firmware takes the one or the
+  other's). Behind them is the panel wall: the screen is filled from a tile of it, the house is stored on it with
+  its shadow, and under the house the pendulum, the chains and the weights go over the wall kept for that region;
+  the words in the margins are drawn over whatever is behind them, their edges blended in.
 - **The screen only takes data from RAM** (its DMA cannot read flash), so every picture is assembled in a RAM
   buffer and sent while the next is made.
 
@@ -93,6 +96,7 @@ The screen is 240 × 240 pixels.
 | (all) | A tick every half second to within 3 ms, left and right in turn, and **nothing between two ticks**. |
 | `cuckoo.txt` | ALGORITHM, then 2:59:56: three calls, each a blow, the high pipe 0.11 s on (0.22 s the first), the low 0.19 s after it, 0.665 s apart, the first 0.87 s after the hour; a tick every 0.4286 s; the pendulum moves; at the hour the door is open and the bird out, after it the door is shut again; the hands at 3:00. |
 | `cuckoo_silent.txt` | The cuckoo, FX and GLO (the keys on the hour): three o'clock without a call or a blow, the door shut, the keys flashing three times; at the half hour nothing. |
+| `classic.txt` | ALGORITHM twice, the classic cuckoo: three calls at three, the first 0.87 s after the hour; its own house (not the chalet's); its pendulum moves, its door opens and shuts; the hands at 3:00. |
 
 **CI** (`.github/workflows/build.yml`, using the shared `zvenson/fm1-build` workflow) builds the package on every
 push and attests it, runs these tests and Dinghy's own platform tests, then builds fm1-emu and runs the package in

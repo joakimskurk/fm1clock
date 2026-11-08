@@ -26,7 +26,7 @@
   .hero { display: flex; gap: 16px; justify-content: center; align-items: flex-end; margin: 28px 0 24px;
           flex-wrap: wrap; }
   .hero img { display: block; max-width: 100%; height: auto; border-radius: 4px; }
-  .hero .a { width: 340px; } .hero .b { width: 228px; }
+  .hero .a { width: 300px; } .hero .b { width: 200px; }
   .lead { font-size: 18px; margin: 0 0 22px; }
   .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 8px; }
   .fact { background: var(--panel); border-top: 3px solid var(--brass); padding: 10px 12px 12px; }
@@ -59,7 +59,7 @@
   footer p { margin: 0 0 8px; }
   @media (max-width: 560px) {
     h1 { font-size: 32px; } .facts { grid-template-columns: repeat(2, 1fr); }
-    .hero .a, .hero .b { width: 100%; max-width: 340px; }
+    .hero .a { width: 100%; max-width: 340px; } .hero .b { width: 46%; }
     td:first-child { white-space: normal; }
   }
 </style>
@@ -67,22 +67,24 @@
 <body>
 <main>
   <h1>FM1 Clock</h1>
-  <p class="tag">Firmware for the M-VAVE FM-1: a pendulum wall clock and a cuckoo clock.</p>
+  <p class="tag">Firmware for the M-VAVE FM-1: a pendulum wall clock and two cuckoo clocks.</p>
 
   <div class="hero">
-    <img class="a" src="screens/pendulum.gif" width="340" height="340" alt="The wall clock on the FM-1's screen: the hands at ten past ten, the pendulum swinging behind the glass">
-    <img class="b" src="screens/cuckoo.gif" width="228" height="342" alt="The cuckoo clock at three o'clock: its door swings open, the bird comes out, bows and calls, goes back in and the door shuts, while the pendulum swings behind the chains and their pine-cone weights">
+    <img class="a" src="screens/pendulum.gif" width="300" height="300" alt="The wall clock on the FM-1's screen: the hands at ten past ten, the pendulum swinging behind the glass">
+    <img class="b" src="screens/cuckoo.gif" width="200" height="300" alt="The chalet cuckoo clock at three o'clock on a pine panel wall: its door swings open, the bird comes out, bows and calls, while the pendulum swings behind the chains and their pine-cone weights">
+    <img class="b" src="screens/cuckoo-classic.gif" width="200" height="300" alt="The classic carved cuckoo clock in dark red walnut on the same wall: leaves along its roof, a Roman-numeral dial, its bird out and calling">
   </div>
 
   <p class="lead">One day the FM-1 may be an almost forgotten treasure, so here is something that looks completely
     useless now and may turn out to be its only useful function: a clock. Its bell is a real 31-day pendulum clock's
     coil gong, taken apart into 742 ringing modes and rebuilt as FM synthesis. Turn ALGORITHM and a cuckoo clock
-    calls the hours instead, its bird on two FM pipes over a wire gong.</p>
+    calls the hours instead, a painted chalet or a classic carved one on a panel wall, its bird on two FM pipes over
+    a wire gong.</p>
 
   <div class="facts">
     <div class="fact"><b>742</b><span>modes of a real gong, each an FM carrier</span></div>
     <div class="fact"><b>~400</b><span>FM operators running every frame</span></div>
-    <div class="fact"><b>2</b><span>clocks, one time, kept by the crystal</span></div>
+    <div class="fact"><b>3</b><span>clocks, one time, kept by the crystal</span></div>
     <div class="fact"><b>0</b><span>samples: every sound is synthesised</span></div>
   </div>
 
@@ -108,7 +110,7 @@
 
   <h2>Using it</h2>
   <table>
-    <tr><td>ALGORITHM</td><td>The wall clock or the cuckoo clock.</td></tr>
+    <tr><td>ALGORITHM</td><td>The wall clock, the chalet cuckoo clock or the classic one.</td></tr>
     <tr><td>SELECT / PRESETS</td><td>The minute and the hour hand. Turned forward past the hour, it strikes it, as a real clock does.</td></tr>
     <tr><td>PLAY</td><td>Strikes (or calls) the last hour again.</td></tr>
     <tr><td>FX</td><td>The strike on or off.</td></tr>

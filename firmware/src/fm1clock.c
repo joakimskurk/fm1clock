@@ -6,7 +6,7 @@
  * call at the half hour) while a wire gong is struck, and its weights go down on their chains through the day. The
  * whole chip goes into the ticking, the gongs and the pipes.
  *
- *   ALGORITHM    the clock: the wall clock, the cuckoo clock
+ *   ALGORITHM    the clock: the wall clock, the chalet cuckoo clock, the classic one
  *   SELECT       the minute hand (turned forward past the hour or the half hour, the clock strikes it, as a real one)
  *   PRESETS      the hour hand
  *   SEL          to the nearest minute (press it at :00 of a clock you trust)
@@ -186,8 +186,9 @@ static void app_audio(int32_t *out, uint32_t n)
         ck_bsub -= CK_BEAT_TICKS;
         ck_beat++;
     }
-    if (ck_clock != isr_clock) {                /* another clock: its pendulum from its end, its sound, no train */
-        isr_clock = ck_clock & 1u;
+    if ((ck_clock != 0u) != isr_clock) {        /* another clock: its pendulum from its end, its sound, no train (the
+                                                   two cuckoos sound alike: from one to the other nothing stops) */
+        isr_clock = ck_clock != 0u;
         eng_want = isr_clock;
         ck_beat = ck_bdone = 0;
         ck_bsub = 0;
@@ -331,6 +332,37 @@ static void midi_in(void)
 #define M_R 183
 #define M_W (240 - M_R)
 
+/* words in the margins, over what is there (bg_px: the panel wall, the clock's own picture), their edges blended
+ * into it; on the cuckoos' wall dark, as if burnt into the wood, on the wall clock's black light */
+#define TXT_HI (draw_clock ? RGB(56, 32, 16) : RGB(224, 200, 150))
+#define TXT_LO (draw_clock ? RGB(92, 60, 36) : RGB(150, 120, 90))
+static void bg_text_box(uint32_t x, uint32_t y, uint32_t w, const felucca_font_t *f, const char *s, uint16_t c)
+{
+    int32_t tx = ((int32_t)w - text_w(f, s)) / 2;
+    uint32_t i, j;
+    cv_begin(w, f->h, C_BLACK);
+    for (j = 0; j < cv_h; j++)
+        for (i = 0; i < cv_w; i++)
+            cv_px[j * cv_w + i] = bg_px(x + i, y + j);
+    for (; *s; s++) {
+        uint32_t gi = glyph(f, (uint8_t)*s), gx, gy, gw = f->bw[gi], bpr = (gw + 1u) / 2u;
+        const uint8_t *gd = f->data + f->off[gi];
+        for (gy = 0; gy < f->h && gy < cv_h; gy++)
+            for (gx = 0; gx < gw; gx++) {
+                uint32_t v = gd[gy * bpr + gx / 2u];
+                int32_t px = tx - f->pad + (int32_t)gx;
+                v = (gx & 1u) ? (v & 15u) : (v >> 4);
+                if (v && px >= 0 && (uint32_t)px < cv_w) {
+                    uint16_t *d = &cv_px[gy * cv_w + (uint32_t)px];
+                    *d = (uint16_t)unsw(mix565(unsw(*d), c, v * 256u / 15u));
+                }
+            }
+        tx += f->adv[gi];
+    }
+    cv_blit(x, y);
+    lcd_sync();
+}
+
 static void num(char *s, uint32_t v, const char *unit)   /* "368 OP" */
 {
     char d[8];
@@ -358,11 +390,11 @@ static void draw_info(int force)                /* SEQ: the FM operators on the 
     shown = v;
     if (set.info) {
         num(s, ops, "OP");
-        draw_text_box(M_R, 4, M_W, &FONT_S, s, RGB(150, 120, 90), 1);
+        bg_text_box(M_R, 4, M_W, &FONT_S, s, TXT_LO);
         num(s, pct, "%");
-        draw_text_box(M_R, 22, M_W, &FONT_S, s, RGB(150, 120, 90), 1);
+        bg_text_box(M_R, 22, M_W, &FONT_S, s, TXT_LO);
     } else {
-        lcd_fill(M_R, 4, M_W, 36, C_BLACK);
+        bg_fill(M_R, 4, M_W, 36);
     }
 }
 
@@ -378,9 +410,9 @@ static void draw_margins(uint32_t tod, int force)   /* the digits (left), the le
         if (show_t) {
             s[0] = (char)('0' + t / 600u); s[1] = (char)('0' + t / 60u % 10u); s[2] = ':';
             s[3] = (char)('0' + t % 60u / 10u); s[4] = (char)('0' + t % 10u); s[5] = 0;
-            draw_text_box(0, 104, M_L, &FONT_S, s, RGB(224, 200, 150), 1);
+            bg_text_box(0, 104, M_L, &FONT_S, s, TXT_HI);
         } else {
-            lcd_fill(0, 104, M_L, 16, C_BLACK);
+            bg_fill(0, 104, M_L, 16);
         }
     }
     r = t_level && fm1_ms - t_level < 2000u ? 1u + level_which : 0u;
@@ -391,21 +423,21 @@ static void draw_margins(uint32_t tod, int force)   /* the digits (left), the le
     if (r != shown_r || force) {
         shown_r = r;
         if ((r & 3u) == 3u) {
-            draw_text_box(M_R, 96, M_W, &FONT_S, "KEYS", RGB(224, 200, 150), 1);
-            draw_text_box(M_R, 114, M_W, &FONT_S, KEYS_NAME[r >> 2 & 3u], RGB(224, 200, 150), 1);
+            bg_text_box(M_R, 96, M_W, &FONT_S, "KEYS", TXT_HI);
+            bg_text_box(M_R, 114, M_W, &FONT_S, KEYS_NAME[r >> 2 & 3u], TXT_HI);
         } else if (r & 3u) {
             uint32_t v = (r >> 2 & 127u) * 100u / 16u;
-            draw_text_box(M_R, 96, M_W, &FONT_S, (r & 3u) == 1u ? "TICK" : set.clock ? "CALL" : "GONG", RGB(224, 200, 150), 1);
+            bg_text_box(M_R, 96, M_W, &FONT_S, (r & 3u) == 1u ? "TICK" : set.clock ? "CALL" : "GONG", TXT_HI);
             s[0] = (char)(v >= 100u ? '0' + v / 100u : ' '); s[1] = (char)(v >= 10u ? '0' + v / 10u % 10u : ' ');
             s[2] = (char)('0' + v % 10u); s[3] = '%'; s[4] = 0;
-            draw_text_box(M_R, 114, M_W, &FONT_S, s, RGB(224, 200, 150), 1);
+            bg_text_box(M_R, 114, M_W, &FONT_S, s, TXT_HI);
         } else {
-            lcd_fill(M_R, 96, M_W, 36, C_BLACK);
+            bg_fill(M_R, 96, M_W, 36);
         }
         if (set.silent)
-            draw_text_box(M_R, 214, M_W, &FONT_S, "SILENT", RGB(150, 120, 90), 1);
+            bg_text_box(M_R, 214, M_W, &FONT_S, "SILENT", TXT_LO);
         else
-            lcd_fill(M_R, 214, M_W, 16, C_BLACK);
+            bg_fill(M_R, 214, M_W, 16);
     }
     draw_info(force);
 }
@@ -448,7 +480,7 @@ static void app_main(void)
     uint32_t show_go = 0, show_ck = 0, winding = 0, d_open = 0, d_out = 0, d_bow = 0, d_shown = ~0u;
     eng_init();
     if (settings_load(&set, sizeof set) || set.tick > 32u || set.gong > 32u || set.silent > 1u || set.digits > 1u ||
-        set.info > 1u || set.clock > 1u || set.keys > KEYS_OFF) {
+        set.info > 1u || set.clock > 2u || set.keys > KEYS_OFF) {
         set.tick = 16; set.gong = 16; set.silent = 0; set.digits = 0; set.info = 0; set.clock = 0; set.keys = KEYS_SWING;
     }
     apply_set();
@@ -470,8 +502,9 @@ static void app_main(void)
         platform_poll();
         midi_in();
 
-        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0 && (!t_clock || fm1_ms - t_clock > 300u)) {   /* the other clock (a turn: one) */
-            set.clock ^= 1u;
+        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0 && (!t_clock || fm1_ms - t_clock > 300u)) {   /* the next clock (a turn:
+                                                   one): the wall clock, the chalet cuckoo, the classic, round */
+            set.clock = (set.clock + (e > 0 ? 1u : 2u)) % 3u;
             t_clock = fm1_ms;
             dirty = 1; t_change = fm1_ms;
         }
