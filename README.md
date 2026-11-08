@@ -287,7 +287,8 @@ photograph: a painted Black Forest chalet.
   cuckoo clock's dial is small; on a 240 px screen it has to be bigger to be read. The hands are the wall clock's,
   smaller, dark on cream.
 - Two windows with green slatted shutters and red geraniums in their flower boxes.
-- A balcony of sawn boards, a round hole and a slot cut where each two meet, as on the chalets of the Black Forest.
+- A balcony of eighteen sawn boards, a round hole and a slot cut where every other two meet, as on the chalets of
+  the Black Forest.
 - A carved apron under it, scalloped, with a heart for a drop.
 
 Everything is drawn eight times over (polygons, ellipses, and wood grain made from smoothed noise, the boards'

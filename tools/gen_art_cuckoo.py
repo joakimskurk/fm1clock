@@ -153,20 +153,20 @@ def house():
             fx, fy = x0 + 3.5 + i * 1.2 + rng.random() * 0.4, 85.4 + rng.random() * 1.2
             cv.ellipse(fx, fy + 1.3, 0.9, 0.7, (60, 120, 52))
             cv.ellipse(fx, fy, 0.75, 0.75, RED if i % 3 else (236, 96, 90))
-    # the balcony: sawn boards side by side, a round hole and a slot cut between each two, rails, posts
+    # the balcony: eighteen sawn boards side by side between the posts, a round hole and a slot cut where every
+    # other two meet (nine, the middle one on the clock's middle), rails, posts
     cv.rect(76, 132, 164, 150, (48, 30, 16))
-    xb = 76.0
-    while xb < 164:
-        cv.rect(xb, 135, min(xb + 5.0, 164), 146.5, wood(WOOD_L, WOOD_M, True, int(xb), period=1.6))
-        cv.line([(xb + 4.6, 135.4), (xb + 4.6, 146.2)], 0.3, WOOD_D, 0.7)          # its edge, in shadow
-        xb += 5.0
-    xb = 81.0
-    while xb < 160:                                                    # the cut-outs, on the boards' joints
+    bw = 88 / 18
+    for k in range(18):
+        xb = 76 + k * bw
+        cv.rect(xb, 135, xb + bw, 146.5, wood(WOOD_L, WOOD_M, True, 60 + k, period=1.6))
+        cv.line([(xb + bw - 0.35, 135.4), (xb + bw - 0.35, 146.2)], 0.3, WOOD_D, 0.7)   # its edge, in shadow
+    for k in range(1, 18, 2):                                          # the cut-outs, on the joints
+        xb = 76 + k * bw
         cv.ellipse(xb, 140.6, 1.35, 1.35, (40, 25, 13))
         cv.rect(xb - 0.45, 136.6, xb + 0.45, 139.4, (40, 25, 13))
         cv.rect(xb - 0.45, 141.8, xb + 0.45, 144.8, (40, 25, 13))
         cv.ellipse(xb - 0.4, 140.2, 0.5, 0.5, WOOD_X, 0.6)
-        xb += 10.0
     cv.rect(74, 131, 166, 135.5, wood(WOOD_L, WOOD_M, False, 11))      # the top rail
     cv.rect(74, 146, 166, 150, wood(WOOD_M, WOOD_D, False, 12))       # the floor
     for x in (74, 162):                                               # the end posts, turned
@@ -174,8 +174,8 @@ def house():
         cv.ellipse(x + 2, 128.5, 2.4, 2.0, WOOD_L)
     # the apron under it, carved: scallops, and a drop in the middle (a heart)
     cv.rect(73, 150, 167, 158, wood(WOOD_M, WOOD_D, False, 14))
-    for x in np.arange(76, 166, 6.5):
-        cv.ellipse(x, 158, 3.2, 3.0, wood(WOOD_M, WOOD_D, False, 15))
+    for j in range(-7, 8):                                            # (fifteen, the middle one under the drop)
+        cv.ellipse(CX + j * 6.3, 158, 3.2, 3.0, wood(WOOD_M, WOOD_D, False, 15))
     cv.line([(73, 151), (167, 151)], 0.5, WOOD_L, 0.8)
     cv.ellipse(117.6, 160.5, 3.0, 3.0, WOOD_M)
     cv.ellipse(122.4, 160.5, 3.0, 3.0, WOOD_M)
