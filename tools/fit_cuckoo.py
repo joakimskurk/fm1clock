@@ -153,6 +153,40 @@ def low_energy(ops, ta, fs=44100, span=0.08, seeds=16):
         acc += np.mean(b[:int(span * fs)] ** 2)
     return acc / seeds
 
+
+RATTLE_RATE, RATTLE_TAU = 250.0, 0.0015           # clicks a second, each its decay (the recording: one every 2-10 ms)
+
+
+def rattle_model(r, e_db, fs=44100, seconds=2.0):
+    """the train's rattle as the engine makes it: clicks at random (RATTLE_RATE a second), each a sine at one of the
+    measured frequencies (chosen as often as its share of the power), its level 0.4-1 of the full one, decaying
+    in RATTLE_TAU; the full level so that its energy above 800 Hz is the recording's (simulated)"""
+    w = np.array([g["w"] for g in r["grains"]])
+    prob = w / w.sum()
+    rng = np.random.default_rng(7)
+    n = int(seconds * fs)
+    y = np.zeros(n + fs)
+    t = np.arange(int(8 * RATTLE_TAU * fs)) / fs
+    k = 0
+    pos = 0
+    while True:
+        pos += int(rng.exponential(fs / RATTLE_RATE))
+        if pos >= n:
+            break
+        f = r["grains"][rng.choice(len(prob), p=prob)]["f"]
+        y[pos:pos + len(t)] += rng.uniform(0.4, 1.0) * np.exp(-t / RATTLE_TAU) * np.sin(2 * np.pi * f * t + rng.uniform(0, 6.3))
+        k += 1
+    y = y[:n]
+    fx = np.fft.rfftfreq(n, 1 / fs)
+    Y = np.fft.rfft(y)
+    Y[fx < 800] = 0
+    e = np.mean(np.fft.irfft(Y, n) ** 2)
+    a = float(np.sqrt(10 ** (e_db / 10) / e))
+    print(f"rattle: {len(prob)} frequencies, {RATTLE_RATE:.0f} clicks a second, each {1000 * RATTLE_TAU:.1f} ms, "
+          f"full level {20 * np.log10(a):.1f} dB; runs {r['start']:.2f} .. {r['stop']:.2f} s before the first blow")
+    return dict(f=[g["f"] for g in r["grains"]], p=prob.tolist(), a=a, tau=RATTLE_TAU, rate=RATTLE_RATE,
+                start=r["start"], stop=r["stop"])
+
 if __name__ == "__main__":
     model = json.loads((ROOT / "tools" / "ref_cuckoo.json").read_text())
     feats = json.loads((ROOT / "tests" / "ref" / "cuckoo_features.json").read_text())
@@ -170,7 +204,8 @@ if __name__ == "__main__":
     # energy at 80-450 Hz (the fit's lowest operators are there too)
     bank, err, ta = F.tick_bank(model["ticks"]["tick"], feats["tick"], feats["tick_noise"], 3, nwin=len(feats["tick_windows"]),
                                 taus=[0.0015, 0.0025, 0.004, 0.006, 0.009, 0.013, 0.019, 0.028, 0.04, 0.056, 0.08, 0.115, 0.16],
-                                tlen=0.22, loss=LOSS, lo=400.0)   # (its analysis is high-passed at 400 Hz)
+                                tlen=0.22, loss=LOSS, lo=400.0,   # (its analysis is high-passed at 400 Hz)
+                                attacks=[0.001])                  # (a hard tick: the pallet strikes the tooth)
     knock = [dict(f=d["f"], tau=d["tau"], a=d["a"]) for d in model["ticks"]["knock"] if d["tau"] < 0.1][:4]
     e_hi, e_kn = low_energy(bank, ta), low_energy(knock, ta)
     want = 10 ** (feats["knock_db"] / 10)
@@ -194,5 +229,6 @@ if __name__ == "__main__":
     g = np.sqrt(10 ** (feats["drone_db"] / 10) / e)
     out["drone"] = [dict(d, a=d["a"] * (g if d["f"] <= 450 else 1.0)) for d in dr]
     print(f"drone: under 450 Hz x {g:.2f}")
+    out["rattle"] = rattle_model(model["rattle"], feats["rattle_db"])
     print(f"drone: {len(out['drone'])} partials, {min(d['f'] for d in out['drone']):.0f} .. {max(d['f'] for d in out['drone']):.0f} Hz")
     (ROOT / "tools" / "clk_cuckoo.json").write_text(json.dumps(out, indent=1) + "\n")

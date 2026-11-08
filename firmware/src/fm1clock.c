@@ -122,13 +122,15 @@ static void train_start(uint32_t n, uint32_t at, uint32_t mute)
             t += TRAIN_FRAMES - CLICK_FRAMES + (eng_rnd() & 1023u) - 512u;
         }
     } else {                                    /* the warning, the door, the calls: the gong and the two pipes */
-        uint32_t h = at + CK_PRE_FRAMES, lo = h;
-        if (!mute) {
-            tr_put(at, EV_RUN, 1);              /* the train runs: its wheels, its fly */
-            tr_put(at, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
+        uint32_t h = at + CK_RUN0_FRAMES, lo = h;
+        if (!mute) {                            /* the warning: the train runs, clicks twice, catches on its pin */
+            tr_put(at, EV_RUN, 1);
+            tr_put(h - CK_PRE_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
             tr_put(h - CK_PRE1_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
-            tr_put(h - CK_PRE2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));
-            tr_put(h - CK_PRE2_FRAMES, EV_DOOR, 1);
+            tr_put(h - CK_STOP_FRAMES, EV_RUN, 0);
+            tr_put(h - CK_PRE2_FRAMES, EV_CLICK, CLICK_ARG(SND_B_PRE, 32767u));   /* the release: the door opens, */
+            tr_put(h - CK_PRE2_FRAMES, EV_DOOR, 1);                             /* the train runs on */
+            tr_put(h - CK_PRE2_FRAMES, EV_RUN, 1);
         }
         for (k = 0; k < n; k++) {
             uint32_t hi = h + jit(k ? CK_HIT_TO_HIGH : CK_FIRST_HIT_TO_HIGH, 7);

@@ -50,8 +50,11 @@ static const uint32_t *const SND_DEC[NSND] = {T0_DEC, T1_DEC, T2_DEC, T3_DEC, T4
 static op_t gop[NG_MAX] __attribute__((section(".pool")));
 static uint32_t gdec_blk[NG_MAX] __attribute__((section(".pool")));
 static pipe_t cpipe[2];
-static uint32_t drone_ph[DRONE_N];              /* the cuckoo's train running: its partials' phases */
+static uint32_t drone_ph[DRONE_N];              /* the cuckoo's train running: its drone's partials' phases */
 static int32_t drone_lvl, drone_on;             /* its level (Q15), going up or down to 0 or full */
+#define RATTLE_G 8u
+static op_t rattle[RATTLE_G];                   /* and its rattle: clicks at random, eight ringing at most */
+static uint32_t rattle_next;
 static uint32_t eng_clock;                      /* (the ISR's) the clock sounding: 0 the wall clock, 1 the cuckoo */
 static mod_t gmod[K_FM] __attribute__((section(".pool")));
 static bank_t tbank[2] __attribute__((section(".pool")));
@@ -130,6 +133,8 @@ static void eng_load(uint32_t c)                /* a clock's operators, all of t
         }
     }
     drone_lvl = drone_on = 0;
+    for (k = 0; k < RATTLE_G; k++)
+        rattle[k].amp = 0;
     eng_clock = c;
     eng_st.clock = c;
     if (eng_st.ng > t->ng) eng_st.ng = t->ng;
@@ -284,7 +289,7 @@ static void pipes_render(int32_t *acc)          /* the cuckoo's two pipes, CLK_S
     }
 }
 
-static void drone_render(int32_t *acc)          /* the train's drone, CLK_SUB frames (still: level 0) */
+static void drone_render(int32_t *acc)          /* the train running, CLK_SUB frames: its drone, its rattle */
 {
     uint32_t k, i;
     if (drone_on)
@@ -299,6 +304,33 @@ static void drone_render(int32_t *acc)          /* the train's drone, CLK_SUB fr
             acc[i] += SINT[p >> 18] * a;
         }
         drone_ph[k] = p;
+    }
+    if (drone_lvl && (eng_rnd() & 65535u) < RATTLE_P16) {   /* a click of the wheels, the fly: at random */
+        op_t *o = &rattle[rattle_next];
+        uint32_t r = eng_rnd() & 65535u, j = 0;
+        while (j + 1u < RATTLE_N && r >= RATTLE_CUM[j])
+            j++;
+        rattle_next = (rattle_next + 1u) % RATTLE_G;
+        o->ph = eng_rnd();
+        o->inc = RATTLE_INC[j];
+        o->amp = (uint32_t)(((uint64_t)RATTLE_AMP * (13107u + (eng_rnd() % 19661u))) >> 15);   /* 0.4 .. 1 */
+        o->dec = RATTLE_DEC;
+    }
+    for (k = 0; k < RATTLE_G; k++) {            /* (all eight, ringing or not) */
+        op_t *o = &rattle[k];
+        uint32_t p = o->ph, d = o->inc, am = o->amp;
+        int32_t *q = acc;
+        for (i = 0; i < CLK_SUB; i += CLK_TSTEP) {
+            int32_t a = (((int32_t)(am >> 16)) * drone_lvl) >> 15;
+            p += d; q[0] += SINT[p >> 18] * a;
+            p += d; q[1] += SINT[p >> 18] * a;
+            p += d; q[2] += SINT[p >> 18] * a;
+            p += d; q[3] += SINT[p >> 18] * a;
+            q += 4;
+            am = mulhi(am, o->dec);
+        }
+        o->ph = p;
+        o->amp = am;
     }
 }
 

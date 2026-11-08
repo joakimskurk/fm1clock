@@ -14,8 +14,8 @@ The cuckoo clock's, against its own recording (tests/ref/cuckoo_features.json, t
                                           recording's slow tail is under its pipes, longer than the analysis saw)
   parity.py ck_tick WAV N [MAX]           its ticks (clk_render ck_tick), as the wall clock's but to 130 ms: it rings on;
                                           and under 400 Hz its case's knock, its energy within 2 dB of the recording's
-  parity.py ck_drone WAV                  the train's drone while it runs (clk_render ck_run): its energy 40-450 Hz
-                                          within 2 dB of the recording's (running less still)
+  parity.py ck_drone WAV                  the train running (clk_render ck_run): its drone's energy 40-450 Hz and its
+                                          rattle's above 800 Hz, each within 2 dB of the recording's (running less still)
   parity.py ck_pre|ck_post WAV N [MAX]    the train's clicks: their peak above 3 kHz within MAX dB (1.5) of the
                                           recording's (under them there the gong and the pipes ring)
 """
@@ -110,7 +110,12 @@ def cuckoo(what, fs, x):
         e = 10 * np.log10(np.mean(b[int(0.4 * fs):int(1.0 * fs)] ** 2)) - G_B
         d = e - C["drone_db"]
         print(f"cuckoo drone (40-450 Hz): {e:.1f} dB, the recording's {C['drone_db']:.1f}: {d:+.2f} dB (limit 2)")
-        return 0 if abs(d) <= 2 else 1
+        sel = np.fft.rfftfreq(len(m), 1 / fs) >= 800      # and its rattle, above 800 Hz
+        b = np.fft.irfft(np.fft.rfft(m) * sel, len(m))
+        e2 = 10 * np.log10(np.mean(b[int(0.4 * fs):int(1.0 * fs)] ** 2)) - G_B
+        d2 = e2 - C["rattle_db"]
+        print(f"cuckoo rattle (above 800 Hz): {e2:.1f} dB, the recording's {C['rattle_db']:.1f}: {d2:+.2f} dB (limit 2)")
+        return 0 if abs(d) <= 2 and abs(d2) <= 2 else 1
     n = int(sys.argv[3])
     limit = float(sys.argv[4]) if len(sys.argv) > 4 else 3.0
     if what == "ck_call":

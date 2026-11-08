@@ -9,6 +9,8 @@ scale, decays as Q32 multipliers per step of frames. Plain Python, no numpy.
 """
 import json
 import math
+
+import numpy as np
 import sys
 from pathlib import Path
 
@@ -143,6 +145,16 @@ def build():
     h.append(f"#define DRONE_FALL {int(round(32768 * SUB / (0.10 * FS)))}u   /* down in 100 ms */")
     h.append(carray("DRONE_INC", "uint32_t", [inc(d["f"]) for d in dr]))
     h.append(carray("DRONE_AMP", "uint32_t", [q31(d["a"], GAIN_B) for d in dr]))
+    ra = c["rattle"]
+    cum = np.cumsum(ra["p"])
+    h.append(f"#define RATTLE_N {len(ra['f'])}u   /* the train's rattle: its clicks' frequencies, chosen by RATTLE_CUM (Q16) */")
+    h.append(f"#define RATTLE_P16 {int(round(ra['rate'] * SUB / FS * 65536))}u   /* a click starts in CLK_SUB frames with this chance (Q16) */")
+    h.append(f"#define RATTLE_AMP {q31(ra['a'], GAIN_B)}u   /* its full level (Q31) */")
+    h.append(f"#define RATTLE_DEC {dec(ra['tau'], TSTEP)}u   /* its decay per CLK_TSTEP frames (Q32) */")
+    h.append(f"#define CK_RUN0_FRAMES {sec(-ra['start'])}u   /* the train starts to run before the first blow */")
+    h.append(f"#define CK_STOP_FRAMES {sec(-ra['stop'])}u   /* and stops, on its warning pin, until the release */")
+    h.append(carray("RATTLE_INC", "uint32_t", [inc(f) for f in ra["f"]]))
+    h.append(carray("RATTLE_CUM", "uint32_t", [min(65535, int(round(v * 65536))) for v in cum]))
     return "\n".join(h) + "\n"
 
 

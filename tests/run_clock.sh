@@ -47,7 +47,7 @@ run "nine calls (the gong, the high pipe, the low): every window of the first 0.
 run "the cuckoo on the chip (218 carriers): the gong within 5 dB, the calls within 9 dB" sh -c \
     "build/clk_render ck_strike build/audio/ck_strike-218.wav 218 && python3 tests/clk/parity.py ck_gong build/audio/ck_strike-218.wav 5.0 && \
      build/clk_render ck_call 9 build/audio/ck_call-218.wav 218 && python3 tests/clk/parity.py ck_call build/audio/ck_call-218.wav 9 9.0"
-run "its train running: its drone (40-450 Hz) within 2 dB of the recording's" sh -c \
+run "its train running: its drone (40-450 Hz) and its rattle (above 800 Hz) within 2 dB of the recording's" sh -c \
     "build/clk_render ck_run build/audio/ck_run.wav && python3 tests/clk/parity.py ck_drone build/audio/ck_run.wav"
 run "its ticks: their mean within 3 dB, every window to 90 ms (it rings on), its case's knock within 2 dB" sh -c \
     "build/clk_render ck_tick build/audio/ck_tick.wav 24 && python3 tests/clk/parity.py ck_tick build/audio/ck_tick.wav 24 3.0"
@@ -75,7 +75,7 @@ run "the pendulum swings (the window between its end and its middle)" python3 $P
 # the cuckoo clock (ALGORITHM): its call, its beat, its door and bird, silent with the keys on the hour
 D="92 28 56 36"                                         # (clk_art_cuckoo.h: CK_DR_*, round the door)
 run "the cuckoo calls three at three: a blow, the high pipe, the low, a call every 0.665 s" python3 $P calls $OUT/cuckoo.log 4 8 3
-run "the first blow 0.75 s after the hour (the warning, the door before it)" python3 $P hits $OUT/cuckoo.log 4 8 3 4.75 0.665
+run "the first blow 0.87 s after the hour (the warning, the door before it)" python3 $P hits $OUT/cuckoo.log 4 8 3 4.87 0.665
 run "its pendulum beats 0.4286 s, left and right in turn (the host's ms: +- 5 ms)" python3 $P ticks $OUT/cuckoo.wav 0.6 3.9 0.4286 5
 run "its pendulum swings (under the house)" python3 $P moved $OUT/cuckoo-1000.ppm $OUT/cuckoo-1200.ppm cuckoo
 run "at the hour its door is open and the bird out" python3 $P differ $OUT/cuckoo-1000.ppm $OUT/cuckoo-5230.ppm $D 150

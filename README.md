@@ -309,7 +309,7 @@ stored once (138 × 166 px); what moves is drawn by the firmware from sprites ma
   weight in a step at each call, its chain running for the time of the call. Both reach the bottom after about a
   day, and then somebody winds the clock (as one does a 1-day cuckoo clock every morning): the rings are pulled
   down, the weights come up, one chain and then the other, the click wheel clicking. ENV does it whenever you like.
-- **The door and the bird.** With the train's third warning click, 0.4 s before the first call, the door opens:
+- **The door and the bird.** With the train's release click, 0.4 s before the first call, the door opens:
   it turns about its hinge in perspective, its free edge growing as it comes towards you, edge on at 90°, its
   darker back against the gable at 150°. Then the bird comes forward out of the dark doorway: it grows from 55 %
   of its size to all of it and is lit as it comes out, on its perch. On each call it **bows** (17° forward) from
@@ -371,12 +371,19 @@ repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_fea
   frames: 0.23 s and 0.20 s, then carried on down with an 80 ms fall, under the gong.
 - **The calls.** The hammer hits; the high pipe sounds 0.11 s later (0.22 s on the first call, the train getting
   going), the low pipe 0.19 s after it; a call every 0.665 s, each varied by about ±1 %, as the recording's are.
-- **The mechanism.** Before the first call the train gives three clicks (the warning: 0.75 s, 0.66 s and 0.40 s
-  before it; the door opens on the third), after the last call two (the bird goes in, the door shuts). In the
-  recording the gong and the pipes ring under them, so their sound is the tick's, at their own level: their peaks
-  above 3 kHz are 6.9 and 15.2 dB over a tick's.
-- **The tick.** 64 sine operators, fitted as the wall clock's tick (two decays a band, all levels together), but
-  over its first 130 ms: a cuckoo clock's tick does not stop at a click, it rings on in its wooden case and its
+- **Before the bird comes out**, as in the recording. At the hour the striking train is let go and runs: it
+  rattles (below), and clicks twice, 0.75 and 0.66 s before the first call. 0.55 s before it, it catches on its
+  warning pin and stops; only the pendulum ticks on. 0.40 s before it, the release: a click, the door opens, and the
+  train runs again, rattling, until the door shuts after the last call (the bird goes in on one click, the door
+  shuts on another). The first blow comes 0.87 s after the hour. The clicks are the tick's sound at their own
+  level (in the recording the gong and the pipes ring under them): their peaks above 3 kHz are 6.6 and 14.9 dB over
+  a tick's.
+- **The rattle.** While the train runs, its wheels and its fly rattle: an irregular click every 2 to 10 ms, 1.2
+  to 1.4 kHz the strongest, and 0.8–1 kHz, 2 kHz and 4.7–5.2 kHz, as loud above 800 Hz as a tick. In the firmware
+  it is clicks at random, 250 a second, each a sine at one of the ten measured frequencies (as often as its share of
+  the power), 0.4 to 1 of the full level, ringing 1.5 ms: eight operators, computed all the time.
+- **The tick.** 64 sine operators, fitted as the wall clock's tick (two decays a band, all levels together, a hard
+  rise of 1 ms: the pallet striking the tooth), but over its first 130 ms: a cuckoo clock's tick does not stop at a click, it rings on in its wooden case and its
   steel, falling 15 to 20 dB in the first 30 ms and then slowly. It is measured from the five ticks of the
   recording that have nothing else under them (before the half hour the warning comes, after a call the gong rings
   on for seconds), above 400 Hz, against the quiet just before each, and its levels are fitted by their ratios
@@ -388,12 +395,11 @@ repository; its measurements are (`tools/ref_cuckoo.json`, `tests/ref/cuckoo_fea
   matrix pencil: 182, 243, 281 and 316 Hz, ringing 18 to 42 ms. They are four operators more in the tick's bank
   (68 then; the wall clock's banks are filled up with silent ones), at the level that gives the whole tick the
   recording's energy at 80–450 Hz.
-- **The train's drone.** While the cuckoo's train runs, from the warning to the door shutting, its wheels and its
-  air brake (the fly) whir: a drone at 74 Hz, with 60, 93 and 115 Hz under and over it and partials up to 1.2 kHz,
-  15 to 30 dB over the train standing still. In the recording it is the loudest thing below 200 Hz, and it is
-  where the cuckoo's depth comes from. Its 12 partials are measured from the warnings (the train running, no gong
-  and no pipe yet) against the quiet before them, and sound in the firmware from the first warning click to the
-  door shutting, up in 60 ms, down in 100 ms: 12 sine operators, computed all the time.
+- **The train's drone.** Under its rattle the running train whirs: 70 Hz, and a comb from 286 to 439 Hz with its
+  partials 12.6 Hz apart (so it beats 12.6 times a second), 15 to 30 dB over the train standing still. In the
+  recording it is the loudest thing below 200 Hz, and much of the cuckoo's depth. Its 12 partials are measured from
+  the train running before the first call (no gong and no pipe yet) against the quiet, and sound whenever the train
+  runs, up in 60 ms, down in 100 ms: 12 sine operators, computed all the time.
 - **Winding** is the click wheel: the tick's sound, softer, every 84 ms while the chains are pulled.
 - **All of it at once.** The engine holds one clock's operators at a time. When ALGORITHM changes the clock, the
   interrupt loads the other one's gong into the same carriers (all still), and its governor carries on. The pipes
@@ -411,21 +417,21 @@ octave, the root mean square over the bands that stand 6 dB over the recording's
 
 | A call, the mean of nine | 0–20 ms | 20–60 | 60–140 | 0.14–0.22 s | 0.22–0.3 | 0.3–0.4 | 0.4–0.5 | 0.5–0.6 |
 |---|---|---|---|---|---|---|---|---|
-| all 681 carriers | 4.46 dB | 4.66 | 3.63 | 4.71 | 3.36 | 5.79 | 4.89 | 9.09 |
+| all 681 carriers | 5.45 dB | 4.93 | 4.10 | 4.48 | 4.04 | 4.17 | 4.35 | 6.17 |
 | 218 carriers (as on the chip) | 4.54 dB | 5.39 | 4.11 | 4.88 | 5.84 | 6.88 | 8.60 | 14.96 |
 
 | The mean of 24 | −2–4 ms | 4–10 | 10–20 | 20–35 | 35–60 | 60–90 |
 |---|---|---|---|---|---|---|
-| ticks (above 400 Hz) | 1.54 dB | 2.47 | 2.07 | 1.38 | 2.55 | 1.08 |
+| ticks (above 400 Hz) | 1.95 dB | 2.71 | 2.41 | 1.54 | 2.68 | 1.46 |
 
-The case's knock (80–450 Hz, its first 80 ms) is within 0.5 dB of the recording's, the train's drone (40–450 Hz)
-within 0.1 dB.
+The case's knock (80–450 Hz, its first 80 ms) is within 0.5 dB of the recording's, the running train's drone
+(40–450 Hz) and its rattle (above 800 Hz) within 0.3 dB.
 
 The warning and the door's clicks are within 1 dB of the recording's peaks. The calls are not as close as the
-wall clock's gong. The recording's calls overlap: a pipe is still breathing out, and the gong is still ringing in
-bands the analysis could only watch for 0.17 s, when the next call starts. In the last tenth of a second before the
-next call (0.5–0.6 s) the synthesised call is drier than the real one, by about 8 dB on average. That is the room
-and the slow tail, not the notes: what you hear first, the hit, the two notes and their timing, is within 3 to 6 dB.
+wall clock's gong: the recording's calls overlap (a pipe is still breathing out and the gong still ringing when the
+next call starts), and the gong could be watched for only 0.17 s round the pipes' pitches. The running train's
+rattle filled much of what was missing between the calls: the last tenth of a second before the next call, 8 dB
+dry without it, is within about 4 dB now.
 On the chip the governor renders 218 of the wire gong's 681 carriers (97.9 % of its energy; the wall clock's 219
 hold 99.7 % of its gong's), and what it leaves out is the weak, long-ringing modes, so there the tail is drier
 again: that is what the case's knock and the train's drone cost, which are computed all the time.
@@ -537,8 +543,8 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 - the app compiles without a warning (gcc and clang, `-Werror`);
 - the sound against the recordings, as in the tables above: the wall clock's every window within 2 dB, its ticks
   within 1.6 dB; the cuckoo's gong within 3.5 dB, its calls within 6 dB over their first 0.5 s (with the 218
-  carriers of the chip 5 and 9 dB), its ticks within 3 dB to 90 ms and its case's knock within 2 dB, its
-  train's drone within 2 dB, its train's clicks within 1.5 dB;
+  carriers of the chip 5 and 9 dB), its ticks within 3 dB to 90 ms and its case's knock within 2 dB, its running
+  train's drone and rattle within 2 dB, its train's clicks within 1.5 dB;
 - and, running the whole app on a computer from scripts (`tests/scripts/`):
 
 | Script | What must happen |
@@ -550,7 +556,7 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 | `repeat.txt` | PLAY: ten blows; the hands at 10:10; the pendulum moves. |
 | `twelve.txt` | Twelve o'clock: twelve blows, every one as hard as the first, and nothing clips. |
 | (all) | A tick every half second to within 3 ms, left and right in turn, and **nothing between two ticks**. |
-| `cuckoo.txt` | ALGORITHM, then 2:59:56: three calls, each a blow, the high pipe 0.11 s on (0.22 s the first), the low 0.19 s after it, 0.665 s apart, the first 0.75 s after the hour; a tick every 0.4286 s; the pendulum moves; at the hour the door is open and the bird out, after it the door is shut again; the hands at 3:00. |
+| `cuckoo.txt` | ALGORITHM, then 2:59:56: three calls, each a blow, the high pipe 0.11 s on (0.22 s the first), the low 0.19 s after it, 0.665 s apart, the first 0.87 s after the hour; a tick every 0.4286 s; the pendulum moves; at the hour the door is open and the bird out, after it the door is shut again; the hands at 3:00. |
 | `cuckoo_silent.txt` | The cuckoo, FX and GLO (the keys on the hour): three o'clock without a call or a blow, the door shut, the keys flashing three times; at the half hour nothing. |
 
 **CI** (`.github/workflows/build.yml`, using the shared `zvenson/fm1-build` workflow) builds the package on every
@@ -560,7 +566,7 @@ it for 6 seconds as the wall clock and 5 seconds as the cuckoo clock (`tools/emu
 - the interrupts' share of the chip;
 - the governor's carriers (read out of the emulated RAM), and which clock is sounding;
 - a tick every half second (every 0.4286 s);
-- a blow after PLAY (the cuckoo's first 0.75 s after it, its warning and its door before it);
+- a blow after PLAY (the cuckoo's first 0.87 s after it, its warning and its door before it);
 - the pendulum moving between two screenshots; the cuckoo's door open and the bird out while it calls;
 - the hands at 10:10.
 

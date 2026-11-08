@@ -142,9 +142,9 @@ def fit_gong(model, feats, nwin=3, T=0.1, name="gong"):
 ATTACKS = [0.0006, 0.001, 0.0015, 0.0022, 0.003, 0.004, 0.0055]      # the tick's rise: 1 - e^(-t / ta)
 
 
-def tick_bank(tk, feats_rows, noise, seed, nwin=4, taus=None, tlen=0.07, loss="kl", lo=300.0):
+def tick_bank(tk, feats_rows, noise, seed, nwin=4, taus=None, tlen=0.07, loss="kl", lo=300.0, attacks=None):
     best = None
-    for ta in ATTACKS:
+    for ta in attacks or ATTACKS:
         bank, err = tick_bank_at(tk, feats_rows, noise, seed, ta, nwin, taus, tlen, loss, lo)
         if best is None or err < best[1]:
             best = (bank, err, ta)
