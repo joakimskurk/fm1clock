@@ -9,8 +9,8 @@ frame, all day long. Turn ALGORITHM and there is a **cuckoo clock**, carved in w
 hour and calls on two FM pipes over a wire gong, fitted to a real Black Forest clock. Both hang on the same panel
 wall.
 
-<p align="center"><img src="docs/screens/clock.png" width="320" alt="The wall clock on the FM-1's screen, on a pine panel wall, at ten past ten: Roman numerals round a wooden centre, the pendulum's brass bob behind the glass">
-<img src="docs/screens/cuckoo.png" width="320" alt="The cuckoo clock on the same wall, at ten past ten, its bird out of its door and calling: a carved house in dark red walnut, leaves along its roof, an ivory dial with serif numbers, turned columns, fretwork under its shelf, the chains and their pine-cone weights"></p>
+<p align="center"><img src="docs/screens/pendulum.gif" width="360" alt="The clock on the FM-1's screen, on a pine panel wall: the hands at ten past ten, the pendulum swinging from side to side behind the glass">
+<img src="docs/screens/cuckoo.gif" width="200" alt="The cuckoo clock at three o'clock on the same wall: a carved house in dark red walnut, leaves along its roof and a crest of leaves at the peak, vines round an ivory dial with serif numbers, turned columns, fretwork under its shelf; its bird comes out and calls, its leaf-shaped pendulum swings"></p>
 
 > **Status: 0.1, in progress.** Built and run in CI (in fm1-emu, the FM-1 emulator), the sound tested against the
 > recordings on a computer, and now being tried on a real FM-1.
