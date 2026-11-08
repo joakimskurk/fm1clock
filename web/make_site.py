@@ -6,7 +6,7 @@
                                inlined: the installer (Web MIDI, Chrome or Edge), the clocks, the links
   firmware/fm1clock-VER.fwsc   the package the page installs (its SHA-256 in the page: a damaged download is
                                never offered)
-  screens/                     the pictures and the icon (docs/screens)
+  screens/                     the pictures and the icon (docs/screens), the link preview (web/og.png)
   app/                         the clock itself in the browser: fm1clock.wasm (web/app/build.sh, the firmware compiled
                                to WebAssembly), worklet.js (it, in the audio thread), clock.js (its screen, its controls)
   .nojekyll                    (served as it is)
@@ -77,10 +77,11 @@ def main(pkg, version, out, wasm="build/web/fm1clock.wasm"):
     shutil.copy(pkg, out / "firmware" / name)
     for f in SCREENS:
         shutil.copy(ROOT / "docs" / "screens" / f, out / "screens" / f)
+    shutil.copy(HERE / "og.png", out / "screens" / "og.png")   # the link preview (web/make_og.py)
     (out / "index.html").write_text(html, encoding="utf-8")
     (out / ".nojekyll").write_text("")
     print(f"site: {out}: index.html ({len(html)} B), firmware/{name} ({len(raw)} B, {product}), "
-          f"{len(SCREENS)} pictures, app/ ({wasm_n} B of WebAssembly)")
+          f"{len(SCREENS) + 1} pictures, app/ ({wasm_n} B of WebAssembly)")
 
 
 if __name__ == "__main__":

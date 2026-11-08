@@ -110,7 +110,7 @@ fi
 if [ -f build/fm1clock.fwsc ]; then
     run "the site: the page, its installer, the package and the clock for the browser (web/make_site.py)" sh -c \
         "python3 web/make_site.py build/fm1clock.fwsc test build/site $WASM && test -s build/site/index.html && \
-         test -s build/site/firmware/fm1clock-test.fwsc && test -s build/site/screens/cuckoo.png"
+         test -s build/site/firmware/fm1clock-test.fwsc && test -s build/site/screens/cuckoo.png && test -s build/site/screens/og.png"
     if node -e "require('playwright')" 2>/dev/null; then
         run "the site's installer against a simulated FM-1: both steps, every byte, and an install cut off" \
             node tests/web/install_sim.js build/site
