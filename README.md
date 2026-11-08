@@ -22,7 +22,7 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 
 ## What it does
 
-- **Two clocks, one time**, kept by the FM-1's crystal. ALGORITHM switches; the FM-1 remembers which.
+- **Three clocks, one time**, kept by the FM-1's crystal. ALGORITHM switches; the FM-1 remembers which.
 - **The wall clock** ticks every half second (the tick from the left, the tock from the right), strikes the hours
   on its gong and once at the half hour. Turn the minute hand past the hour and it strikes, as a real clock does.
 - **The cuckoo clocks**, the chalet and the classic, call the hours: the train warns, the door opens, the bird comes
