@@ -55,6 +55,13 @@
   pre.cmd { background: var(--panel); color: var(--fg); padding: 10px 12px; font-size: 13px; max-height: none; }
   .small { color: var(--dim); font-size: 14px; }
   ul.links { padding-left: 20px; }
+  .warn { margin: 22px 0 0; padding: 12px 16px; border: 2px solid #e0443a; border-radius: 4px; background: #3b1410;
+          color: #ffdcd5; font-size: 15px; line-height: 1.5; }
+  .warn b { color: #ff6f61; }
+  .coffee { margin: 20px 0 0; text-align: center; }
+  .coffee a { display: inline-block; padding: 10px 18px; border-radius: 8px; background: #ffdd00; color: #1b1309;
+              font-weight: 700; text-decoration: none; }
+  .coffee a:hover { background: #ffe74d; }
   footer { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--dim); font-size: 13px; }
   footer p { margin: 0 0 8px; }
   @media (max-width: 560px) {
@@ -68,6 +75,9 @@
 <main>
   <h1>FM1 Clock</h1>
   <p class="tag">Firmware for the M-VAVE FM-1: a pendulum wall clock and a cuckoo clock.</p>
+
+  <p class="warn" role="note"><b>⚠ Not yet tried on a real FM-1.</b> FM1 Clock is built and tested on every change,
+    in CI and in the FM-1 emulator, but it has not been tried on an actual device. Install it at your own risk.</p>
 
   <div class="hero">
     <img src="screens/clock.png" width="320" height="480" alt="The wall clock on the FM-1's screen, on a pine panel wall, at ten past ten: Roman numerals round a wooden centre, the pendulum's brass bob behind the glass">
@@ -143,6 +153,7 @@ python3 tools/settime.py</pre>
     <p>The recordings it is fitted to (an Adelaide Clocks wall clock, a Black Forest cuckoo clock) are not in it:
       only measurements of them. "M-VAVE" and "FM-1" belong to their owners; this is a fan project, not an official
       M-VAVE product.</p>
+    <p class="coffee"><a href="https://buymeacoffee.com/skurk" target="_blank" rel="noopener">☕ Buy me a coffee</a></p>
   </footer>
 </main>
 <script type="module">
