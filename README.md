@@ -256,7 +256,7 @@ noise counted. The numbers are the root mean square of the differences over the 
 | A strike | 0–20 ms | 20–50 | 50–100 | 0.1–0.2 s | 0.2–0.4 | 0.4–0.8 | 0.8–1.6 | 1.6–3.2 | 3.2–5 |
 |---|---|---|---|---|---|---|---|---|---|
 | all 742 carriers | 0.66 dB | 1.31 | 0.65 | 0.69 | 0.62 | 1.02 | 1.17 | 0.72 | 1.78 |
-| 243 carriers (as on the chip) | 0.59 dB | 1.11 | 0.67 | 0.72 | 0.66 | 1.28 | 1.35 | 0.71 | 1.79 |
+| 219 carriers (as on the chip) | 0.54 dB | 1.04 | 0.76 | 0.75 | 0.67 | 1.35 | 1.49 | 0.72 | 1.79 |
 | 160 carriers | 0.53 dB | 0.98 | 0.94 | 1.16 | 0.86 | 1.73 | 1.59 | 0.70 | 1.86 |
 
 | The mean of 24 | −2–4 ms | 4–10 | 10–20 | 20–35 |
@@ -407,12 +407,12 @@ octave, the root mean square over the bands that stand 6 dB over the recording's
 | The wire gong, one hit | 0–10 ms | 10–30 | 30–70 | 70–140 |
 |---|---|---|---|---|
 | all 681 carriers | 1.23 dB | 1.76 | 2.40 | 3.09 |
-| 243 carriers (as on the chip) | 1.49 dB | 1.98 | 2.55 | 3.76 |
+| 218 carriers (as on the chip) | 1.59 dB | 2.35 | 2.78 | 4.59 |
 
 | A call, the mean of nine | 0–20 ms | 20–60 | 60–140 | 0.14–0.22 s | 0.22–0.3 | 0.3–0.4 | 0.4–0.5 | 0.5–0.6 |
 |---|---|---|---|---|---|---|---|---|
 | all 681 carriers | 4.46 dB | 4.66 | 3.63 | 4.71 | 3.36 | 5.79 | 4.89 | 9.09 |
-| 243 carriers (as on the chip) | 4.33 dB | 4.89 | 3.60 | 4.67 | 2.93 | 6.41 | 6.38 | 11.29 |
+| 218 carriers (as on the chip) | 4.54 dB | 5.39 | 4.11 | 4.88 | 5.84 | 6.88 | 8.60 | 14.96 |
 
 | The mean of 24 | −2–4 ms | 4–10 | 10–20 | 20–35 | 35–60 | 60–90 |
 |---|---|---|---|---|---|---|
@@ -426,9 +426,9 @@ wall clock's gong. The recording's calls overlap: a pipe is still breathing out,
 bands the analysis could only watch for 0.17 s, when the next call starts. In the last tenth of a second before the
 next call (0.5–0.6 s) the synthesised call is drier than the real one, by about 8 dB on average. That is the room
 and the slow tail, not the notes: what you hear first, the hit, the two notes and their timing, is within 3 to 6 dB.
-On the chip the governor renders 243 of the wire gong's 681 carriers (98.3 % of its energy; the wall clock's 243
-hold 99.8 % of its gong's), and what it leaves out is the weak, long-ringing modes, so there the tail is a little
-drier again.
+On the chip the governor renders 218 of the wire gong's 681 carriers (97.9 % of its energy; the wall clock's 219
+hold 99.7 % of its gong's), and what it leaves out is the weak, long-ringing modes, so there the tail is drier
+again: that is what the case's knock and the train's drone cost, which are computed all the time.
 
 ## Using the whole chip
 
@@ -450,10 +450,10 @@ included):
 
 | | The wall clock | The cuckoo clock |
 |---|---|---|
-| Gong carriers the governor renders | 243 of 742 (99.8 % of the gong's energy) | 243 of 681 (98.3 %) |
-| FM operators in all | 411: 243 carriers, 32 modulators, 2 × 64 tick operators, the pipes' 8, at 44.1 kHz | 411, the same |
-| The engine's share of each audio block | 76.7 %, 77.8 % in the worst block | 76.6 %, 77.6 % in the worst block |
-| All interrupts, of the whole chip | 75.0 % (180.0 million instructions a second) | 74.4 % (178.5 million) |
+| Gong carriers the governor renders | 219 of 742 (99.7 % of the gong's energy) | 218 of 681 (97.9 %) |
+| FM operators in all | 407: 219 carriers, 32 modulators, 2 × 68 tick operators, the pipes' 8, the drone's 12, at 44.1 kHz | 406 |
+| The engine's share of each audio block | 76.8 %, 77.9 % in the worst block | 76.5 %, 77.5 % in the worst block |
+| All interrupts, of the whole chip | 75.2 % (180.3 million instructions a second) | 74.4 % (178.5 million) |
 | What is left | the pendulum at 50 frames a second, the hands, USB, the panel | the same, the door and the bird, the chains |
 
 The two pipes (each a carrier and a modulator, the low one with four partials of its body) and the train's drone
@@ -536,8 +536,8 @@ make host     # the app on a computer with Dinghy's own script: build/host/fm1cl
 - the tables are exactly what the model makes;
 - the app compiles without a warning (gcc and clang, `-Werror`);
 - the sound against the recordings, as in the tables above: the wall clock's every window within 2 dB, its ticks
-  within 1.6 dB; the cuckoo's gong within 3.5 dB, its calls within 6 dB over their first 0.5 s (with the 243
-  carriers of the chip 4 and 6.5 dB), its ticks within 3 dB to 90 ms and its case's knock within 2 dB, its
+  within 1.6 dB; the cuckoo's gong within 3.5 dB, its calls within 6 dB over their first 0.5 s (with the 218
+  carriers of the chip 5 and 9 dB), its ticks within 3 dB to 90 ms and its case's knock within 2 dB, its
   train's drone within 2 dB, its train's clicks within 1.5 dB;
 - and, running the whole app on a computer from scripts (`tests/scripts/`):
 
