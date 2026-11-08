@@ -12,7 +12,7 @@ The cuckoo clock's, against its own recording (tests/ref/cuckoo_features.json, t
   parity.py ck_call CALLS.wav N [MAX]     N calls (clk_render ck_call): the gong and both pipes, 0.5 s from the hit
                                           (the last 0.1 s before the next is shown, not held to it: there the
                                           recording's slow tail is under its pipes, longer than the analysis saw)
-  parity.py ck_tick WAV N [MAX]           its ticks (clk_render ck_tick), as the wall clock's
+  parity.py ck_tick WAV N [MAX]           its ticks (clk_render ck_tick), as the wall clock's but to 130 ms: it rings on
   parity.py ck_pre|ck_post WAV N [MAX]    the train's clicks: their peak above 3 kHz within MAX dB (1.5) of the
                                           recording's (under them there the gong and the pipes ring)
 """
@@ -126,7 +126,9 @@ def cuckoo(what, fs, x):
     E = [10 ** (band_energies(h, fs, t, C["tick_windows"]) / 10) for t in ons]
     synth = 10 * np.log10(np.mean(E, axis=0)) - G_B
     name = what[3:]
-    return 0 if report(f"cuckoo {name}", synth, np.array(C[name]), noise, C["tick_windows"][:4], limit) else 1
+    centers = np.sqrt(np.array(BANDS[:-1]) * np.array(BANDS[1:]))
+    ref = np.where(centers[None, :] < 400, -200, np.array(C[name]))   # (the analysis is high-passed at 400 Hz)
+    return 0 if report(f"cuckoo {name}", synth, ref, np.array(C["tick_noise"]), C["tick_windows"], limit) else 1
 
 
 if __name__ == "__main__":

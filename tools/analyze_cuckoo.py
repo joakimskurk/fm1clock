@@ -31,14 +31,17 @@ HALF_HIT = 2.232                                    # (by eye; refined below) th
 TRAIN = [5.387, 6.147, 6.772, 7.397, 8.048, 8.718, 9.384, 10.055, 10.719, 11.385]
 HIGH = [5.621, 6.284, 6.908, 7.541, 8.197, 8.862, 9.53, 10.199, 10.862, 11.531]
 LOW = [5.81, 6.445, 7.057, 7.698, 8.361, 9.031, 9.709, 10.375, 11.037, 11.705]
-TICKS = [0.459, 0.886, 1.314, 3.032, 3.458, 3.888, 4.315, 12.475, 12.903, 13.333]
+TICKS = [0.459, 0.886, 1.314, 3.032, 3.458, 3.888, 4.315, 12.475, 12.903, 13.333]   # (all of them: the beat)
+TICKS_CLEAN = [0.459, 0.886, 3.458, 3.888, 4.315]   # the ticks with nothing under them for 0.13 s: the sound (at
+# 1.314 the warning comes, at 3.032 and after 12 s the gong still rings from a call)
 PRE = [1.492, 4.655, 4.729, 4.99]                   # the train's clicks before a strike (warning, door)
 POST = [2.825, 11.784, 11.94]                       # and after it (the door shuts)
 F_HIGH, F_LOW = 1223.9, 997.6
 CALL_WIN = [(0.000, 0.020), (0.020, 0.060), (0.060, 0.140), (0.140, 0.220), (0.220, 0.300), (0.300, 0.400),
             (0.400, 0.500), (0.500, 0.600)]       # a whole call, from the gong's hit (the next one may come at 0.62 s)
 GONG_WIN = [(0.000, 0.010), (0.010, 0.030), (0.030, 0.070), (0.070, 0.140)]   # the hit alone (before the pipe)
-TICK_WIN = [(-0.002, 0.004), (0.004, 0.010), (0.010, 0.020), (0.020, 0.035), (0.035, 0.060)]
+TICK_WIN = [(-0.002, 0.004), (0.004, 0.010), (0.010, 0.020), (0.020, 0.035), (0.035, 0.060), (0.060, 0.090),
+            (0.090, 0.130)]                       # (it rings on: -30 dB above 1.5 kHz at 0.15 s)
 
 
 def onset(m, fs, t, thr=0.3, span=0.03):
@@ -179,11 +182,16 @@ def main():
     lo_p = pipe(m, fs, LOW, F_LOW, step)
     d_hi = [s - t for s, t in zip(hi_p["starts"], train)]
     d_lo = [s - t for s, t in zip(lo_p["starts"], hi_p["starts"])]
-    tick_ons, tick, tick_bands = clicks(m, fs, TICKS, "tick")
+    tick_ons = [onset(m, fs, t) for t in TICKS]
+    _, tick, tick_bands = clicks(m, fs, TICKS_CLEAN, "tick")
     pre_ons, pre, pre_bands = clicks(m, fs, PRE, "pre")
     post_ons, post, post_bands = clicks(m, fs, POST, "post")
     beat = float(np.median([b - a for a, b in zip(tick_ons, tick_ons[1:]) if b - a < 0.5]))
     noise = band_energies(m, fs, 3.60, [(0.0, 0.2)])[0]
+    # the floor under a tick: just before each clean one (at 3.6 s the half hour's gong and a tick still ring low)
+    b4, a4 = sg.butter(4, 400 / (fs / 2), "high")
+    h4 = sg.filtfilt(b4, a4, m)
+    tick_noise = mean_bands(h4, fs, [onset(m, fs, t) - 0.10 for t in TICKS_CLEAN], [(0.0, 0.09)])[0]
     model = dict(fs=fs, hit=hit, modes=modes, pipes=dict(high=hi_p, low=lo_p),
                  call=dict(period=float(np.median(np.diff(train))), hit_to_high=float(np.median(d_hi[1:])),
                            first_hit_to_high=float(d_hi[0]), high_to_low=float(np.median(d_lo))),
@@ -193,7 +201,7 @@ def main():
     feats = dict(bands=BANDS, call_windows=CALL_WIN, gong_windows=GONG_WIN, tick_windows=TICK_WIN,
                  gong=band_energies(m, fs, hit, GONG_WIN).tolist(),
                  call=mean_bands(m, fs, train[1:], CALL_WIN), call_times=train[1:],
-                 tick=tick_bands, pre=pre_bands, post=post_bands, noise=noise.tolist())
+                 tick=tick_bands, pre=pre_bands, post=post_bands, noise=noise.tolist(), tick_noise=tick_noise)
     (ROOT / "tools" / "ref_cuckoo.json").write_text(json.dumps(model, indent=1) + "\n")
     (ROOT / "tests" / "ref" / "cuckoo_features.json").write_text(json.dumps(feats, indent=1) + "\n")
     print(f"gong hit {hit:.4f} s, {len(modes)} modes; beat {beat:.4f} s; call every {model['call']['period']:.3f} s, "

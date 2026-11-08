@@ -8,7 +8,8 @@ are made from (tools/gen_tables.py). The same methods as the wall clock's (tools
     (before the first pipe) have the reference's band energies;
   - the two pipes: an FM pair each, carrier and modulator at the pipe's pitch (1:1), the index from the second
     harmonic (J1(I) / J0(I) ~ I / 2), the bellows' envelope as measured, step by step;
-  - the tick: 64 operators, two decays per third octave, a rise, all levels fitted together; the mechanism's clicks
+  - the tick: 64 operators, two decays per third octave, a rise, all levels fitted together over its first 0.13 s
+    (it rings on); the mechanism's clicks
     (the warning and the door before a strike, the door after it) are its sound at their own level (their peaks
     above 3 kHz: under them the pipes and the gong sound in the recording).
 
@@ -23,6 +24,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import fit_model as F  # noqa: E402
+import os  # noqa: E402
+LOSS = os.environ.get("CK_TICK_LOSS", "is")   # (its tick: by ratio, so its quiet tail counts)
 from features import BANDS, band_energies  # noqa: E402
 
 
@@ -146,9 +149,12 @@ if __name__ == "__main__":
                             body=v["body"]) for k, v in model["pipes"].items()}
     out["pipes"] = fit_pipe_tails(modes, fm, out["pipes"], model["call"], feats)
     out["modes"] = fit_tails(modes, out["pipes"], model["call"], feats)
-    bank, err, ta = F.tick_bank(model["ticks"]["tick"], feats["tick"], feats["noise"], 3)
+    # its tick rings on (the wooden case, the escapement's steel): fitted over 0.13 s, its decays up to 0.16 s
+    bank, err, ta = F.tick_bank(model["ticks"]["tick"], feats["tick"], feats["tick_noise"], 3, nwin=len(feats["tick_windows"]),
+                                taus=[0.0015, 0.0025, 0.004, 0.006, 0.009, 0.013, 0.019, 0.028, 0.04, 0.056, 0.08, 0.115, 0.16],
+                                tlen=0.22, loss=LOSS, lo=400.0)   # (its analysis is high-passed at 400 Hz)
     out["tick"], out["tick_attack"] = bank, ta
-    print(f"tick: {len(bank)} operators, rise {1000 * ta:.1f} ms, band energies over 0-35 ms: {err:.2f} dB rms off")
+    print(f"tick: {len(bank)} operators, rise {1000 * ta:.1f} ms, band energies over 0-130 ms: {err:.2f} dB rms off")
     # the train's clicks and the door: the same mechanism's clicks, but in the recording the pipes and the gong sound
     # under them; their level from their peak above 3 kHz against the tick's, their sound the tick's
     for name in ("pre", "post"):

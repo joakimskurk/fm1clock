@@ -142,32 +142,33 @@ def fit_gong(model, feats, nwin=3, T=0.1, name="gong"):
 ATTACKS = [0.0006, 0.001, 0.0015, 0.0022, 0.003, 0.004, 0.0055]      # the tick's rise: 1 - e^(-t / ta)
 
 
-def tick_bank(tk, feats_rows, noise, seed):
+def tick_bank(tk, feats_rows, noise, seed, nwin=4, taus=None, tlen=0.07, loss="kl", lo=300.0):
     best = None
     for ta in ATTACKS:
-        bank, err = tick_bank_at(tk, feats_rows, noise, seed, ta)
+        bank, err = tick_bank_at(tk, feats_rows, noise, seed, ta, nwin, taus, tlen, loss, lo)
         if best is None or err < best[1]:
             best = (bank, err, ta)
     return best
 
 
-def tick_bank_at(tk, feats_rows, noise, seed, ta):
+def tick_bank_at(tk, feats_rows, noise, seed, ta, nwin=4, taus=None, tlen=0.07, loss="kl", lo=300.0):
     """NT operators for one tick sound: (f, tau, a). The frequencies: the spectrum's strongest peaks, the rest spread
     over 330 Hz .. 14.5 kHz (the case knocks too). Per third-octave band two decays (the tick falls fast, then rings on in the movement and
     the case): the operators of a band take the short and the long one in turn, and the two levels and decays are
-    fitted to the reference's band energies in its first 35 ms (noise taken off, NNLS over a grid of decays). The
+    fitted to the reference's band energies in its first nwin windows (4: 35 ms; noise taken off, NNLS over a grid
+    of decays, taus; each operator's template tlen s long). The
     tick rises over a fraction of a millisecond (the pallet meets the tooth): that rise is searched too"""
     rng = np.random.default_rng(seed)
     peaks = [p[0] for p in tk["peaks"][:28]]
-    fill = list(np.exp(np.linspace(np.log(330), np.log(14500), NT - len(peaks))))
+    fill = list(np.exp(np.linspace(np.log(lo * 1.1), np.log(14500), NT - len(peaks))))   # (lo: 300 Hz, 330 on)
     freqs = np.array(sorted(peaks + [f * np.exp(rng.uniform(-0.03, 0.03)) for f in fill]))
     ref = 10 ** (np.array(feats_rows) / 10)
     nz = 10 ** (np.array(noise) / 10)
-    wins = feats["tick_windows"][:4]
+    wins = feats["tick_windows"][:nwin]
     pad = int(0.01 * FS)
-    t = np.arange(int(0.07 * FS)) / FS
+    t = np.arange(int(tlen * FS)) / FS
     band_of = np.clip(np.searchsorted(BANDS, freqs) - 1, 0, len(BANDS) - 2)
-    TAUS = [0.0015, 0.0025, 0.004, 0.006, 0.009, 0.013, 0.019, 0.028, 0.04]
+    TAUS = taus or [0.0015, 0.0025, 0.004, 0.006, 0.009, 0.013, 0.019, 0.028, 0.04]
 
     att = 1 - np.exp(-t / ta)
 
@@ -184,10 +185,10 @@ def tick_bank_at(tk, feats_rows, noise, seed, ta):
     errs = []
     for b in range(len(BANDS) - 1):
         idx = np.where(band_of == b)[0]
-        if len(idx) == 0:
+        if len(idx) == 0 or np.sqrt(BANDS[b] * BANDS[b + 1]) < lo:
             continue
-        target = np.clip(ref[:, b][:4] - nz[b], 0, None)
-        wt = (ref[:4, b] > 2 * nz[b]).astype(float) + 1e-3
+        target = np.clip(ref[:, b][:nwin] - nz[b], 0, None)
+        wt = (ref[:nwin, b] > 2 * nz[b]).astype(float) + 1e-3
         fc = float(np.exp(np.mean(np.log(freqs[idx]))))
         T = {tau: template(fc, tau)[:, b] for tau in TAUS}
         best = None
@@ -221,16 +222,21 @@ def tick_bank_at(tk, feats_rows, noise, seed, ta):
             taus[short] = ts if x[0] >= x[1] else tl
     # then all levels at once, each operator with its own template at its own frequency: a short window spreads a
     # band's energy into its neighbours, and the low operators have only a few cycles in the first 6 ms
-    Tk = np.stack([template(f, max(tt, 0.0015), 4)[:4] for f, tt in zip(freqs, taus)])     # ops x windows x bands
+    Tk = np.stack([template(f, max(tt, 0.0015), 4)[:nwin] for f, tt in zip(freqs, taus)])   # ops x windows x bands
     centers = np.sqrt(np.array(BANDS[:-1]) * np.array(BANDS[1:]))
-    tgt = np.clip(ref[:4] - nz[None, :], 0, None)
-    W = ((ref[:4] > 2 * nz[None, :]) & (centers[None, :] > 300)).astype(float)
+    tgt = np.clip(ref[:nwin] - nz[None, :], 0, None)
+    W = ((ref[:nwin] > 2 * nz[None, :]) & (centers[None, :] > lo)).astype(float)
     pw = np.maximum(amps ** 2, 1e-16)
-    for _ in range(400):                                       # multiplicative updates (NMF, KL): pw stays >= 0
+    for _ in range(400):                                       # multiplicative updates (NMF): pw stays >= 0
         P = np.einsum("k,kwb->wb", pw, Tk) + 1e-20
-        num = np.einsum("kwb,wb->k", Tk, W * tgt / P)
-        den = np.einsum("kwb,wb->k", Tk, W) + 1e-20
-        pw *= num / den
+        if loss == "is":                                       # Itakura-Saito: every window and band by its ratio,
+            num = np.einsum("kwb,wb->k", Tk, W * tgt / P ** 2)  # as in dB (a quiet tail counts as the loud hit)
+            den = np.einsum("kwb,wb->k", Tk, W / P) + 1e-30
+            pw *= np.sqrt(num / den)
+        else:                                                  # KL: by energy
+            num = np.einsum("kwb,wb->k", Tk, W * tgt / P)
+            den = np.einsum("kwb,wb->k", Tk, W) + 1e-20
+            pw *= num / den
     amps = np.sqrt(pw)
     P = np.einsum("k,kwb->wb", pw, Tk)
     sel = W > 0
