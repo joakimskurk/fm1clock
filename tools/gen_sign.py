@@ -7,10 +7,12 @@
 Drawn as the clocks are (tools/gen_art_cuckoo.py, its own helpers): at the screen's scale, 8 x 8 samples a pixel,
 then twice the size, pixel for pixel, as the pictures of the clocks on the page are; on nothing (its background
 transparent), so it hangs on the page, its soft shadow on the page. Carved as the cuckoo clock is, in its dark red
-walnut (lighter: it hangs on the dark page), and then some: a crest of leaves at the top with the cuckoo on it, leaves along the top edge, a frame of
-carved beads round a sunk field, brass rosettes in its corners, scrolls curling out at either end; the letters cut
-in and gilded; under it fretwork, two scrolls and a leaf hanging on a stem between, and
-two pine cones on their chains; it hangs from two brass nails on two chains.
+walnut (lighter: it hangs on the dark page), and then some: a crest of leaves at the top with the cuckoo on it,
+leaves along the top edge, a frame of carved beads round a sunk field, brass rosettes in its corners, scrolls curling
+out at either end; the letters cut in and gilded. And from the wall clock (its design, assets/design.png, as it is
+on the screen): its gold scrollwork from round its dial in the field's corners, a gilt fillet round the field as
+round its window, its turned finial on each top corner. Under it fretwork, two scrolls and a leaf hanging on a stem
+between, and two pine cones on their chains; it hangs from two brass nails on two chains.
 --check: fail if docs/screens/sign.png is not what this makes.
 """
 import argparse
@@ -21,6 +23,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageFilter, ImageFont
 
+import gen_art as GA                             # (the wall clock's: its gold scrollwork, its finial, from the design)
 import gen_art_cuckoo as A
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,6 +141,25 @@ def over(img, spr, x0, y0):
     reg[...] = spr + reg * (1 - spr[..., 3:])
 
 
+def from_design(box, mask, scale):
+    """a piece of the wall clock's design (assets/design.png) as a sprite: its pixels where mask is, scaled to the
+    screen as the clock is (premultiplied RGBA)"""
+    im = np.asarray(Image.open(GA.SRC).convert("RGB")).astype(np.float32)
+    x0, y0, x1, y1 = box
+    m = mask(im)[y0:y1, x0:x1].astype(np.float32)
+    pre = np.concatenate([im[y0:y1, x0:x1] / 255 * m[..., None], m[..., None]], axis=2)
+    w, h = int(round((x1 - x0) * scale)), int(round((y1 - y0) * scale))
+    return np.stack([np.asarray(Image.fromarray(pre[..., c], "F").resize((w, h), Image.BOX)) for c in range(4)], axis=2)
+
+
+def spandrel(im):
+    """the gold scrollwork in the corners round the wall clock's dial (and its dark edge), not the dial"""
+    R, G, B = im[..., 0], im[..., 1], im[..., 2]
+    yy, xx = np.mgrid[0:im.shape[0], 0:im.shape[1]]
+    off = np.hypot(xx - GA.HUB[0], yy - GA.HUB[1]) > GA.RING_R + 4
+    return GA.dilate((R > 150) & (G > 90) & (R - B > 90) & (G - B > 40) & off, 2) & off
+
+
 def build():
     cv = A.Canvas(W, H)
     for hx in HOOKS:                              # the chains: from the two nails straight down to the board's rings
@@ -179,12 +201,17 @@ def build():
     cv.rect(fx0, fy0, fx1, fy1, A.wood(SW_D, SW_X, False, 302, period=3.0))
     cv.rect(fx0, fy1 - 0.6, fx1, fy1, SW_L, 0.35)
     cv.rect(fx1 - 0.6, fy0, fx1, fy1, SW_L, 0.25)
+    g = gold(fy0, fy1)                            # a gilt fillet round the field, as round the wall clock's window
+    for x0_, y0_, x1_, y1_ in ((fx0 + 1.2, fy0 + 1.2, fx1 - 1.2, fy0 + 1.9), (fx0 + 1.2, fy1 - 1.9, fx1 - 1.2, fy1 - 1.2),
+                               (fx0 + 1.2, fy0 + 1.2, fx0 + 1.9, fy1 - 1.2), (fx1 - 1.9, fy0 + 1.2, fx1 - 1.2, fy1 - 1.2)):
+        cv.rect(x0_ + 0.35, y0_ + 0.4, x1_ + 0.35, y1_ + 0.4, (20, 6, 3), 0.7)
+        cv.rect(x0_, y0_, x1_, y1_, g)
     for x, y in ((BX0 + 4.2, BY0 + 4.2), (BX1 - 4.2, BY0 + 4.2), (BX0 + 4.2, BY1 - 4.2), (BX1 - 4.2, BY1 - 4.2)):
         rosette(cv, x, y, 4.2)                    # brass rosettes in the corners, over the beads
     for hx in HOOKS:                              # the rings the chains hang from, on its top
         ring(cv, hx, BY0 - 2.2)
     for s_ in (-1, 1):                            # leaves along the top edge, turned out in turn, smaller to the ends
-        for i, t in enumerate(np.arange(30.0, 128.0, 13.5)):
+        for i, t in enumerate(np.arange(30.0, 118.0, 13.5)):
             if abs(t - abs(HOOKS[0] - CX)) < 7:
                 continue                          # (not over the rings)
             leaf(cv, CX + s_ * t, BY0 - 0.6, 5.6 - 1.6 * t / 128, s_ * (40 if i % 2 else 12))
@@ -215,6 +242,15 @@ def build():
     cn = cone()
     for s_ in (-1, 1):
         over(scr, cn, int(round(CX + s_ * 64 - cn.shape[1] / 2)), int(round(BY1 + 14)))
+    # the wall clock's: its gold scrollwork from round its dial in the field's corners, its finials on the board's
+    sp = from_design((418, 298, 524, 404), spandrel, 240 / 1254 * 0.9)      # top corners
+    sh_, sw_ = sp.shape[:2]
+    for flip, x, y in (((), fx0 + 2, fy0 + 2), ((1,), fx1 - 2 - sw_, fy0 + 2), ((0,), fx0 + 2, fy1 - 2 - sh_),
+                       ((0, 1), fx1 - 2 - sw_, fy1 - 2 - sh_)):
+        over(scr, np.flip(sp, flip) if flip else sp, int(round(x)), int(round(y)))
+    fin = from_design((585, 4, 675, 136), GA.clock_mask, 240 / 1254)
+    for x in (BX0 + 4.2, BX1 - 4.2):
+        over(scr, fin, int(round(x - fin.shape[1] / 2)), int(round(BY0 + 1 - fin.shape[0])))
     # its shadow on the page: 3 px right, 4 down, soft, half as dark as black; straight alpha for the PNG
     a = scr[..., 3]
     sh = np.zeros_like(a)
