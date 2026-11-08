@@ -23,3 +23,47 @@ jobs:
         if [ "$GITHUB_REF_TYPE" = tag ]; then ./build.sh --release "${GITHUB_REF_NAME#v}"; else ./build.sh; fi
       test: python3 -m pip install -q numpy && sh tests/run_clock.sh && sh tests/run_tests.sh && sh tools/emu_ci.sh
       packages: build/fm1clock*.fwsc
+
+  # The site (GitHub Pages, https://joakimskurk.github.io/fm1clock/): FM1 Clock's page and its installer in the
+  # browser (Web MIDI), with the package this run built and tested (web/make_site.py). From the default branch only.
+  # GitHub Pages has to be switched on once, by the repository's owner: Settings -> Pages -> Build and deployment ->
+  # Source: GitHub Actions. Until then this job says so and publishes nothing (the build stays green).
+  site:
+    needs: build
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
+      - name: GitHub Pages switched on?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/pages" >/dev/null 2>&1; then
+            echo "on=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=GitHub Pages is off::Settings -> Pages -> Build and deployment -> Source: GitHub Actions, then run the build again"
+            echo "on=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: The site
+        run: python3 web/make_site.py build/fm1clock.fwsc "dev-${GITHUB_SHA::7}" _site
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outputs.on == '1'
+        with:
+          path: _site
+      - id: deploy
+        if: steps.pages.outputs.on == '1'
+        uses: actions/deploy-pages@v4

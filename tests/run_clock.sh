@@ -88,4 +88,20 @@ run "silent: no call and no blow at three" sh -c "python3 $P events $OUT/cuckoo_
 run "silent: the door stays shut" python3 $P same $OUT/cuckoo-1000.ppm $OUT/cuckoo_silent-5230.ppm $D 0
 run "silent, the keys on the hour: three flashes at three, none at the half hour" python3 $P events $OUT/cuckoo_silent.log FLASH 3 9 3
 
+# the site (GitHub Pages): made from the package (CI builds it before the tests; here, if it is there), its installer
+# against a simulated FM-1 if Playwright is there
+if [ -f build/fm1clock.fwsc ]; then
+    run "the site: the page, its installer and the package (web/make_site.py)" sh -c \
+        "python3 web/make_site.py build/fm1clock.fwsc test build/site && test -s build/site/index.html && \
+         test -s build/site/firmware/fm1clock-test.fwsc && test -s build/site/screens/cuckoo.gif"
+    if node -e "require('playwright')" 2>/dev/null; then
+        run "the site's installer against a simulated FM-1: both steps, every byte, and an install cut off" \
+            node tests/web/install_sim.js build/site
+    else
+        echo "== the site's installer against a simulated FM-1: skipped (no Playwright)"
+    fi
+else
+    echo "== the site: skipped (no build/fm1clock.fwsc: make fw)"
+fi
+
 [ $fail = 0 ] && echo "run_clock: all passed" || { echo "run_clock: FAILED"; exit 1; }

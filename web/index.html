@@ -1,0 +1,225 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only
+     FM1 Clock's page and installer (web/make_site.py makes the site). The install flow follows SLOOP's installer
+     page (web/index_pkg.html, Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments; isod89),
+     its protocol is SLOOP's own, unchanged: web/fm1pkg.js, web/fm1ota.js. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM1 Clock</title>
+<meta name="description" content="FM1 Clock: firmware for the M-VAVE FM-1. A pendulum wall clock and a cuckoo clock, every sound synthesised in FM. Install it from the browser.">
+<meta name="theme-color" content="#14100c">
+<link rel="icon" href="screens/icon.png">
+<style>
+  :root { --bg: #14100c; --panel: #1e1812; --line: #3a2e22; --fg: #f2ebe0; --dim: #b3a490;
+          --brass: #d9a441; --brass-d: #a87a2a; --good: #6fbf73; --bad: #e0705a; }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 56px; }
+  a { color: var(--brass); }
+  h1 { font: 600 40px/1.1 Georgia, "Times New Roman", serif; margin: 0; letter-spacing: .01em; }
+  .tag { color: var(--dim); margin: 6px 0 0; font-size: 17px; }
+  h2 { font: 600 22px/1.2 Georgia, "Times New Roman", serif; margin: 44px 0 12px; color: var(--brass); }
+  .hero { display: flex; gap: 16px; justify-content: center; align-items: flex-end; margin: 28px 0 24px;
+          flex-wrap: wrap; }
+  .hero img { display: block; max-width: 100%; height: auto; border-radius: 4px; }
+  .hero .a { width: 340px; } .hero .b { width: 228px; }
+  .lead { font-size: 18px; margin: 0 0 22px; }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 8px; }
+  .fact { background: var(--panel); border-top: 3px solid var(--brass); padding: 10px 12px 12px; }
+  .fact b { display: block; font: 600 24px/1.1 Georgia, serif; color: var(--brass); }
+  .fact span { display: block; color: var(--dim); font-size: 13px; line-height: 1.35; margin-top: 4px; }
+  .box { background: var(--panel); border: 1px solid var(--line); padding: 20px; }
+  ol { margin: 0 0 16px; padding-left: 22px; } li { margin: 0 0 4px; }
+  button#go { font: 600 16px/1 inherit; font-family: inherit; width: 100%; padding: 16px 0; border: 0;
+              background: var(--brass); color: #1b1309; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+  button#go:hover:not(:disabled) { background: #e8b453; }
+  button#go:disabled { background: var(--line); color: var(--dim); cursor: default; }
+  progress { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin: 14px 0 0; border: 0;
+             background: var(--line); }
+  progress::-webkit-progress-bar { background: var(--line); }
+  progress::-webkit-progress-value { background: var(--brass); }
+  progress::-moz-progress-bar { background: var(--brass); }
+  #status { margin: 12px 0 0; min-height: 1.6em; font-variant-numeric: tabular-nums; }
+  #status.good { color: var(--good); } #status.bad { color: var(--bad); }
+  .pkg { color: var(--dim); font-size: 13px; margin: 10px 0 0; overflow-wrap: anywhere; }
+  details { margin: 12px 0 0; } summary { cursor: pointer; color: var(--dim); font-size: 14px; }
+  pre { color: var(--dim); font-size: 12px; white-space: pre-wrap; max-height: 180px; overflow: auto; margin: 8px 0 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  td { border-top: 1px solid var(--line); padding: 7px 10px 7px 0; vertical-align: top; }
+  td:first-child { white-space: nowrap; font-weight: 600; color: var(--brass); padding-right: 16px; }
+  code { background: var(--panel); padding: 1px 5px; font-size: 14px; }
+  pre.cmd { background: var(--panel); color: var(--fg); padding: 10px 12px; font-size: 13px; max-height: none; }
+  .small { color: var(--dim); font-size: 14px; }
+  ul.links { padding-left: 20px; }
+  footer { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--dim); font-size: 13px; }
+  footer p { margin: 0 0 8px; }
+  @media (max-width: 560px) {
+    h1 { font-size: 32px; } .facts { grid-template-columns: repeat(2, 1fr); }
+    .hero .a, .hero .b { width: 100%; max-width: 340px; }
+    td:first-child { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>FM1 Clock</h1>
+  <p class="tag">Firmware for the M-VAVE FM-1: a pendulum wall clock and a cuckoo clock.</p>
+
+  <div class="hero">
+    <img class="a" src="screens/pendulum.gif" width="340" height="340" alt="The wall clock on the FM-1's screen: the hands at ten past ten, the pendulum swinging behind the glass">
+    <img class="b" src="screens/cuckoo.gif" width="228" height="342" alt="The cuckoo clock at three o'clock: its door swings open, the bird comes out, bows and calls, goes back in and the door shuts, while the pendulum swings behind the chains and their pine-cone weights">
+  </div>
+
+  <p class="lead">One day the FM-1 may be an almost forgotten treasure, so here is something that looks completely
+    useless now and may turn out to be its only useful function: a clock. Its bell is a real 31-day pendulum clock's
+    coil gong, taken apart into 742 ringing modes and rebuilt as FM synthesis. Turn ALGORITHM and a cuckoo clock
+    calls the hours instead, its bird on two FM pipes over a wire gong.</p>
+
+  <div class="facts">
+    <div class="fact"><b>742</b><span>modes of a real gong, each an FM carrier</span></div>
+    <div class="fact"><b>~400</b><span>FM operators running every frame</span></div>
+    <div class="fact"><b>2</b><span>clocks, one time, kept by the crystal</span></div>
+    <div class="fact"><b>0</b><span>samples: every sound is synthesised</span></div>
+  </div>
+
+  <h2 id="install">Install</h2>
+  <div class="box">
+    <ol>
+      <li>Open this page in <b>Chrome or Edge</b> on a computer (they can talk to the FM-1 over USB MIDI).</li>
+      <li>Connect the FM-1 <b>directly</b> to the computer with a USB data cable, and switch it on.</li>
+      <li>Close other apps that use MIDI, press <b>Install</b> and allow MIDI when the browser asks.</li>
+    </ol>
+    <button id="go" disabled>Install</button>
+    <progress id="bar" max="100" value="0"></progress>
+    <p id="status">Loading the firmware…</p>
+    <p class="pkg" id="pkg"></p>
+    <details><summary>Log</summary><pre id="log"></pre></details>
+  </div>
+  <p class="small">Do not unplug the cable while it writes (about a minute). If an install is cut off, the FM-1
+    stays in update mode: replug it and press Install again, and it finishes. If the FM-1 does not start at all, hold
+    <b>OCT−</b> while switching it on: it starts in the USB rescue, where an installer always works. To go back to
+    the official firmware, use M-VAVE's own updater M-UPGRADE, or the
+    <a href="https://thefirmwarehub.com" target="_blank" rel="noopener">FM-1 Firmware Hub</a>.
+    Installing firmware is at your own risk.</p>
+
+  <h2>Using it</h2>
+  <table>
+    <tr><td>ALGORITHM</td><td>The wall clock or the cuckoo clock.</td></tr>
+    <tr><td>SELECT / PRESETS</td><td>The minute and the hour hand. Turned forward past the hour, it strikes it, as a real clock does.</td></tr>
+    <tr><td>PLAY</td><td>Strikes (or calls) the last hour again.</td></tr>
+    <tr><td>FX</td><td>The strike on or off.</td></tr>
+    <tr><td>GLO</td><td>The keys' lights: they follow the pendulum, flash the hours, or stay off.</td></tr>
+    <tr><td>ENV</td><td>Winds the cuckoo clock.</td></tr>
+    <tr><td>KNOB 1 / 2</td><td>The ticks' and the strike's levels.</td></tr>
+  </table>
+  <p class="small" style="margin-top: 14px">The FM-1 has no battery-backed clock: it starts at 10:10 and forgets the
+    time when switched off. Set it with the hands, or send the computer's time over MIDI
+    (CC 20, 21, 22: hours, minutes, seconds) with <code>tools/settime.py</code> from the source:</p>
+  <pre class="cmd">pip3 install mido python-rtmidi
+python3 tools/settime.py</pre>
+
+  <h2>More</h2>
+  <ul class="links">
+    <li><a href="https://github.com/joakimskurk/fm1clock">The source on GitHub</a>, with everything about how it is made:
+      <a href="https://github.com/joakimskurk/fm1clock/blob/HEAD/docs/SOUND.md">the sound</a>,
+      <a href="https://github.com/joakimskurk/fm1clock/blob/HEAD/docs/CUCKOO.md">the cuckoo clock</a>,
+      <a href="https://github.com/joakimskurk/fm1clock/blob/HEAD/docs/HOW-IT-WORKS.md">how it works</a>.</li>
+    <li><a id="dl" href="#">Download the firmware file</a> (<code>.fwsc</code>), to install it another way
+      (<code>tools/fm1_install.py</code>, the FM-1 Firmware Hub).</li>
+    <li>Try it without an FM-1: open the file in <a href="https://joakimeriksson.github.io/fm1-emu/" target="_blank" rel="noopener">fm1-emu</a>,
+      the FM-1 emulator, in the browser.</li>
+  </ul>
+
+  <footer>
+    <p>FM1 Clock is free software under the GPL-3.0, with no warranty. It runs on
+      <a href="https://github.com/zvenson/dinghy">Dinghy</a> (zvenson), built on
+      <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) and the platform of
+      <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89), whose installer this page uses.</p>
+    <p>The recordings it is fitted to (an Adelaide Clocks wall clock, a Black Forest cuckoo clock) are not in it:
+      only measurements of them. "M-VAVE" and "FM-1" belong to their owners; this is a fan project, not an official
+      M-VAVE product.</p>
+  </footer>
+</main>
+<script type="module">
+/*LIB*/
+const $ = (id) => document.getElementById(id);
+const meta = /*META*/;
+const TEXT = {
+  nomidi: "This browser cannot talk to the FM-1. Open the page in Chrome or Edge on a computer.",
+  loadfail: "Could not load the firmware: ", badpkg: "The firmware file is damaged. Reload the page.",
+  start: "Starting", verify: "Checking", loader: "Switching the FM-1 to update mode", write: "Writing",
+  reboot: "Restarting", done: "Done: FM1 Clock is installed.",
+  stopped: "Stopped. Replug the USB cable and press Install again.",
+  error: "Error: ",
+  denied: "MIDI (SysEx) was not allowed. Allow MIDI in the site settings (the address bar) and press Install again.",
+  notfound: "FM-1 not found. Check the USB cable (a data cable, directly to the computer), close other apps that use MIDI, and press Install again.",
+  model: "The connected device is not an FM-1.",
+  lost: "The USB connection was lost. Replug it and press Install again.",
+  noloader: "The FM-1 in update mode was not found. Replug the USB cable and press Install again (it stays in update mode until it is finished).",
+  noreturn: "The FM-1 did not come back. Switch it off and on.",
+  mismatch: "Written, but the FM-1 reports another version: ",
+  foreign: "The FM-1 is in the update mode of another firmware. Finish that update with its own updater (M-UPGRADE), then press Install again: ",
+  leave: "Writing. Do not close the page.",
+};
+const say = (k, arg = "", cls = "") => { const s = $("status"); s.textContent = (TEXT[k] ?? k) + arg; s.className = cls; };
+const log = (t) => { $("log").textContent += t + "\n"; };
+let image = null, writing = false;
+const lock = (on) => { writing = on; $("go").disabled = on || !image; };
+window.addEventListener("beforeunload", (e) => { if (writing) { e.preventDefault(); e.returnValue = TEXT.leave; } });
+$("dl").href = meta.pkg;
+$("dl").setAttribute("download", meta.pkg.split("/").pop());
+$("pkg").textContent = `FM1 Clock ${meta.version} · ${meta.product} · SHA-256 ${meta.sha256}`;
+(async () => {
+  try {
+    const sha = async (b) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", b))].map((x) => x.toString(16).padStart(2, "0")).join("");
+    const get = async (cache) => {
+      const r = await fetch(meta.pkg, { cache });
+      if (!r.ok) throw new Error(`${meta.pkg}: HTTP ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    };
+    let pkg = await get("no-cache");                 /* (a copy the browser kept of an older build: fetched again) */
+    const check = self.crypto && crypto.subtle;
+    if (check && (await sha(pkg)) !== meta.sha256) pkg = await get("reload");
+    if (productOf(pkg) !== meta.product || (check && (await sha(pkg)) !== meta.sha256)) { say("badpkg", "", "bad"); return; }
+    image = logicalImage(pkg);
+    if (!navigator.requestMIDIAccess) { say("nomidi", "", "bad"); return; }
+    say(`Ready: FM1 Clock ${meta.version}.`);
+    lock(false);
+  } catch (e) { say("loadfail", e.message, "bad"); }
+})();
+const step = (k, a) => {
+  const total = 74 + Math.ceil((image ? image.length : 0) / 512);   /* the reads: the check, then the write */
+  log(`${k} ${a ?? ""}`);
+  if (k === "verify") $("bar").value = Math.min(100, (a / total) * 100);
+  if (k === "write") $("bar").value = Math.min(100, ((74 + a) / total) * 100);
+  if (k === "done") { $("bar").value = 100; say("done", "", "good"); return; }
+  if (["start", "verify", "loader", "write", "reboot"].includes(k)) say(k);
+};
+$("go").addEventListener("click", async () => {
+  if (writing) return;
+  lock(true);
+  let midi;
+  try { midi = await navigator.requestMIDIAccess({ sysex: true }); }
+  catch (e) { say("denied", "", "bad"); lock(false); return; }
+  try {
+    const up = new Updater(midi, log);
+    const ota = await up.find((id) => /^ota-/i.test(id.model), true);   /* an install cut off: finish it */
+    if (ota) {
+      ota.link.close();
+      if (await up.resume(image, step)) say("done", "", "good"); else say("stopped", "", "bad");
+    } else {
+      await up.install(image, meta.product, step);
+    }
+  } catch (e) {
+    if (e && e.code && TEXT[e.code]) say(e.code, e.detail || "", "bad"); else say("error", e && e.message, "bad");
+    log(String(e && e.stack || e));
+  }
+  lock(false);
+});
+</script>
+</body>
+</html>

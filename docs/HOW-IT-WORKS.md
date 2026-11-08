@@ -107,6 +107,27 @@ it for 6 seconds as the wall clock and 5 seconds as the cuckoo clock (`tools/emu
 
 The figures in [Using the whole chip](SOUND.md#using-the-whole-chip) come from there. A tag `vX.Y` also publishes a
 release.
+## The web page and its installer
+
+[joakimskurk.github.io/fm1clock](https://joakimskurk.github.io/fm1clock/) is the clock's page: the two clocks, how to
+use them, and an **Install** button that writes the firmware to an FM-1 from the browser, as many FM-1 firmwares
+have. It is made by `web/make_site.py` from the package CI has just built and tested, and published by the `site`
+job of `.github/workflows/build.yml` on every push to the default branch.
+
+- **The installer** talks to the FM-1 over Web MIDI (Chrome, Edge): the update protocol the FM-1's own updater,
+  M-UPGRADE, speaks. The running firmware reads parts of the package and starts the update loader; the loader reads
+  all of it and writes it; the FM-1 comes back as FM1 Clock, and the page checks that it says so. An install cut off
+  is finished by pressing Install again. The protocol is SLOOP's (`web/fm1pkg.js`, `web/fm1ota.js`, unchanged), as
+  Dinghy keeps SLOOP's platform: the USB port's name ("Felucca") and the loader's identity (`ota-FM-1_940`) are what
+  it looks for.
+- **The package** is in the site with its SHA-256 in the page: a damaged or stale download is never offered.
+- **Tested** (`tests/run_clock.sh`, with Playwright): the page against a simulated FM-1 on Web MIDI, the whole
+  install from the official firmware and an install cut off; every byte the page sends is checked against the
+  package. Dinghy's own `tests/install_test.py` checks `web/fm1pkg.js` against `tools/fm1pkg_make.py`.
+- **To switch it on** (once, the repository's owner): on GitHub, *Settings → Pages → Build and deployment →
+  Source: GitHub Actions*. Then the next push (or *Actions → build → Run workflow*) publishes it. Until then the
+  `site` job says that Pages is off, and the build stays green.
+
 ## Making the tables again
 
 | | |
@@ -135,6 +156,7 @@ release.
 | [tools/gen_art_cuckoo.py](../tools/gen_art_cuckoo.py) | The cuckoo clock, drawn: the house, the door, the bird, the bob, a weight |
 | [tools/settime.py](../tools/settime.py) | Sets the clock to the computer's time over MIDI |
 | [tools/emu_ci.sh](../tools/emu_ci.sh), [tools/emu_check.sh](../tools/emu_check.sh) | The package in fm1-emu |
+| [web/](../web/) | The web page and its installer: `index.html`, `make_site.py`, SLOOP's `fm1pkg.js` and `fm1ota.js` |
 | [tests/run_clock.sh](../tests/run_clock.sh), [tests/clk/](../tests/clk/), [tests/scripts/](../tests/scripts/) | The tests |
 | [assets/design.png](../assets/design.png) | The design |
 | [PLATFORM.md](../PLATFORM.md) | Which Dinghy, and what is changed from it |

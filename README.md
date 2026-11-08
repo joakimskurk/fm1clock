@@ -60,11 +60,14 @@ The settings (the clock, the levels, the strike, the lights, the digits) are kep
 
 ## Install and try
 
+**Install it from the browser:** [joakimskurk.github.io/fm1clock](https://joakimskurk.github.io/fm1clock/), in Chrome
+or Edge on a computer, the FM-1 on USB. One button; it always offers the latest build that passed its tests.
+
 **Try it without an FM-1:** download `packages` from a run under *Actions* on GitHub, unzip `fm1clock.fwsc`, and
 open it in [fm1-emu](https://joakimeriksson.github.io/fm1-emu/) in a browser.
 
-**Install it on an FM-1** over USB, or with the [FM-1 Firmware Hub](https://thefirmwarehub.com) in Chrome or Edge
-(which also takes you back to any other firmware):
+**Or install it** from a computer with Python, or with the [FM-1 Firmware Hub](https://thefirmwarehub.com) in Chrome
+or Edge (which also takes you back to any other firmware):
 
 ```sh
 python3 tools/fm1_install.py build/fm1clock.fwsc     # asks before it writes, then restarts into the clock
@@ -80,6 +83,7 @@ make test     # the clock's tests on a computer: no FM-1, no toolchain (Python 3
 make fw       # the FM-1 package, build/fm1clock.fwsc (the JieLi toolchain and the AC79 SDK: docs/DINGHY_README.md)
 make emu      # the package in fm1-emu
 make host     # the app on a computer: build/host/fm1clock.wav and screenshots
+python3 web/make_site.py build/fm1clock.fwsc VERSION build/site   # the web page with its installer
 ```
 
 ## How it is made
@@ -90,7 +94,7 @@ make host     # the app on a computer: build/host/fm1clock.wav and screenshots
 - **[The cuckoo clock](docs/CUCKOO.md):** its own design, what moves, why its chains are not a counterweight, and its
   sound: the wire gong, the two pipes, the train's warning and rattle, and clicks made of a crack and noise.
 - **[How it works](docs/HOW-IT-WORKS.md):** keeping time from the crystal, drawing the picture, the tests and CI,
-  making the tables again, and what is where.
+  the web page and its installer, making the tables again, and what is where.
 
 <p align="center"><img src="docs/screens/gong-spectrogram.png" width="820" alt="Two spectrograms side by side, the recording and FM1 Clock, the first five seconds after a strike, 0 to 6 kHz: the same series of partials and the same decay; the recording also shows its ticks as vertical lines and the room's noise"></p>
 

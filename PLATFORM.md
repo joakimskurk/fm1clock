@@ -21,7 +21,8 @@ Kept small, so a later Dinghy can be merged by diffing these files.
 | `tests/run_tests.sh` | `fm1clock.*` names; the SMK-37 packages' identities `_94N` |
 | `tests/install_test.py` | `fm1clock.*` names |
 | `README.md` | moved to `docs/DINGHY_README.md`; FM1 Clock's README in its place |
-| `.github/workflows/release.yml` | replaced by `build.yml` (zvenson/fm1-build, as VaveHero, RoboSeq and SkurkyMello) |
+| `.github/workflows/release.yml` | replaced by `build.yml` (zvenson/fm1-build, as VaveHero, RoboSeq and SkurkyMello), with a job for the site (GitHub Pages) |
+| `web/` (Dinghy has none) | the site: `fm1pkg.js` and `fm1ota.js` from SLOOP (`bac9c05`, unchanged: the update protocol over Web MIDI; Dinghy's `tests/install_test.py` checks `fm1pkg.js` against `tools/fm1pkg_make.py`), FM1 Clock's own page and `make_site.py` |
 
 Nothing in `firmware/hal/`, `firmware/loader/`, `firmware/app.ld`, `platform.c` or `tests/host.c` is changed.
 
