@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """Checks on what the clock does, from its sound (WAV) and its screen (PNG / BMP), on the host or in fm1-emu.
 
   check_clock.py hits LOG FROM TO N [T0 [GAP]]   N blows of the hammer between FROM and TO s in the host's log (its

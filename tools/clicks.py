@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """The cuckoo clock's clicks (its tick, its train's warning, its door opening, its door shutting): measured, fitted
 and checked here; tools/analyze_cuckoo.py measures, tools/fit_cuckoo.py fits, tests/clk/parity.py checks.
 

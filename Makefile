@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 # FM-1 Clock: the everyday commands. The firmware itself is built by ./build.sh (docs/DINGHY_README.md: the toolchain).
 #   make test       the clock's host tests: the sound against the reference, the time, the strike, the screen
 #   make host       the app on the host with Dinghy's default script: build/host/fm1clock.wav and its screens

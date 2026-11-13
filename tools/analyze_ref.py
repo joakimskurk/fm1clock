@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """Measure the reference recording (a 31-day pendulum wall clock striking on a coil gong) and write what the
 firmware's sound is fitted to. The recording itself is not in this repository (it is not ours to share); its
 measurements are:

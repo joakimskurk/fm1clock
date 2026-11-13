@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
+/* Copyright (C) 2026 Joakim (joakimskurk); from Dinghy's dinghy.c by zvenson */
 /* FM-1 Clock: the most useless firmware for the M-VAVE FM-1. Two clocks that keep the time, swing their pendulums and
  * tick at both ends of the swing. The wall clock (a 31-day pendulum clock) ticks every half second and strikes the
  * hours (and one at the half hour) on an FM gong fitted to a recording of a real one. The cuckoo clock (a Black

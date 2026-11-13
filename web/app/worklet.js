@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Joakim (joakimskurk)
 // FM-1 Clock in a browser: the firmware (fm1clock.wasm, web/app/build.sh) in the audio thread. Its sound is the
 // clock's time base, as the audio interrupt is on the FM-1: each quantum asks it for its frames, and it runs its main
 // loop for the milliseconds they are worth. The screen and the lights go to the page about 30 times a second.

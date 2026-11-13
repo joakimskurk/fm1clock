@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """Fit the clock's sound to the measurements of the reference (tools/ref_model.json, tests/ref/features.json, from
 tools/analyze_ref.py) and write tools/clk_model.json, the model the firmware's tables are made from
 (tools/gen_tables.py). Deterministic (fixed seeds); run it again when the analysis changes.

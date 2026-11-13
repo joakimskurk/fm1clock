@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Joakim (joakimskurk)
 // The clock for the browser (web/app/: the firmware compiled to WebAssembly, web/app/build.sh) in Node, as the page's
 // worklet runs it: no imports; a tick every half second, on its frame; the screen drawn; ALGORITHM to the cuckoo
 // clock and back; PLAY: it calls; the time over MIDI (CC 20, 21, 22) to 3:59:57: the wall clock strikes on the hour.

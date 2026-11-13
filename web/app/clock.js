@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Joakim (joakimskurk)
 // FM-1 Clock on its own page: the firmware runs in the audio thread (worklet.js, fm1clock.wasm); here its screen, its
 // keys' lights and the FM-1's controls, as buttons. Nothing is loaded before Start (a browser plays sound after a click).
 const $ = (id) => document.getElementById(id);

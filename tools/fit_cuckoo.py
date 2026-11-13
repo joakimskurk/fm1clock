@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """Fit the cuckoo clock's sound to the measurements of its recording (tools/ref_cuckoo.json,
 tests/ref/cuckoo_features.json, from tools/analyze_cuckoo.py) and write tools/clk_cuckoo.json, the model its tables
 are made from (tools/gen_tables.py). The same methods as the wall clock's (tools/fit_model.py):

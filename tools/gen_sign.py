@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """The site's sign: "FM-1 Clock" on a carved walnut board, hung on the page itself: docs/screens/sign.png.
 
   python3 tools/gen_sign.py [--check]     (Pillow, numpy)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """Measure the second reference recording, a small Black Forest cuckoo clock (a one-day "leaf and loon" clock)
 calling the half hour and ten o'clock, and write what the cuckoo clock's sound is fitted to. As with the wall clock,
 the recording is not in this repository; its measurements are:

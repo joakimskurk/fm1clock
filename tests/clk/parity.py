@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """The engine against the reference: the band energies (third octaves, 100 Hz .. 16 kHz) over time after a hit and
 after a tick, as tools/analyze_ref.py measured them in the recording (tests/ref/features.json). The engine's output
 is the recording's level times GAIN (tools/gen_tables.py); that is taken off. Only bands where the recording stands

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Joakim (joakimskurk)
 // The site's "Try it here" in Chromium (Playwright): the page served over HTTP (a worklet needs it), Start, and the
 // clock runs: its screen drawn, a key lit under the pendulum, at the computer's time (the digits); the cuckoo clock and
 // PLAY (the strike button lit while it calls); no error on the page.

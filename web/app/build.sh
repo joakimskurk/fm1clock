@@ -1,5 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 # FM-1 Clock for the browser: firmware/src/fm1clock.c, unchanged, compiled to WebAssembly on web/app/web_host.c (the
 # page's FM-1) instead of the chip: build/web/fm1clock.wasm, no imports, no C library. clang with the wasm32 target
 # and wasm-ld (lld): apt install clang lld.

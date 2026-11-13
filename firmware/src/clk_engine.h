@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
+/* Copyright (C) 2026 Joakim (joakimskurk) */
 /* FM-1 Clock's sound, in the audio interrupt, for two clocks: a gong of FM carriers (the first K_FM with a modulator
  * each), two banks of NT sine operators for the ticks and the mechanism's clicks, and for the cuckoo clock its two
  * pipes (an FM pair each, with their body partials), every one of them computed in every frame, sounding or not.

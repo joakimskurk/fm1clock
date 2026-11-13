@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
+/* Copyright (C) 2026 Joakim (joakimskurk) */
 /* The clock's sound engine alone (firmware/src/clk_engine.h), on the host: one strike, one tick, one tock or a
  * train, as a WAV, to hold against the reference's measurements (tests/clk/parity.py). The engine is the firmware's
  * own, unchanged; only the crystal is a stub (no governor: a fixed number of carriers).

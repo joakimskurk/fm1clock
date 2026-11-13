@@ -1,5 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 # FM-1 Clock's own host tests (no FM-1, no JieLi toolchain; Python with numpy and Pillow): the tables and pictures are
 # what their tools make, the app compiles cleanly, the engine sounds like the reference recording (band energies over
 # time, tests/clk/parity.py), the clock keeps time and strikes what it should (tests/scripts/*.txt in host mode,

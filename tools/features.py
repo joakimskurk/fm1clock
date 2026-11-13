@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Joakim (joakimskurk)
 """What the clock's sound is measured by, in the reference and in the engine alike (numpy only): the energy in
 third-octave bands, 100 Hz .. 16 kHz, in windows of time after a hit or a tick (dB, as an RMS level)."""
 import numpy as np
