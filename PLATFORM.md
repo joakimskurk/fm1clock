@@ -10,7 +10,7 @@ FM-1 Clock runs on **Dinghy 0.5**, imported as source (as VaveHero does).
 
 ## What differs from upstream
 
-Kept small, so a later Dinghy can be merged by diffing these files.
+Kept small, so a later Dinghy can be merged by diffing these files. Each changed file of Dinghy's says so at its top ("Changed for FM-1 Clock").
 
 | file | change |
 | --- | --- |

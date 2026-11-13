@@ -1,6 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
+# Changed for FM-1 Clock by Joakim (joakimskurk), 2026-11; PLATFORM.md lists the changes.
 # Build FM-1 Clock on Dinghy (see docs/DINGHY_README.md).
 #   ./build.sh [--release X.Y]
 #   JIELI_TOOLCHAIN  JieLi Linux toolchain (default: ~/.jieli/toolchain)

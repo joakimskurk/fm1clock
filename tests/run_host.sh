@@ -1,5 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
+# Changed for FM-1 Clock by Joakim (joakimskurk), 2026-11; PLATFORM.md lists the changes.
 # Run firmware/src/fm1clock.c on this computer (tests/host.c): build/host/fm1clock.wav and the screens as PNG.
 #   tests/run_host.sh [script]               your own script (tests/host.c says what a line can do)
 #   BOARD=smk37 tests/run_host.sh [script]   the SMK-37 build (velocity, pads, faders, wheels, outer keys)
