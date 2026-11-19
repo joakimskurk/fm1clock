@@ -47,7 +47,7 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 | **HOME** | The time as digits beside the clock. |
 | **SEQ** | How many FM operators are running, and how much of the chip they take. |
 | **KNOB 1 / KNOB 2** | The ticks' and the strike's levels, 0–200 % of the recordings'. |
-| **MIDI in** | CC 20, 21, 22 set the hours, minutes and seconds, on any channel. |
+| **MIDI in** | CC 20, 21, 22 set the hours, minutes and seconds, on any channel. On channel 16 only: CC 29 asks the time, CC 23, 24 set the trim (the calibration). |
 
 <p align="center"><img src="docs/screens/overlays.png" width="360" alt="The clock with its margins in use: 10:10 in digits on the left, TICK 125% on the right while the first knob turns, SILENT at the bottom right"></p>
 
@@ -59,7 +59,17 @@ pip3 install mido python-rtmidi
 python3 tools/settime.py            # finds the FM-1 ("Felucca" over USB); --list shows the ports
 ```
 
-The settings (the clock, the levels, the strike, the lights, the digits) are kept in flash.
+**Calibrating it.** A crystal is a few ppm off as it comes, a second or two a day. With the FM-1 on USB,
+`tools/calibrate.py` measures it against the computer's clock, live, and writes the trim that cancels it:
+
+```sh
+python3 tools/calibrate.py --set-time --minutes 30 --apply    # a line a second as it measures; then the trim
+```
+
+Ten minutes give it to about 0.2 ppm, an hour to about 0.05 ppm (0.004 s a day). `--status` shows the FM-1's time and
+trim, `--trim 0` takes it away, `--log FILE.csv` keeps every sample.
+
+The settings (the clock, the levels, the strike, the lights, the digits, the trim) are kept in flash.
 
 ## Install and try
 

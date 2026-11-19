@@ -19,6 +19,8 @@
  *   SEQ          how many of the FM operators the chip runs, and how much of it they take, on / off
  *   KNOB 1, 2    the ticks' and the strike's level (kept in flash, with the clock and the keys' lights)
  *   MIDI         CC 20 hours, CC 21 minutes, CC 22 seconds (any channel): the time is set when the seconds come
+ *                channel 16 (tools/calibrate.py): CC 29 asks the time (the crystal, the time of day, the trim), CC 23 24
+ *                set the trim, crystal ticks added to each half second: the crystal calibrated
  *                (tools/settime.py sends the computer's)
  *
  * Time: TIMER4 counts the 24 MHz crystal; the audio interrupt turns it into half seconds (the time of day) and beats
@@ -39,7 +41,8 @@ static uint32_t frames;
 #include "clk_engine.h"
 #include "clk_draw.h"
 
-#define HALF_TICKS 12000000u                    /* half a second of the crystal */
+#define HALF_TICKS 12000000u                    /* half a second of the crystal, as it says on it */
+#define TRIM_MAX 8191                           /* the trim's reach: +-8191 crystal ticks a half second (+-683 ppm) */
 #define DAY 172800u                             /* half seconds in a day */
 #define HOUR 7200u
 #define SWING_A 95443718u                       /* the wall clock's pendulum, each way: 8 degrees (2^32 = a turn) */
@@ -56,6 +59,8 @@ static volatile uint32_t ck_beat;               /* the cuckoo's beats since it w
 static volatile uint32_t ck_bsub;               /* crystal ticks into this beat */
 static volatile uint32_t ck_t4;                 /* the crystal when ck_sub was this */
 static volatile uint32_t ck_seq;                /* odd while they change */
+static volatile uint32_t ck_half_ticks = HALF_TICKS;   /* (main) a half second, in crystal ticks: HALF_TICKS and the
+                                                   trim the crystal is calibrated by (tools/calibrate.py) */
 static volatile uint32_t ck_off = BOOT_TOD;     /* (main) the time of day = ck_half + ck_off, modulo DAY */
 static volatile uint32_t ck_silent;             /* (main) no strike on the hour */
 static volatile uint32_t ck_clock;              /* (main) the clock */
@@ -170,7 +175,7 @@ static void half_second(uint32_t h, uint32_t f, ev_t *ev, uint32_t *nev)   /* th
 static void app_audio(int32_t *out, uint32_t n)
 {
     ev_t ev[12];
-    uint32_t nev = 0, now = clk_now(), d, due, f;
+    uint32_t nev = 0, now = clk_now(), d, due, f, ht = ck_half_ticks;
     if (!ck_started) {                          /* (the audio starts before app_main: the time from here) */
         ck_started = 1;
         ck_t4 = now;
@@ -180,8 +185,8 @@ static void app_audio(int32_t *out, uint32_t n)
     ck_sub += d;
     ck_bsub += d;
     ck_t4 = now;
-    while (ck_sub >= HALF_TICKS) {
-        ck_sub -= HALF_TICKS;
+    while (ck_sub >= ht) {
+        ck_sub -= ht;
         ck_half++;
     }
     while (ck_bsub >= CK_BEAT_TICKS) {
@@ -202,7 +207,7 @@ static void app_audio(int32_t *out, uint32_t n)
         half_second(ck_half, 0, ev, &nev);
         ck_done = ck_half;
     }
-    due = HALF_TICKS - ck_sub;                  /* the next one, if it falls in this block: on its frame */
+    due = ht - ck_sub;                          /* the next one, if it falls in this block: on its frame */
     f = due * 147u / 80000u;                    /* (44100 / 24 M = 147 / 80000) */
     if (f < n) {
         half_second(ck_half + 1u, f, ev, &nev);
@@ -246,7 +251,7 @@ static void app_audio(int32_t *out, uint32_t n)
    beats, and ticks into the beat */
 static void clk_read2(uint32_t *half, uint32_t *sub, uint32_t *beat, uint32_t *bsub)
 {
-    uint32_t s, h, b, t, bt, bb, d;
+    uint32_t s, h, b, t, bt, bb, d, ht = ck_half_ticks;
     do {
         s = ck_seq;
         h = ck_half;
@@ -258,8 +263,8 @@ static void clk_read2(uint32_t *half, uint32_t *sub, uint32_t *beat, uint32_t *b
     d = clk_now() - t;
     b += d;
     bb += d;
-    while (b >= HALF_TICKS) {
-        b -= HALF_TICKS;
+    while (b >= ht) {
+        b -= ht;
         h++;
     }
     while (bb >= CK_BEAT_TICKS) {
@@ -279,7 +284,8 @@ static void clk_read(uint32_t *half, uint32_t *sub)
 
 /* ---- the panel */
 enum { KEYS_SWING, KEYS_HOUR, KEYS_OFF };
-static struct { uint8_t tick, gong, silent, digits, info, clock, keys, pad; } set = {16, 16, 0, 0, 0, 0, KEYS_SWING, 0};
+static struct { uint8_t tick, gong, silent, digits, info, clock, keys, pad; int16_t trim; } set =
+    {16, 16, 0, 0, 0, 0, KEYS_SWING, 0, 0};       /* (trim: crystal ticks added to each half second, the calibration) */
 static uint32_t dirty, t_change, t_set, t_level, level_which, strike_due, strike_n, t_turn, t_clock, t_keys;
 
 static void apply_set(void)
@@ -288,6 +294,7 @@ static void apply_set(void)
     eng_gong_lvl = set.gong * 16u;
     ck_silent = set.silent;
     ck_clock = set.clock;
+    ck_half_ticks = (uint32_t)((int32_t)HALF_TICKS + set.trim);
 }
 
 static void set_time(int32_t delta)             /* the hands moved by delta half seconds */
@@ -312,12 +319,45 @@ static void strike_now(uint32_t n)
     st_req_seq++;
 }
 
+/* the calibration (tools/calibrate.py), on MIDI channel 16 only (no other gear sets the trim by chance): CC 29 n asks
+ * the time; the reply is CC 29 n again, the crystal now (TIMER4, 32 bits: CC 30..34, 7 bits each, low first), the time
+ * of day in half seconds (CC 35..37), the crystal ticks into this half second (CC 38..41) and the trim + 8192 (CC 42,
+ * 43: high, low; the last of the reply). CC 23, 24 (high, low: the trim + 8192) set the trim, kept with the settings */
+static void time_report(uint32_t seq)
+{
+    uint32_t t4 = clk_now(), h, sub, tod, tr = (uint32_t)((int32_t)set.trim + 8192), i;
+    clk_read(&h, &sub);
+    tod = (h + ck_off) % DAY;
+    midi_send(0xBF, 29, seq);
+    for (i = 0; i < 5u; i++)
+        midi_send(0xBF, 30u + i, (t4 >> (7u * i)) & 0x7Fu);
+    for (i = 0; i < 3u; i++)
+        midi_send(0xBF, 35u + i, (tod >> (7u * i)) & 0x7Fu);
+    for (i = 0; i < 4u; i++)
+        midi_send(0xBF, 38u + i, (sub >> (7u * i)) & 0x7Fu);
+    midi_send(0xBF, 42, tr >> 7);
+    midi_send(0xBF, 43, tr & 0x7Fu);
+}
+
 static void midi_in(void)
 {
-    static uint32_t hh, mm, have;
+    static uint32_t hh, mm, have, trim_hi = ~0u;
     uint8_t st, d1, d2;
     while (midi_get(&st, &d1, &d2)) {
         if ((st & 0xF0u) != 0xB0u) continue;
+        if (st == 0xBFu && d1 == 29u) {          /* the calibration (channel 16): the time, now */
+            time_report(d2);
+            continue;
+        }
+        if (st == 0xBFu && d1 == 23u) { trim_hi = d2; continue; }
+        if (st == 0xBFu && d1 == 24u && trim_hi < 128u) {
+            int32_t tr = (int32_t)(trim_hi << 7 | d2) - 8192;
+            set.trim = (int16_t)(tr < -TRIM_MAX ? -TRIM_MAX : tr > TRIM_MAX ? TRIM_MAX : tr);
+            trim_hi = ~0u;
+            apply_set();
+            dirty = 1; t_change = fm1_ms;
+            continue;
+        }
         if (d1 == 20u && d2 < 24u) { hh = d2; have |= 1u; }
         if (d1 == 21u && d2 < 60u) { mm = d2; have |= 2u; }
         if (d1 == 22u && d2 < 60u && have == 3u) {   /* the seconds set it, now: the half second starts here */
@@ -493,8 +533,9 @@ static void app_main(void)
 #endif
     eng_init();
     if (settings_load(&set, sizeof set) || set.tick > 32u || set.gong > 32u || set.silent > 1u || set.digits > 1u ||
-        set.info > 1u || set.clock > 2u || set.keys > KEYS_OFF) {
+        set.info > 1u || set.clock > 2u || set.keys > KEYS_OFF || set.trim < -TRIM_MAX || set.trim > TRIM_MAX) {
         set.tick = 16; set.gong = 16; set.silent = 0; set.digits = 0; set.info = 0; set.clock = 0; set.keys = KEYS_SWING;
+        set.trim = 0;
     }
     if (set.clock > 1u)                         /* (a build before had two cuckoo clocks: either is this one) */
         set.clock = 1u;

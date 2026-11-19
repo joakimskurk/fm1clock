@@ -1,0 +1,7 @@
+# the calibration (tools/calibrate.py), MIDI channel 16: the time asked (CC 29), the trim set to +6000 crystal ticks a
+# half second (+500 ppm: CC 23 110, CC 24 112 = 14192 = 6000 + 8192), the time asked again 30 s on
+300 midi 0xBF 29 1
+400 midi 0xBF 23 110
+401 midi 0xBF 24 112
+30400 midi 0xBF 29 2
+30500 end

@@ -7,6 +7,15 @@
 - **The time base is the crystal.** The FM-1's TIMER4 counts the 24 MHz crystal. Every 5.8 ms the audio interrupt
   takes what it has counted and turns it into half seconds (12,000,000 crystal ticks each). It does not count audio
   frames, so the clock is exactly as good as the crystal, typically within a couple of seconds a day.
+- **Calibrated, it is better than that.** The half second is 12,000,000 ticks plus a trim (±8191 ticks; 12 ticks
+  a ppm), kept with the settings. `tools/calibrate.py` measures the crystal with the FM-1 on USB: every half
+  second it asks for the time (CC 29 on MIDI channel 16), and the main loop answers at once with the crystal's
+  32-bit count, the time of day, the ticks into the half second and the trim (CC 29 to 43). Each answer is put at
+  the middle of its round trip, the slower half of the round trips is left out (they waited for the main loop), and
+  a straight line through the crystal's counts against the computer's (network-kept) time is the crystal's real
+  frequency; the trim is then CC 23 and 24. Tested: in host mode (`tests/scripts/calib.txt`: the reports whole,
+  the trim set to +500 ppm, the half seconds 12,006,000 ticks) and the estimate against simulated crystals
+  (`calibrate.py --simulate PPM --check`: to 0.2 ppm in 20 minutes, through USB round trips of 1 to 40 ms).
 - **In an emulator the crystal is the emulator's.** fm1-emu counts TIMER4 from the instructions it runs and paces
   itself by the computer's sound, so there the clock is only as good as that pace. In Chrome, at 100 MHz, it kept
   188.0 s of the FM-1's time in 188.7 s (the difference is its start), and the hands showed the same.
@@ -100,6 +109,7 @@ The screen is 240 × 240 pixels.
 | (all) | A tick every half second to within 3 ms, left and right in turn, and **nothing between two ticks**. |
 | `cuckoo.txt` | ALGORITHM, then 2:59:56: three calls, each a blow, the high pipe 0.11 s on (0.22 s the first), the low 0.19 s after it, 0.665 s apart, the first 0.87 s after the hour; a tick every 0.4286 s; the pendulum moves; at the hour the door is open and the bird out, after it the door is shut again; the hands at 3:00. |
 | `cuckoo_silent.txt` | The cuckoo, FX and GLO (the keys on the hour): three o'clock without a call or a blow, the door shut, the keys flashing three times; at the half hour nothing. |
+| `calib.txt` | The calibration over MIDI channel 16: two time reports, whole (read by `tools/calibrate.py`'s own decoding), the crystal as counted; the trim set to +6000 ticks and echoed; the half seconds between them 12,006,000 ticks. |
 | `back.txt` | ALGORITHM, a turn of five detents over 0.4 s: one switch, the cuckoo clock; a turn the other way: the wall clock again. |
 
 **CI** (`.github/workflows/build.yml`, using the shared `zvenson/fm1-build` workflow) builds the package on every
@@ -173,6 +183,7 @@ job of `.github/workflows/build.yml` on every push to the default branch.
 | [tools/clicks.py](../tools/clicks.py) | The cuckoo's clicks (its tick, warning, door) measured and fitted: what comes back every time, and noise |
 | [tools/gen_art_cuckoo.py](../tools/gen_art_cuckoo.py) | The cuckoo clock, drawn: the house, the door, the bird, the bob, a weight |
 | [tools/settime.py](../tools/settime.py) | Sets the clock to the computer's time over MIDI |
+| [tools/calibrate.py](../tools/calibrate.py) | Measures the clock against the computer's, live, and writes the trim (the FM-1 on USB); `--simulate` without one |
 | [tools/emu_ci.sh](../tools/emu_ci.sh), [tools/emu_check.sh](../tools/emu_check.sh) | The package in fm1-emu |
 | [web/](../web/) | The web page and its installer: `index.html`, `make_site.py`, SLOOP's `fm1pkg.js` and `fm1ota.js` |
 | [tools/gen_sign.py](../tools/gen_sign.py) | The site's sign, "FM-1 Clock" carved and gilded on walnut, the cuckoo on its crest, the wall clock's gold scrollwork and finials, hung on the page (transparent): `docs/screens/sign.png` |

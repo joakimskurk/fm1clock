@@ -61,7 +61,7 @@ run "its train's warning click, its door opening (its wood struck three times), 
      build/clk_render ck_shut build/audio/ck_shut.wav 12 && python3 tests/clk/parity.py ck_fine_door_shut build/audio/ck_shut.wav 12 6.0"
 
 # the clock: the time, the strike, the panel (host mode, 200 carriers: quicker, the same events)
-for s in hour half silent turn repeat twelve cuckoo cuckoo_silent back; do
+for s in hour half silent turn repeat twelve cuckoo cuckoo_silent back calib; do
     run "the clock on the host: tests/scripts/$s.txt" sh -c "CLK_NG=200 $OUT/fm1clock $OUT/$s tests/scripts/$s.txt > $OUT/$s.log"
 done
 run "three o'clock: three blows, the first 40 ms after the hour, 1.19 s apart" python3 $P hits $OUT/hour.log 1 14.9 3 10.04
@@ -89,6 +89,14 @@ run "the cuckoo's hands at 3:00 when it calls" python3 $P hands $OUT/cuckoo-5230
 run "silent: no call and no blow at three" sh -c "python3 $P events $OUT/cuckoo_silent.log PIPE 0 9 0 && python3 $P hits $OUT/cuckoo_silent.log 0 9 0"
 run "silent: the door stays shut" python3 $P same $OUT/cuckoo-1000.ppm $OUT/cuckoo_silent-5230.ppm $D 0
 run "silent, the keys on the hour: three flashes at three, none at the half hour" python3 $P events $OUT/cuckoo_silent.log FLASH 3 9 3
+# the calibration (tools/calibrate.py): the time asked over MIDI channel 16 and answered whole, the trim set and kept,
+# the half seconds trimmed; and the tool's estimate against simulated crystals (no MIDI, no FM-1)
+run "the calibration: time reports on channel 16, the trim (+500 ppm) set, the half seconds trimmed" \
+    python3 tests/clk/calib_check.py $OUT/calib.log
+run "tools/calibrate.py finds a crystal's ppm and its trim (simulated: +23.4, -17.25, +120 ppm, 20 minutes)" sh -c \
+    "python3 tools/calibrate.py --simulate 23.4 --check && python3 tools/calibrate.py --simulate -17.25 --check && \
+     python3 tools/calibrate.py --simulate 120 --check"
+
 # ALGORITHM: one switch a turn, however many detents; a turn either way
 run "ALGORITHM, a turn of five detents over 0.4 s: one switch, the cuckoo clock (its roof, not the wall clock's top)" \
     python3 $P differ $OUT/repeat-1000.ppm $OUT/back-1000.ppm 0 0 240 55 1500
