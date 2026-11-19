@@ -19,18 +19,26 @@ jobs:
       id-token: write
       attestations: write
     with:
+      # a tag vX.Y: the release build (build/fm1clock-X.Y.fwsc, version X.Y), and the tests run on a copy of those very
+      # bytes under the name they know; the release carries the one package
       build: |
-        if [ "$GITHUB_REF_TYPE" = tag ]; then ./build.sh --release "${GITHUB_REF_NAME#v}"; else ./build.sh; fi
+        if [ "$GITHUB_REF_TYPE" = tag ]; then
+          ./build.sh --release "${GITHUB_REF_NAME#v}" && cp "build/fm1clock-${GITHUB_REF_NAME#v}.fwsc" build/fm1clock.fwsc
+        else ./build.sh; fi
       test: python3 -m pip install -q numpy && sh tests/run_clock.sh && sh tests/run_tests.sh && sh tools/emu_ci.sh
-      packages: build/fm1clock*.fwsc
+      packages: ${{ github.ref_type == 'tag' && 'build/fm1clock-*.fwsc' || 'build/fm1clock.fwsc' }}
 
   # The site (GitHub Pages, https://joakimskurk.github.io/fm1clock/): FM-1 Clock's page and its installer in the
   # browser (Web MIDI), with the package this run built and tested (web/make_site.py). From the default branch only.
   # GitHub Pages has to be switched on once, by the repository's owner: Settings -> Pages -> Build and deployment ->
   # Source: GitHub Actions. Until then this job says so and publishes nothing (the build stays green).
+  # A release (a tag vX.Y on this commit, its release published): the page offers that release's own package and
+  # version; run the build once more on the default branch after the tag (Actions -> build -> Run workflow).
   site:
     needs: build
-    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -58,13 +66,28 @@ jobs:
             echo "::notice title=GitHub Pages is off::Settings -> Pages -> Build and deployment -> Source: GitHub Actions, then run the build again"
             echo "on=0" >> "$GITHUB_OUTPUT"
           fi
+      - name: The release of this commit, if it has one (its package, its version)
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch -q --tags origin || true
+          tag=$(git tag --points-at "$GITHUB_SHA" -l 'v*' | sort -V | tail -1)
+          if [ -n "$tag" ] && gh release download "$tag" -p 'fm1clock-*.fwsc' -D build/release 2>/dev/null; then
+            echo "pkg=$(ls build/release/fm1clock-*.fwsc | head -1)" >> "$GITHUB_OUTPUT"
+            echo "ver=${tag#v}" >> "$GITHUB_OUTPUT"
+            echo "::notice title=The release::the page offers $tag"
+          else
+            echo "pkg=build/fm1clock.fwsc" >> "$GITHUB_OUTPUT"
+            echo "ver=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
       - name: The clock for the browser (WebAssembly)
         run: |
           command -v wasm-ld >/dev/null || command -v wasm-ld-18 >/dev/null || \
             { sudo apt-get update -q && sudo apt-get install -y -q lld; }
-          APP_VER="dev-${GITHUB_SHA::7}" sh web/app/build.sh build/web/fm1clock.wasm
+          APP_VER="${{ steps.rel.outputs.ver }}" sh web/app/build.sh build/web/fm1clock.wasm
       - name: The site
-        run: python3 web/make_site.py build/fm1clock.fwsc "dev-${GITHUB_SHA::7}" _site
+        run: python3 web/make_site.py "${{ steps.rel.outputs.pkg }}" "${{ steps.rel.outputs.ver }}" _site
       - uses: actions/upload-pages-artifact@v3
         if: steps.pages.outputs.on == '1'
         with:

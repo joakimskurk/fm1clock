@@ -152,6 +152,11 @@ job of `.github/workflows/build.yml` on every push to the default branch.
   sent as the MIDI CCs 20 to 22; it renders the 206 carriers the chip does; it runs about 40 times faster than it
   has to. Tested: in Node (`tests/web/app_test.mjs`: its ticks every half second, the screen, ALGORITHM, PLAY, the
   hour struck after the time is set) and the page in Chromium (`tests/web/app_page.js`).
+- **A release** is a tag: `git tag v1.0 && git push origin v1.0`. CI builds it as a release (`build.sh --release
+  1.0`: the version 1.0 on the FM-1, the identity `FM-1_940`), runs every test on those very bytes, attests the
+  package and publishes the GitHub release with `fm1clock-1.0.fwsc` and its SHA-256. Then run the build once more
+  on the default branch (*Actions → build → Run workflow*): the page finds the release of its commit and offers
+  that package, as version 1.0, instead of a `dev-` build.
 - **To switch it on** (once, the repository's owner): on GitHub, *Settings → Pages → Build and deployment →
   Source: GitHub Actions*. Then the next push (or *Actions → build → Run workflow*) publishes it. Until then the
   `site` job says that Pages is off, and the build stays green.
