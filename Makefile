@@ -8,9 +8,15 @@
 #   make analyze-cuckoo REF=recording.wav   and from the cuckoo clock's
 #   make fw         the FM-1 package build/fm1clock.fwsc (JieLi toolchain in ~/.jieli, SDK in ~/fw-AC79_AIoT_SDK)
 #   make check      what CI runs after the package: the clock's tests, Dinghy's platform tests, fm1-emu
+#   make hamster    Hamster Piano (docs/HAMSTER.md): build/hamsterpiano.fwsc;  make hamster-test: its host tests
 PY ?= python3
 
-.PHONY: test host tables art fit analyze analyze-cuckoo fw check emu clean
+.PHONY: hamster hamster-test test host tables art fit analyze analyze-cuckoo fw check emu clean
+hamster:
+	PYTHON=$(PY) sh build.sh --app hamster
+	sha256sum build/hamsterpiano.fwsc
+hamster-test:
+	sh tests/run_hamster.sh
 test:
 	sh tests/run_clock.sh
 host:

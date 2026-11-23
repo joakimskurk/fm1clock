@@ -1,0 +1,21 @@
+# REC, then C4, E4, a rest (SEL), G5 from step 8 on; undo the last; SELECT to step 1 and the editor: A4 there, an
+# arpeggio and a ratchet x2 on it; then PLAY: the pattern with what was written
+300 btn 13
+500 keys 0x80
+600 keys 0
+700 keys 0x800
+800 keys 0
+900 btn 3
+1100 keys 0x4000000
+1200 keys 0
+1400 btn 4
+1600 btn 13
+1800 enc 0 6
+2000 btn 6
+2200 keys 0x10000
+2300 keys 0
+2500 enc 3 1
+2700 enc 5 1
+3000 btn 6
+3300 btn 12
+7500 end

@@ -21,6 +21,9 @@ A [Dinghy 0.5](https://github.com/zvenson/dinghy) app, from the family of
 [VaveHero](https://github.com/joakimskurk/fm1vavehero), [RoboSeq](https://github.com/joakimskurk/fm1roboseq) and
 [SkurkyMello](https://github.com/joakimskurk/fm1mello).
 
+> **Also in this repository: [Hamster Piano](docs/HAMSTER.md)**, a second firmware on the same platform: eight singing
+> hamsters, a 16-step sequencer, a drummer hamster and THALLHAMSTERGRINDCORE (`./build.sh --app hamster`).
+
 ## What it does
 
 - **Two clocks, one time**, kept by the FM-1's crystal. ALGORITHM switches; the FM-1 remembers which.

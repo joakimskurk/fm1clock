@@ -63,6 +63,17 @@ SCREEN_NAME = "FM1 CLOCK"              # the update loader's screen (FM-1, ldr_s
 SCREEN_COLOUR = 0xE526              # brass, #E0A430 (the pendulum bob)
 PRODUCT = "FM-1_940"                # FM-1 Clock: 94N, not in Dinghy's list of taken ones (OUR_LOADER wants FM-1_9NN)
 VERSION = None                      # APP_VER for release builds
+NAME = "fm1clock"                   # the app's source (firmware/src/NAME.c) and its outputs (build/NAME.*)
+FIXED_ID = False                    # one identity for every build and release
+# --app hamster (or APP=hamster): Hamster Piano (firmware/src/hamster.c), the second firmware in this repository.
+# Its identity is one for every build and release, as RoboSeq's: FM-1_902 (free in the Firmware Hub's catalogue on
+# 2026-11-23; of the form FM-1_9NN, so the installers finish an install that was cut off)
+APPS = {
+    "clock": {},
+    "hamster": {"NAME": "hamsterpiano", "SOURCE": "hamster.c", "BOARD_PREFIX": {"fm1": "FM-1_902", "smk37": "SMK-37 Pro_902"},
+                "FIXED_ID": True, "DATA_FAMILY": "HAMSTER", "SCREEN_NAME": "HAMSTER PIANO", "SCREEN_COLOUR": 0xF54A},
+}
+SOURCE = "fm1clock.c"
 
 
 def toolchain():
@@ -176,9 +187,9 @@ def build_app():
     cmds = [("cc", "-c", FW / "crt0.S", "-o", OUT / "crt0.o"),
             ("cc", "-c", FW / "hal" / "fm1_vec.S", "-o", OUT / "fm1_vec.o"),
             ("cc", "-c", FW / "hal" / "fm1_isr.S", "-o", OUT / "fm1_isr.o"),
-            ("cc", *flags, "-c", FW / "src" / "fm1clock.c", "-o", OUT / "fm1clock.o")]
+            ("cc", *flags, "-c", FW / "src" / SOURCE, "-o", OUT / f"{NAME}.o")]
     tc_all(*cmds)
-    elf = OUT / "fm1clock.elf"
+    elf = OUT / f"{NAME}.elf"
     ld = FW / "app.ld"
     if APP_SLOT != 0x8DFBC:          # another board's app slot (SMK-37): the same script, its XIP length
         txt = ld.read_text()
@@ -187,7 +198,7 @@ def build_app():
         ld = OUT / "app.ld"
         ld.write_text(txt.replace("LENGTH = 0x8DFBC", f"LENGTH = {APP_SLOT:#X}".replace("0X", "0x")))
     tc("pi32v2/bin/ld", "--gc-sections", "-e", "_start", "-T", ld, OUT / "crt0.o", OUT / "fm1_vec.o",
-       OUT / "fm1_isr.o", OUT / "fm1clock.o", "-o", elf)
+       OUT / "fm1_isr.o", OUT / f"{NAME}.o", "-o", elf)
     for sect in ("text.bin", "data.bin", "ramtext.bin"):
         (OUT / sect).unlink(missing_ok=True)
     *_, syms, dis, rt = tc_all(("common/bin/objcopy", "-O", "binary", "-j", ".text", elf, OUT / "text.bin"),
@@ -196,8 +207,8 @@ def build_app():
                                ("common/bin/objdump", "-t", elf),
                                ("common/bin/objdump", "-d", elf),
                                ("common/bin/objdump", "-d", "-j", ".ram_text", elf))
-    (OUT / "fm1clock.dis").write_text(dis)
-    (OUT / "fm1clock.syms").write_text(syms)    # (FM-1 Clock: tools/emu_check.sh reads the engine's state by its address)
+    (OUT / f"{NAME}.dis").write_text(dis)
+    (OUT / f"{NAME}.syms").write_text(syms)    # (FM-1 Clock: tools/emu_check.sh reads the engine's state by its address)
 
     def symv(name):
         return int(re.search(r"^([0-9a-f]+) .*\s" + name + r"$", syms, re.M).group(1), 16)
@@ -214,7 +225,7 @@ def build_app():
             img += b"\xff" * (load - APP_XIP - len(img))
             img += blob
     img += b"\xff" * (-len(img) % 4)
-    (OUT / "fm1clock.bin").write_bytes(img)
+    (OUT / f"{NAME}.bin").write_bytes(img)
     return bytes(img), syms, dis, rt
 
 
@@ -297,7 +308,7 @@ def mmio_check():
 
 
 def main():
-    global PRODUCT, VERSION, BOARD, APP_SLOT
+    global PRODUCT, VERSION, BOARD, APP_SLOT, NAME, SOURCE, FIXED_ID, DATA_FAMILY, SCREEN_NAME, SCREEN_COLOUR
     ap = argparse.ArgumentParser()
     ap.add_argument("--release", metavar="X.Y", help="release build: identity FM-1_94Y, version string X.Y")
     ap.add_argument("--board", choices=sorted(BOARD_PREFIX), default=None,
@@ -305,7 +316,13 @@ def main():
     ap.add_argument("--model", choices=sorted(MODELS), default=None,
                     help="smk37: the model name, pro (default), elite or mke (default: $MODEL, else pro)")
     ap.add_argument("--sdk", type=Path, help="JieLi AC79 SDK checkout (default: $AC79_SDK)")
+    ap.add_argument("--app", choices=sorted(APPS), default=None, help="clock (default) or hamster (default: $APP)")
     a = ap.parse_args()
+    app = APPS[a.app or os.environ.get("APP") or "clock"]
+    NAME, SOURCE, FIXED_ID = app.get("NAME", NAME), app.get("SOURCE", SOURCE), app.get("FIXED_ID", False)
+    DATA_FAMILY, SCREEN_NAME = app.get("DATA_FAMILY", DATA_FAMILY), app.get("SCREEN_NAME", SCREEN_NAME)
+    SCREEN_COLOUR = app.get("SCREEN_COLOUR", SCREEN_COLOUR)
+    BOARD_PREFIX.update(app.get("BOARD_PREFIX", {}))
     BOARD = (a.board or os.environ.get("BOARD") or "fm1").lower().replace("-", "")
     if BOARD not in BOARD_PREFIX:
         raise SystemExit(f"BOARD={BOARD}: use fm1 or smk37")
@@ -319,15 +336,15 @@ def main():
         BOARD_DEFS[BOARD] = [*BOARD_DEFS[BOARD], f'-DSMK_MODEL="{MODELS[model]}"']
         BOARD_PREFIX[BOARD] = BOARD_PREFIX[BOARD].replace(MODELS["pro"], MODELS[model])
         suffix += "-" + model
-    PRODUCT = BOARD_PREFIX[BOARD] + "0"
-    name = f"fm1clock{suffix}.fwsc"
+    PRODUCT = BOARD_PREFIX[BOARD] + ("" if FIXED_ID else "0")
+    name = f"{NAME}{suffix}.fwsc"
     if a.release:                   # one digit each: the identity has room for two (X.Y; a .Z only in the text)
         m = re.fullmatch(r"(\d)\.(\d)(\.\d)?(-[A-Za-z0-9]+)?", a.release)
         if not m:
             raise SystemExit(f"--release {a.release}: use X.Y, X.Y.Z or X.Y-suffix, one digit each")
-        PRODUCT = BOARD_PREFIX[BOARD] + m[2]
+        PRODUCT = BOARD_PREFIX[BOARD] + ("" if FIXED_ID else m[2])
         VERSION = m[1] + "." + m[2] + (m[3] or "")
-        name = f"fm1clock-{a.release}{suffix}.fwsc"
+        name = f"{NAME}-{a.release}{suffix}.fwsc"
     fm1pkg_make.SDK = a.sdk
     for rel, sha in SDK_SHA256.items():          # fail early without the SDK
         if hashlib.sha256(fm1pkg_make.sdk_file(rel)).hexdigest() != sha:
@@ -342,14 +359,14 @@ def main():
         notes.append("register access: hal/ only (src/, loader/ clean)")
     for n in notes:
         print("  ok   ", n)
-    (OUT / "fm1clock.notes").write_text("".join(f"{n}\n" for n in notes))   # (CI shows them again after fm1-emu)
+    (OUT / f"{NAME}.notes").write_text("".join(f"{n}\n" for n in notes))   # (CI shows them again after fm1-emu)
     for e in errors:
         print("  FAIL ", e)
     if errors:
         raise SystemExit("build: checks failed")
     pkg = fm1pkg_make.ufw(fm1pkg_make.flash_image(img, fm1pkg_make.KEY), ota, PRODUCT)
     (OUT / name).write_bytes(pkg)
-    print(f"app      {OUT / 'fm1clock.bin'}  {len(img)} B")
+    print(f"app      {OUT / (NAME + '.bin')}  {len(img)} B")
     print(f"loader   {LDR / 'ota.bin'}  {len(ota)} B")
     print(f"package  {OUT / name}  {len(pkg)} B, identity {PRODUCT}" + (f", board {BOARD}" if BOARD != "fm1" else ""))
     return 0

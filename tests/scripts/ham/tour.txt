@@ -1,0 +1,47 @@
+# a tour of Hamster Piano for its screens (tests/run_hamster.sh; docs/screens/ham-*.png)
+500 shot
+4600 shot
+# a hamster by hand: E4
+4700 keys 0x800
+4760 shot
+4900 keys 0
+# play the pattern
+5200 btn 12
+5900 shot
+6700 btn 12
+# the editor: step 9, a glide, an arpeggio, ratchet x3, an octave down
+7000 btn 6
+7100 enc 0 1
+7300 enc 2 1
+7500 enc 3 1
+7700 enc 5 2
+7900 btn 0
+8200 shot
+8300 btn 6
+# the Tromster, playing
+8500 btn 11
+8700 keys 0x80000
+8750 keys 0
+9000 btn 12
+9900 shot
+# THALL
+10100 btn 2
+10300 shot
+11300 shot
+11500 btn 12
+11700 btn 8
+12000 shot
+# the song's page
+12200 btndown 7
+12900 btnup 7
+13100 shot
+13300 btn 8
+# help
+13500 btndown 8
+14200 btnup 8
+14400 shot
+14500 btn 12
+14700 shot
+14900 btn 12
+15100 shot
+15300 end

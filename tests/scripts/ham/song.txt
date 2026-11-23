@@ -1,0 +1,24 @@
+# pattern B: one note (REC, C5); the song "AB" (the song's page: two letters taken away six times ... here: SEL x6
+# from AABACCDC leaves AA; PRESETS turns the second into B); SONG on, PLAY: A's 16 steps, then B's one note
+300 enc 6 1
+400 enc 0 -7
+500 btn 13
+700 keys 0x80000
+800 keys 0
+900 btn 13
+1000 enc 6 -1
+1200 btndown 7
+1900 btnup 7
+2000 btn 3
+2100 btn 3
+2200 btn 3
+2300 btn 3
+2400 btn 3
+2500 btn 3
+2600 enc 0 -1
+2700 enc 6 1
+2900 btn 8
+3000 btn 7
+3200 btn 12
+7700 shot
+8000 end
