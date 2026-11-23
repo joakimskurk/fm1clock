@@ -54,12 +54,18 @@ run "the hamster kit (the drums' fourth voices) sounds and does not clip" sh -c 
     "printf 'bpm 120\ndrums 1\ndrum 0 0 17\ndrum 0 1 68\ndrum 0 2 85\ndrum 0 3 170\ndvoice 0 0 3\ndvoice 0 1 3\ndvoice 0 2 3\ndvoice 0 3 3\n' > build/audio/kit.txt &&
      build/ham_render build/audio/kit.txt build/audio/kit.wav && python3 $P peak build/audio/kit.wav 0.9"
 
+# playing over what plays
+run "the engine: THALL's two lines, no voice taken as it begins, a step skipped" sh -c \
+    "cc -O2 -Wall -Wextra -Werror -Wno-unused-function -Ifirmware/src -Ifirmware/gen -o build/engine_test tests/ham/engine_test.c && build/engine_test"
+
 # the app, by its buttons
 A="48,64,67,64,52,67,64,62,53,67,69,72,55,71,67,62"
 run "PLAY: the pattern A, a step every 250 ms, and round again" sh -c \
     "$OUT/hamstersynth $OUT/ham_play tests/scripts/ham/play.txt >$OUT/ham_play.log && python3 $P notes $OUT/ham_play.log $A,48 250 && python3 $P peak $OUT/ham_play.wav 0.9"
 run "REC writes and moves on, SEL a rest, ENV undoes; the editor changes a step, its arpeggio and ratchet; then PLAY" sh -c \
     "$OUT/hamstersynth $OUT/ham_rec tests/scripts/ham/rec.txt >$OUT/ham_rec.log && python3 $P notes $OUT/ham_rec.log 60,64,79,48,69,69,69,69,69,69,64,67,64,52,67,64,60,64,69,72,55,71,67,62,69"
+run "REC while it plays: a note into the step it was heard in (the nearest), not twice; SEL a rest; the next round plays them" sh -c \
+    "$OUT/hamstersynth $OUT/ham_od tests/scripts/ham/overdub.txt >$OUT/ham_od.log && python3 $P notes $OUT/ham_od.log 48,64,67,64,52,67,64,62,53,67,69,72,55,71,71,67,79,48,64,67,64,52,67,64,62,53,67,69,72,71,67,79,48"
 run "a song written on its page (AB), SONG on, PLAY: A's bar, then B's" sh -c \
     "$OUT/hamstersynth $OUT/ham_song tests/scripts/ham/song.txt >$OUT/ham_song.log && python3 $P notes $OUT/ham_song.log 72,$A,72"
 run "a tour of its pages: the screens (build/host/ham_tour-*.png)" sh -c \

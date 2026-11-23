@@ -8,7 +8,8 @@
  *   white keys   the hamsters: C4..C5 are the eight; F3..B3 the same hamsters an octave down, D5..G5 an octave up
  *   black keys   C#4 D#4 F#4 G#4: kick, snare, hat, clap, by hand
  *   PLAY         play / stop (the pattern, or the song with SONG on)
- *   REC          step recording: a hamster is written to the step and the step moves on; SEL writes a rest
+ *   REC          step recording: a hamster is written to the step and the step moves on; SEL writes a rest.
+ *                While it plays (a pattern or the song): into the step it is heard in (the nearest), over and over
  *   EDIT         the editor: a key changes the step's note and stays; SELECT walks the steps;
  *                KNOB 1 glide, KNOB 2 arpeggio (+7, +12), KNOB 3 accent, KNOB 4 ratchet (x1..x4); OCT- OCT+ its octave;
  *                ARP the arpeggio too; SEL deletes the step; SAVE copies it to the next; LFO a random pattern
@@ -241,18 +242,19 @@ static void store_save(void)
 /* ---- undo: the pattern as it was, twelve deep */
 static struct { uint8_t pat, cur; uint16_t s[16]; } undo[12];
 static uint32_t undo_n;
-static void undo_push(void)
+static void undo_push_p(uint32_t p)             /* pattern p as it is, to come back to */
 {
     uint32_t i;
     if (undo_n == 12u) {
         for (i = 1; i < 12u; i++) undo[i - 1u] = undo[i];
         undo_n = 11;
     }
-    undo[undo_n].pat = (uint8_t)active;
+    undo[undo_n].pat = (uint8_t)p;
     undo[undo_n].cur = (uint8_t)cur_step;
-    for (i = 0; i < 16u; i++) undo[undo_n].s[i] = hq.pat[active][i];
+    for (i = 0; i < 16u; i++) undo[undo_n].s[i] = hq.pat[p][i];
     undo_n++;
 }
+static void undo_push(void) { undo_push_p(active); }
 static void set_active(uint32_t p)
 {
     active = p & 3u;
@@ -321,6 +323,30 @@ static void step_say(uint32_t step)
 }
 
 /* a hamster pressed: key 0..7, its octave -3..+1; vel: MIDI velocity, 0 from the keys */
+/* recording while it plays: the step a note played now belongs in, and its pattern. The nearer of the step that sounds
+   and the next; the next, the sequencer is told not to play it again (it was just played by hand) */
+static uint32_t live_step(uint32_t *pat)
+{
+    uint32_t info, at, len, el, step, p, pos;
+    do {
+        info = heng_step_info;
+        at = heng_step_at;
+        len = heng_step_len;
+    } while (info != heng_step_info);
+    step = info & 15u;
+    p = info >> 4 & 3u;
+    pos = info >> 8 & 63u;
+    el = heng_now - at;
+    if (len && el * 2u >= len) {
+        if (step == 15u)                        /* the next bar: the song's next, or the pattern asked for */
+            p = song_playing ? hq.song[(pos + 1u) % hq.song_len] & 3u : hq.want_pat & 3u;
+        step = (step + 1u) & 15u;
+        hq.skip = heng_fired + 1u;
+    }
+    *pat = p;
+    return step;
+}
+
 static void press(uint32_t key, int32_t oct, uint32_t vel)
 {
     oct = oct < -3 ? -3 : oct > 1 ? 1 : oct;
@@ -336,7 +362,14 @@ static void press(uint32_t key, int32_t oct, uint32_t vel)
         return;
     }
     sing(key, oct, vel);
-    if (page == PG_HOME && rec_on) {            /* step recording: written, and on to the next */
+    if (page == PG_HOME && rec_on && playing) { /* recorded while it plays: where it was heard */
+        uint32_t p, step = live_step(&p);
+        undo_push_p(p);
+        hq.pat[p][step] = ST_MAKE(key, oct);
+        SAY_BEGIN(); sb_c((char)('A' + p)); sb_u(step + 1u); sb_s(" · "); sb_s(NOTE_NAME[key]); sb_s(" ●"); SAY_END();
+        rd_steps |= 1u << step;
+        touch();
+    } else if (page == PG_HOME && rec_on) {     /* step recording: written, and on to the next */
         uint32_t step = cur_step;
         undo_push();
         hq.pat[active][step] = ST_MAKE(key, oct);
@@ -795,8 +828,8 @@ static void buttons(void)
         rec_on = !rec_on;
         if (rec_on) edit_on = 0;
         if (page != PG_HOME) go_page(PG_HOME);
-        if (song_playing) stop(0);
-        if (rec_on) { SAY_BEGIN(); sb_s("REC · NESTE STEG "); sb_step(cur_step); SAY_END(); }
+        if (rec_on && playing) say("REC · SPILL MED");      /* (the song plays on: record over it) */
+        else if (rec_on) { SAY_BEGIN(); sb_s("REC · NESTE STEG "); sb_step(cur_step); SAY_END(); }
         else say("REC AV · SPILL FRITT");
         rd_steps = 0xFFFF;
     }
@@ -917,6 +950,14 @@ static void buttons(void)
                 rd_page = 1;
                 touch();
             }
+        } else if (page == PG_HOME && rec_on && playing) {   /* while it plays: a rest where it is heard */
+            uint32_t p, step = live_step(&p);
+            hq.skip = 0;
+            undo_push_p(p);
+            hq.pat[p][step] = 0;
+            SAY_BEGIN(); sb_c((char)('A' + p)); sb_u(step + 1u); sb_s(" · REST"); SAY_END();
+            rd_steps |= 1u << step;
+            touch();
         } else if (page == PG_HOME && rec_on) {  /* a rest, and on */
             uint32_t step = cur_step;
             undo_push();

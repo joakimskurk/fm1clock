@@ -44,7 +44,7 @@ CI bygger pakken på hver push (artefaktet `packages`). SMK-37: `./build.sh --ap
 | **Hvite tangenter** | Hamsterne. C4–C5 er de åtte; F3–B3 er de samme en oktav ned, D5–G5 en oktav opp. |
 | **Svarte tangenter** | C#4 D#4 F#4 G#4: kick, snare, hat, clap for hånd. |
 | **PLAY** | Spill / stopp (sekvensen, eller songen når SONG er på). |
-| **REC** | Stegopptak: hamsteren lagres i steget og går videre. **SEL** legger inn pause. |
+| **REC** | Stegopptak: hamsteren lagres i steget og går videre. **SEL** legger inn pause. Mens det spilles (sekvens eller song): tonen lagres i steget du hører den i, det nærmeste, runde etter runde. |
 | **EDIT** | Rediger: en tangent bytter tonen uten å gå videre. **SELECT** velger steg. |
 | **SELECT** | Velg steg (og hør det). |
 | **PRESETS** | Sekvens A–D. Mens den spiller: byttes ved neste runde. |
