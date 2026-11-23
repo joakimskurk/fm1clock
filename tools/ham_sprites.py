@@ -46,9 +46,9 @@ HALF = [
     ".OFFFFFFFFFFF",   # 8
     ".OFFFFFFFFFFF",   # 9   the eyes, 9..11
     ".OFFFFFFFFFFF",   # 10
-    ".OFFFFFFFFFFB",   # 11
-    "OFFFFFFFFFFBB",   # 12  the nose
-    "OFFFFFFFFFBBB",   # 13  the mouth
+    ".OFFFFFFFFFBB",   # 11  the muzzle: round, cream, round the nose and the mouth
+    "OFFFFFFFFFBBB",   # 12  the nose
+    "OFFFFFFFFBBBB",   # 13  the mouth
     "OFFFFFFFBBBBB",   # 14
     "OFFFFFFBBBBBB",   # 15
     "OFFFFFBBBBBBB",   # 16  the paws
