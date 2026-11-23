@@ -110,6 +110,45 @@ def note_table(key, f):
     return x, abs(hb), cmath.phase(hb)
 
 
+# ---- the hamster voice (this firmware's own; the page's is the one above): each hamster its own size, vowel and
+# vibrato. A note is three tables, its vowel as it opens (a squeak, "i"), as it sings (its own vowel) and as it closes
+# ("u"); the engine fades from one to the next. Up to 24 harmonics, so the small vocal tract's high formants have
+# something to shape. Its level as the page's at each note.
+VOWEL = {"i": (280, 2250, 2900), "e": (400, 2000, 2550), "a": (730, 1090, 2440), "o": (450, 800, 2830),
+         "u": (300, 870, 2240)}
+# scale (how small: the formants up), its vowel, vibrato (Hz), squeak (semitones), low-pass (Hz)
+HVOICE = [
+    (1.50, "a", 8.6, 4.0, 7000),        # C  the golden one
+    (1.35, "o", 7.8, 3.0, 6000),        # D  the grey one with its seed
+    (1.80, "i", 10.2, 6.0, 8000),       # E  the white one: the squeakiest
+    (1.45, "u", 8.2, 3.5, 2600),        # F  the orange one: its mouth full of cheese
+    (1.30, "a", 7.4, 2.5, 6000),        # G  the brown one: the deepest
+    (1.60, "e", 9.4, 5.0, 7500),        # A  the grey one, smiling
+    (1.55, "a", 9.0, 4.5, 7500),        # B  the orange one, its mouth open
+    (1.40, "o", 6.8, 2.0, 6500),        # C  the one in sunglasses: cool, slow
+]
+HV_Q = (3.5, 5.0, 6.0)
+HV_G = (.72, .30, .12)
+
+
+def hv_table(key, f, vowel):
+    """one cycle of the hamster voice at f: up to 24 harmonics (1 / k^1.25) through its vowel's formants"""
+    sc, _, _, _, lp = HVOICE[key]
+    if vowel == "i":
+        sc *= 1.15
+    fs = [bq_bandpass(min(fo * sc, 15000), q) for fo, q in zip(VOWEL[vowel], HV_Q)]
+    low = bq_lowpass(lp, .55)
+    t = np.arange(WT_N) / WT_N
+    x = np.zeros(WT_N)
+    for k in range(1, 25):
+        fk = f * k
+        if fk >= 16000:
+            break
+        H = sum(g * resp(b, fk) for g, b in zip(HV_G, fs)) * resp(low, fk)
+        x += k ** -1.25 * abs(H) * np.sin(2 * np.pi * k * t + cmath.phase(H))
+    return x
+
+
 def lg(v):                              # a level or a ratio as its base-2 logarithm, Q16
     return int(round(math.log2(v) * 65536))
 
@@ -181,6 +220,33 @@ def build():
     o.append(arr("HAM_HARM", "int16_t", [int(round(h * periodic_norm() * 32768)) for h in HARM], 8))
     o.append(arr("HAM_LGK", "int32_t", [lg(k) for k in range(1, 9)], 8))
     o.append(arr("HAM_BODY_G", "int16_t", bg))
+    # the hamster voice: [key * NOCT + octave][squeak, its vowel, closing], then its vowel a fifth up (the arpeggio)
+    hv, hv5, hb = [], [], []
+    for key in range(8):
+        for oct_ in range(OCT_LO, OCT_HI + 1):
+            f = hz(MIDI[key] + 12 * oct_)
+            page, _, _ = note_table(key, f)
+            xs = [hv_table(key, f, v) for v in ("i", HVOICE[key][1], "u")]
+            g = np.sqrt((page ** 2).mean()) / np.sqrt((xs[1] ** 2).mean())
+            g = min(g, 1.95 / max(np.abs(x).max() for x in xs))
+            for x in xs:
+                hv.append([int(round(v * g * 16384)) for v in x] + [int(round(x[0] * g * 16384))])
+            x5 = hv_table(key, f * 2 ** (7 / 12), HVOICE[key][1])
+            g5 = min(g, 1.95 / np.abs(x5).max())
+            hv5.append([int(round(v * g5 * 16384)) for v in x5] + [int(round(x5[0] * g5 * 16384))])
+            hb.append(int(round(.25 * abs(resp(bq_lowpass(HVOICE[key][4], .55), f)) * 32768)))
+    for n, t in (("HAM_HV", hv), ("HAM_HV5", hv5)):
+        o.append(f"static const int16_t {n}[{len(t)}][{WT_N + 1}] = {{")
+        for row in t:
+            o.append("    {" + ", ".join(str(v) for v in row) + "},")
+        o.append("};")
+    o.append(arr("HAM_HV_BODY", "int16_t", hb))
+    o.append(arr("HAM_HV_VIB", "uint32_t", [int(round(v[2] * CB / FS * 2 ** 32)) for v in HVOICE], 8, "{}u"))
+    o.append(arr("HAM_HV_SQUEAK", "int32_t", [lg(2 ** (v[3] / 12)) for v in HVOICE], 8))
+    seat = [-.5 + k / 7 for k in range(8)]      # the eight in a row, left to right, as on the screen
+    o.append(arr("HAM_SEAT_L", "int16_t", [int(round(32768 * math.cos((p + 1) / 2 * math.pi / 2))) for p in seat], 8))
+    o.append(arr("HAM_SEAT_R", "int16_t", [int(round(32768 * math.sin((p + 1) / 2 * math.pi / 2))) for p in seat], 8))
+    o.append(f"#define LG_HV_FALL ({lg(2 ** (-1.5 / 12))})                     /* the hamster voice: down 1.5 semitones as it closes */")
     o.append(arr("HAM_BODY_PH", "uint32_t", bp, 6, "{}u"))
     # the vibrato of each hamster: 6.4 + key * 0.08 Hz, a phase step a control block
     o.append(arr("HAM_VIB_INC", "uint32_t", [int(round((6.4 + k * .08) * CB / FS * 2 ** 32)) for k in range(8)], 8, "{}u"))
@@ -200,13 +266,16 @@ def build():
         "BQ_T_BREATH": bq_bandpass(2450, 1.15), "BQ_T_STRING": bq_lowpass(5200, .35), "BQ_T_SOFT5": bq_lowpass(5000, .55),
         "BQ_T_PREHP": bq_highpass(72, .45), "BQ_T_CABHP": bq_highpass(82, .55), "BQ_T_CABMID": bq_peaking(920, .8, 3.4),
         "BQ_T_CABLP": bq_lowpass(4100, .72),
+        "BQ_SQUEAK": bq_bandpass(6500, 1.2), "BQ_SOFT8": bq_lowpass(9000, .55),
     }
     for n, b in bqs.items():
         o.append(f"static const int32_t {n}[5] = {{{', '.join(str(v) for v in q28(b))}}};")
-    drum = [[bq_bandpass(f, q) for f, q in zip([1800, 1180, 2550], [.7, .5, 1.05])],          # snare
-            [bq_highpass(f, 1.0) for f in [6200, 4700, 7600]],                               # hat (Q: the default, 1 dB)
-            [bq_bandpass(f, q) for f, q in zip([1450, 1050, 2100], [.55, .48, .95])]]        # clap
-    o.append("static const int32_t BQ_DRUM[3][3][5] = {                /* snare, hat, clap: a voice each */")
+    # snare, hat, clap: the page's three voices, and a fourth of this firmware's own (the hamster kit): the seed's
+    # crunch, the sniff, the paw's pat
+    drum = [[bq_bandpass(f, q) for f, q in zip([1800, 1180, 2550, 3200], [.7, .5, 1.05, .9])],   # snare
+            [bq_highpass(f, 1.0) for f in [6200, 4700, 7600, 7000]],                           # hat (Q: the default, 1 dB)
+            [bq_bandpass(f, q) for f, q in zip([1450, 1050, 2100, 900], [.55, .48, .95, .7])]]  # clap
+    o.append("static const int32_t BQ_DRUM[3][4][5] = {                /* snare, hat, clap: a voice each */")
     for row in drum:
         o.append("    {" + ", ".join("{" + ", ".join(str(v) for v in q28(b)) + "}" for b in row) + "},")
     o.append("};")
@@ -222,12 +291,14 @@ def build():
     }
     for n, v in names.items():
         o.append(f"#define {n} ({lg(v)})")
-    for n, vals in {"LG_KICK_PK": [.62, .54, .48], "LG_SNARE_PK": [.24, .22, .20], "LG_SNARE_TONE": [.12, .16, .09],
-                    "LG_HAT_PK": [.11, .09, .13], "LG_CLAP_PK": [.13, .115, .145]}.items():
-        o.append(f"static const int32_t {n}[3] = {{{', '.join(str(lg(v)) for v in vals)}}};")
-    for n, vals in {"LGP_KICK0": [150, 185, 125], "LGP_KICK1": [48, 42, 55], "LGP_SNARE": [185, 145, 225],
-                    "LGP_CLICK": [820, 190, 190]}.items():
-        o.append(f"static const int32_t {n}[3] = {{{', '.join(str(lg(v * 2 ** 32 / FS)) for v in vals)}}};")
+    for n, vals in {"LG_KICK_PK": [.62, .54, .48, .58], "LG_SNARE_PK": [.24, .22, .20, .26],
+                    "LG_SNARE_TONE": [.12, .16, .09, .05], "LG_HAT_PK": [.11, .09, .13, .10],
+                    "LG_CLAP_PK": [.13, .115, .145, .20]}.items():
+        o.append(f"static const int32_t {n}[4] = {{{', '.join(str(lg(v)) for v in vals)}}};")
+    for n, vals in {"LGP_KICK0": [150, 185, 125, 260], "LGP_KICK1": [48, 42, 55, 52], "LGP_SNARE": [185, 145, 225, 330],
+                    "LGP_CLICK": [820, 190, 190, 190], "LGP_PIP": [3400, 2600, 3900, 3000]}.items():
+        o.append(f"static const int32_t {n}[4] = {{{', '.join(str(lg(v * 2 ** 32 / FS)) for v in vals)}}};")
+    o.append(f"#define LG_PIP ({lg(.075)})                       /* the hamster kit's squeak (clap 4): its level */")
     o.append(f"#define LG_T_TRIM ({lg(.155 * math.cos(math.pi / 4))})                    /* the drive's trim and the panner at its middle */")
     o.append(f"#define LG_PAN0 ({lg(math.cos(math.pi / 4))})")
     o.append(f"#define LG_OCT 65536                           /* an octave */")

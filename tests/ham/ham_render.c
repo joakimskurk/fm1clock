@@ -3,7 +3,7 @@
  * played by its own sequencer into a WAV, to hold against what the original page renders (tests/ham/parity.py).
  *
  *   ham_render CASE.txt OUT.wav     CASE.txt: a line a setting (tests/ham/parity.py writes it from cases.json)
- *     bpm N | thall 0/1 | drums 0/1 | swing N | rounds N | song ABCD...
+ *     bpm N | thall 0/1 | drums 0/1 | swing N | rounds N | song ABCD... | voice 0/1 (1: the hamster voice)
  *     step P I KEY OCT GLIDE ARP ACCENT RATCHET     pattern P (0..3), step I: ARP 0, 7 or 12
  *     drum P D BITS | dvoice P D V                  drum D (0 kick .. 3 clap): its 8 steps, its voice
  *   ham_render bench                the heaviest minute for the instruction count (DINGHY_PERF) */
@@ -37,6 +37,7 @@ int main(int argc, char **argv)
             else if (!strcmp(what, "thall")) { sscanf(line, "%*s %u", &a[0]); hq.thall = a[0]; }
             else if (!strcmp(what, "drums")) { sscanf(line, "%*s %u", &a[0]); hq.drums_on = a[0]; }
             else if (!strcmp(what, "swing")) { sscanf(line, "%*s %u", &a[0]); hq.swing = a[0]; }
+            else if (!strcmp(what, "voice")) { sscanf(line, "%*s %u", &a[0]); hq.hvoice = a[0]; }
             else if (!strcmp(what, "rounds")) { sscanf(line, "%*s %u", &rounds); }
             else if (!strcmp(what, "song")) { sscanf(line, "%*s %79s", song); }
             else if (!strcmp(what, "step")) {

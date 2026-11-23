@@ -41,7 +41,7 @@ CI bygger pakken på hver push (artefaktet `packages`). SMK-37: `./build.sh --ap
 | **OCT− / OCT+** | Tangentene en oktav ned / opp (i EDIT: stegets oktav, −3 … +1). |
 | **ENV** | Angre (12 nivåer). |
 | **SEQ** | Tromster-siden (og trommene på). Hold: trommer av / på. |
-| **FX** | THALLHAMSTERGRINDCORE av / på: −1 oktav, vreng, dobbelt tempo. |
+| **FX** | THALLHAMSTERGRINDCORE av / på: −1 oktav, vreng, dobbelt tempo. Hold: hamsterstemmen eller sidens stemme. |
 | **GLO** | SONG av / på. Hold: siden for song-rekkefølgen. |
 | **HOME** | Hjem. Hjemme: skiltet sier noe nytt. Hold: hjelp på skjermen. |
 | **SEL** (hold) | Slett sekvensen (ENV henter den tilbake). |
@@ -52,7 +52,8 @@ CI bygger pakken på hver push (artefaktet `packages`). SMK-37: `./build.sh --ap
 **SEL** sletter steget, **SAVE** kopierer det til neste, **LFO** lager en tilfeldig sekvens.
 
 **På Tromster-siden:** F3 G3 A3 B3 velger kick, snare, hat, clap; C4–C5 setter de åtte stegene (lysene viser dem);
-KNOTT 1–4 velger lyd 1–3 for hver tromme; hold SEL sletter raden.
+KNOTT 1–4 velger lyd 1–4 for hver tromme (1–3 er sidens, 4 er hamstersettet: kinnpop, frøknas, snus og pip); hold SEL
+sletter raden.
 
 **På song-siden:** C4 D4 E4 F4 skriver A B C D ved markøren, SELECT flytter den, PRESETS bytter bokstaven, SEL sletter.
 
@@ -82,7 +83,23 @@ siden: den gylne, den grå med solsikkefrø, den hvite som blunker, den oransje 
 med lukkede øyne, den oransje med tunga ute og den hvite med solbriller. Én blekkfarge for omrisset og lys fra øvre
 venstre hjørne. Hver figurpiksel er 2×2 skjermpiksler, som logoen og teksten.
 
-## Lyden
+## Hamsterstemmen
+
+Standardstemmen er firmwarens egen, mer hamstrete enn sidens (hold **FX** for å bytte til sidens):
+
+- **Hver tone piper:** den starter med et lite kvitter ovenfra og vokalen «i», synger sin egen vokal og lukker seg
+  med «u», litt lavere.
+- **Hver hamster har sin stemme:** størrelse (formantene), vokal, trille og hvor mye den piper. Den hvite piper mest,
+  den brune er dypest, den med ost har munnen full, den med solbriller er kul og rolig.
+- **Rikere klang:** opptil 24 overtoner i stedet for 8, så de små hamsterstrupenes høye formanter høres.
+- **Ryddigere:** tonens lengde følger tempoet, så raske sekvenser ikke flyter sammen. Hamsterne sitter fra venstre til
+  høyre i stereo, slik de sitter på skjermen, i et lite rom med noen få refleksjoner.
+- **Hamstersettet** i Tromster (lyd 4 på hver tromme): kinnpop, et frø som knaser, et snus og et pip.
+
+Lyddemoen bruker hamsterstemmen. `tools/ham_demo.sh` lager også samme demo med sidens stemme
+(`build/demo/hamsterpiano-demo-side.mp3`) til sammenligning.
+
+## Sidens stemme
 
 Siden bygger hver tone av Web Audio-noder. Her, i heltall (`firmware/src/ham_engine.h`):
 
@@ -93,13 +110,14 @@ Siden bygger hver tone av Web Audio-noder. Her, i heltall (`firmware/src/ham_eng
 - **Tromster**: kick, snare, hat og clap med tre lyder hver.
 - Omhyllingskurvene er linjer i logaritmen, altså Web Audios eksponentielle ramper.
 
-Mot sidens egen gjengivelse (`tools/ham_ref.js` lar siden rendre testtilfellene; `tests/ham/parity.py` sammenligner
+Sidens stemme er beholdt som den var. Mot sidens egen gjengivelse (`tools/ham_ref.js` lar siden rendre testtilfellene; `tests/ham/parity.py` sammenligner
 energien i tersbånd over tid): hamsterne innenfor ca. 0,2–0,5 dB i snitt, THALL 0,4–0,6 dB, trommene ca. 1,4 dB
 (støy er aldri lik to ganger). Referansen er instrumentet slik det spilles live: sidens WAV-eksport starter noter
 midt i en lydblokk, og da begynner Chromiums oscillatorer på feil tonehøyde et øyeblikk, som endrer forvrengningen i
 THALL. Den særheten er ikke portet.
 
-I fm1-emu bruker lydavbruddet på det meste ca. 20 % av tiden det har.
+Hamsterstemmen testes for nivå (like sterk som sidens innenfor 2 dB) og at ingenting klipper. I fm1-emu bruker
+lydavbruddet på det meste ca. 22 % av tiden det har.
 
 ## Hva er hvor
 

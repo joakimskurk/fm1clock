@@ -19,7 +19,8 @@
  *   OCT- OCT+    (not editing) the keys an octave down / up again
  *   SEQ          the Tromster's page (and the drums on); held: the drums on / off
  *                there: F3 G3 A3 B3 choose kick snare hat clap, C4..C5 set its eight steps, KNOB 1..4 their voices
- *   FX           THALLHAMSTERGRINDCORE on / off
+ *                (1..3 the page's, 4 the hamster kit: a cheek's pop, a seed's crunch, a sniff, a squeak)
+ *   FX           THALLHAMSTERGRINDCORE on / off; held: the hamster voice (squeaks, each its own) or the page's
  *   GLO          SONG on / off; held: the song's page (C4 D4 E4 F4 write A B C D, SEL takes one away)
  *   HOME         home; at home: the sign says something else; held: what the buttons do
  *   SEL          held: the pattern cleared
@@ -65,7 +66,7 @@ static save_t sv;
 enum { PG_HOME, PG_TROM, PG_SONG, PG_HELP };
 static uint32_t page, rec_on, edit_on, cur_step = 7, active, playing, song_playing, ext_sync, play_step, play_pat, song_pos;
 static uint32_t sel_key, trom_row, song_cur, help_page, song_mode, drums_on, thall, bpm = 120, swing, lvl_ham = 16, lvl_drum = 16;
-static uint32_t midi_ch, dirty, t_change, save_now;
+static uint32_t midi_ch, dirty, t_change, save_now, hvoice = 1;   /* hvoice: the hamster voice (0: the page's) */
 static int32_t kb_oct;
 static uint32_t t_ham[8], t_logo, logo_dance, t_sign, sign_on, lore_i = 99, t_status;
 static char status[64], sign1[40], sign2[40];
@@ -152,6 +153,7 @@ static void push_all(void)
     hq.want_pat = active;
     hq.lvl_ham = lvl_ham * 16u;
     hq.lvl_drum = lvl_drum * 16u;
+    hq.hvoice = hvoice;
 }
 
 #ifdef HAM_DEMO
@@ -177,7 +179,7 @@ static void defaults(void)
         hq.song[i] = (uint8_t)(SONG[i] - 'A');
     hq.song_len = 8;
     bpm = 120; active = 0; song_mode = 0; drums_on = 0; thall = 0; cur_step = 7; swing = 0;
-    lvl_ham = lvl_drum = 16; midi_ch = 0; kb_oct = 0;
+    lvl_ham = lvl_drum = 16; midi_ch = 0; kb_oct = 0; hvoice = 1;
 #ifdef HAM_DEMO
     ham_demo();
 #endif
@@ -189,7 +191,7 @@ static void store_load(void)
     defaults();
     ok = !settings_load(&sv, sizeof sv) && sv.ver == SV_VER && sv.bpm >= 50u && sv.bpm <= 220u && sv.active < 4u &&
          sv.cur_step < 16u && sv.swing <= 60u && sv.lvl_ham <= 32u && sv.lvl_drum <= 32u && sv.midi_ch <= 16u &&
-         sv.song_len >= 1u && sv.song_len <= 64u && sv.kb_oct >= -2 && sv.kb_oct <= 0;
+         sv.song_len >= 1u && sv.song_len <= 64u && sv.kb_oct >= -2 && sv.kb_oct <= 0 && sv.pad[0] <= 1u;
     if (!ok)
         return;
     for (p = 0; p < 4u; p++) {
@@ -199,7 +201,7 @@ static void store_load(void)
         }
         for (i = 0; i < 4u; i++) {
             hq.drum[p][i] = sv.drum[p][i];
-            hq.dvoice[p][i] = sv.dvoice[p][i] % 3u;
+            hq.dvoice[p][i] = sv.dvoice[p][i] > 3u ? 0u : sv.dvoice[p][i];
         }
     }
     for (i = 0; i < 64u; i++)
@@ -208,6 +210,7 @@ static void store_load(void)
     bpm = sv.bpm; active = sv.active; song_mode = sv.song_mode & 1u; drums_on = sv.drums_on & 1u; thall = sv.thall & 1u;
     cur_step = sv.cur_step; swing = sv.swing; lvl_ham = sv.lvl_ham; lvl_drum = sv.lvl_drum; midi_ch = sv.midi_ch;
     kb_oct = sv.kb_oct;
+    hvoice = !sv.pad[0];                        /* (pad[0]: 1 = the page's voice; an older save's 0 = the hamster voice) */
 }
 
 static void store_save(void)
@@ -217,7 +220,8 @@ static void store_save(void)
     sv.drums_on = (uint8_t)drums_on; sv.thall = (uint8_t)thall; sv.cur_step = (uint8_t)cur_step; sv.swing = (uint8_t)swing;
     sv.lvl_ham = (uint8_t)lvl_ham; sv.lvl_drum = (uint8_t)lvl_drum; sv.midi_ch = (uint8_t)midi_ch;
     sv.song_len = (uint8_t)hq.song_len; sv.kb_oct = (int8_t)kb_oct;
-    sv.pad[0] = sv.pad[1] = sv.pad[2] = 0;
+    sv.pad[0] = (uint8_t)!hvoice;
+    sv.pad[1] = sv.pad[2] = 0;
     for (p = 0; p < 4u; p++) {
         for (i = 0; i < 16u; i++) sv.pat[p][i] = hq.pat[p][i];
         for (i = 0; i < 4u; i++) { sv.drum[p][i] = hq.drum[p][i]; sv.dvoice[p][i] = hq.dvoice[p][i]; }
@@ -532,7 +536,7 @@ static const char *const HELP[3][13] = {
     {"REDIGER          2/3", "TANGENT BYTT TONE", "KNOTT 1 GLIDE", "KNOTT 2 ARP +7/+12", "KNOTT 3 ACCENT",
      "KNOTT 4 RATCHET ×1-4", "OCT-/+  STEGETS OKT.", "ARP     ARP +7/+12", "SEL     SLETT STEG", "SAVE    KOPIER →",
      "LFO     RANDOMISER", "ENV     ANGRE", ""},
-    {"MER              3/3", "SEQ     TROMSTER", "HOLD SEQ TROMMER AV", "FX      THALLHAMSTER", "        GRINDCORE",
+    {"MER              3/3", "SEQ     TROMSTER", "HOLD SEQ TROMMER AV", "FX      THALLHAMSTER", "HOLD FX STEMME",
      "GLO     SONG AV/PÅ", "HOLD GLO SONG-REKKE", "HOME    HJEM/SKILT", "KNOTT 1-4 UTENFOR", " REDIGER: SWING,",
      " HAMSTER, TROMSTER,", " MIDI-KANAL", "USB: LYD OG MIDI"},
 };
@@ -746,9 +750,9 @@ static void drum_try(uint32_t d, uint32_t voice_changed)
 static void buttons(void)
 {
     static uint32_t t_down[32], armed, fired;
-    static const uint8_t HOLD[4] = {BTN_HOME, BTN_GLO, BTN_SEQ, BTN_SEL};
+    static const uint8_t HOLD[5] = {BTN_HOME, BTN_GLO, BTN_SEQ, BTN_SEL, BTN_FX};
     uint32_t rel, b = fm1_input_edges(&rel), tap = 0, hold = 0, k;
-    for (k = 0; k < 4u; k++) {                  /* these four: a tap when let go, or held 600 ms */
+    for (k = 0; k < 5u; k++) {                  /* these five: a tap when let go, or held 600 ms */
         uint32_t m = 1u << HOLD[k];
         if (b & m) { armed |= m; fired &= ~m; t_down[HOLD[k]] = fm1_ms; }
         if ((armed & m) && !(fired & m) && (fm1_in.buttons & m) && fm1_ms - t_down[HOLD[k]] >= 600u) {
@@ -796,8 +800,16 @@ static void buttons(void)
         else say("REDIGER AV");
         rd_steps = 0xFFFF;
     }
-    if (b & (1u << BTN_FX))
+    if (tap & (1u << BTN_FX))
         set_thall(!thall);
+    if (hold & (1u << BTN_FX)) {                /* the voice: the hamsters' own, or the page's */
+        hvoice = !hvoice;
+        hq.hvoice = hvoice;
+        say(hvoice ? "HAMSTERSTEMME" : "SIDENS STEMME");
+        if (!thall && !playing)
+            sing(sel_key, 0, 0);
+        touch();
+    }
     if (b & (1u << BTN_ENV)) {
         undo_pop();
         rd_steps = 0xFFFF;
@@ -982,9 +994,11 @@ static void encoders(void)
             continue;
         if (page == PG_TROM) {                  /* each drum's voice, 1..3 */
             int32_t v = (int32_t)hq.dvoice[active][k] + (e > 0 ? 1 : -1);
-            hq.dvoice[active][k] = (uint8_t)(v < 0 ? 0 : v > 2 ? 2 : v);
+            hq.dvoice[active][k] = (uint8_t)(v < 0 ? 0 : v > 3 ? 3 : v);
             drum_try(k, 1);
-            SAY_BEGIN(); sb_s(DRUM_NAME[k]); sb_c(' '); sb_u(hq.dvoice[active][k] + 1u); SAY_END();
+            SAY_BEGIN(); sb_s(DRUM_NAME[k]); sb_c(' '); sb_u(hq.dvoice[active][k] + 1u);
+            if (hq.dvoice[active][k] == 3u) { static const char *const KIT[4] = {"KINNPOP", "FRØKNAS", "SNUS", "PIP"}; sb_s(" · "); sb_s(KIT[k]); }
+            SAY_END();
             rd_page = 1;
             touch();
         } else if (page == PG_HOME && edit_on) {

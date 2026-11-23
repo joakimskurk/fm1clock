@@ -6,6 +6,7 @@ itself (tools/ham_ref.js, its own export), and what is kept of those is their en
 
   parity.py ref DIR                  DIR/<case>.wav (tools/ham_ref.js) -> tests/ref/ham_features.json
   parity.py casefile NAME OUT.txt    the case as ham_render reads it
+  parity.py level NAME OUT.wav TOL    the hamster voice (this firmware's own): as loud as the page's, within TOL dB
   parity.py cmp NAME OUT.wav MEAN MAX [-v]    the engine's WAV against the reference: the mean and the largest
                                      difference (dB) over the windows and bands that sound, and the level over all
 """
@@ -107,6 +108,15 @@ def main():
                 s = sel[:, k]
                 if s.sum() > 2:
                     print(f"    {BANDS[k]:7.0f} Hz {d[s, k].mean():+6.2f} dB  (ref {a[s, k].mean():6.1f})")
+        return 0 if ok else 1
+    if cmd == "level":                          # the hamster voice: as loud as the page's, within TOL dB; no clip
+        name, tol = sys.argv[2], float(sys.argv[4])
+        ref = json.loads(REF.read_text())[name]
+        x = mono(sys.argv[3])
+        lvl = 20 * np.log10(np.sqrt((x ** 2).mean()) / ref["rms"]) - GAIN_DB
+        pk = float(np.abs(x).max())
+        ok = abs(lvl) <= tol and pk < 0.98
+        print(f"{name} (hamster voice): level {lvl:+.2f} dB against the page's (<= {tol}), peak {pk:.2f}: {'ok' if ok else 'FAIL'}")
         return 0 if ok else 1
     print(__doc__)
     return 2

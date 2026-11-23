@@ -41,6 +41,19 @@ run "its second voices" par drums_v1 2.0 2.5
 run "its third voices" par drums_v2 2.0 2.5
 run "the hamsters and the Tromster together" par full_default 1.0 4
 
+# the hamster voice (this firmware's own, the default): as loud as the page's, nothing clips; the hamster kit too
+hv() {   # case, tolerance
+    python3 tests/ham/parity.py casefile "$1" build/audio/ham_case.txt && echo "voice 1" >> build/audio/ham_case.txt &&
+        build/ham_render build/audio/ham_case.txt "build/audio/hv_$1.wav" && python3 tests/ham/parity.py level "$1" "build/audio/hv_$1.wav" "$2"
+}
+run "the hamster voice: a note" hv ham_one0 2
+run "the hamster voice: the page's pattern" hv ham_default 2
+run "the hamster voice: glide, arpeggio, accent, ratchets" hv ham_fx 2
+run "the hamster voice with the Tromster" hv full_default 2
+run "the hamster kit (the drums' fourth voices) sounds and does not clip" sh -c \
+    "printf 'bpm 120\ndrums 1\ndrum 0 0 17\ndrum 0 1 68\ndrum 0 2 85\ndrum 0 3 170\ndvoice 0 0 3\ndvoice 0 1 3\ndvoice 0 2 3\ndvoice 0 3 3\n' > build/audio/kit.txt &&
+     build/ham_render build/audio/kit.txt build/audio/kit.wav && python3 $P peak build/audio/kit.wav 0.9"
+
 # the app, by its buttons
 A="48,64,67,64,52,67,64,62,53,67,69,72,55,71,67,62"
 run "PLAY: the pattern A, a step every 250 ms, and round again" sh -c \

@@ -25,7 +25,8 @@ static void ham_demo(void)
     };
     static const uint8_t DR[4][4] = {               /* kick, snare, hat, clap: 8 steps each, a bit a step */
         {0x11, 0x44, 0xFF, 0x00}, {0x11, 0x44, 0x55, 0x00}, {0x91, 0x44, 0xFF, 0x40}, {0x11, 0x44, 0xFF, 0x44}};
-    static const uint8_t DV[4][4] = {{0, 0, 0, 0}, {0, 1, 0, 0}, {1, 0, 2, 0}, {2, 0, 2, 1}};
+    /* the voices: C sniffs and squeaks, D pops its cheeks and crunches a seed (4: the hamster kit) */
+    static const uint8_t DV[4][4] = {{0, 0, 0, 0}, {0, 1, 0, 0}, {1, 0, 3, 3}, {3, 3, 2, 1}};
     uint32_t p, i;
     for (p = 0; p < 3u; p++)
         for (i = 0; i < 16u; i++)
@@ -38,4 +39,7 @@ static void ham_demo(void)
     for (i = 0; i < 4u; i++)
         hq.song[i] = (uint8_t)i;
     hq.song_len = 4;
+#ifdef HAM_DEMO_PAGE_VOICE
+    hvoice = 0;                                 /* (the same demo in the page's voice, to hold against it) */
+#endif
 }
