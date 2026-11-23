@@ -3,10 +3,11 @@
  * and the rows that changed are sent (fb_flush): nothing flickers, and a hamster can hop without a thought for what
  * is behind it.
  *
- *   y   0 ..  25   the logo: HAMSTER PIANO in the page's pixel letters (HAMSTERCORE on black in THALL), its notes
- *   y  26 .. 165   the eight hamsters, four a row, each over its note (or the Tromster, the song, the help)
- *   y 166 .. 199   the 16 steps, eight a row
- *   y 200 .. 239   the patterns A-D, the tempo, what it is doing; the status line (or the sign with its wisdom)
+ *   y   0 ..  23   the logo: HAMSTER PIANO in the page's pixel letters (HAMSTERCORE on black in THALL), its notes
+ *   y  24 .. 175   the eight hamsters, four a row, each with air around it, over its note (or the Tromster, the
+ *                  song, the help)
+ *   y 176 .. 207   the 16 steps, eight a row
+ *   y 208 .. 239   the patterns A-D, the tempo, what it is doing; the status line (or the sign with its wisdom)
  */
 #include "ham_art.h"
 
@@ -29,10 +30,11 @@
 #define C_WHITE2 RGB(0xFF, 0xF6, 0xE8)
 #define C_SKY RGB(0x9A, 0xD0, 0xE8)
 
-#define Y_HAM 26
-#define HAM_CELL_H 70
-#define Y_STEPS 166
-#define Y_BOT 200
+#define LOGO_H 24
+#define Y_HAM 24
+#define HAM_CELL_H 76
+#define Y_STEPS 176
+#define Y_BOT 208
 
 static uint16_t hfb[240u * 240u] __attribute__((section(".pool")));   /* as the screen takes it: bytes swapped */
 static uint8_t fb_dirty[15];                                        /* bands of 16 rows */
@@ -142,7 +144,7 @@ static void fb_flush(void)
 }
 
 /* ---- the logo: the page's, two pixels a pixel. dance: its notes a pixel off, on the beat (0: at rest, 1, 2) */
-static void lg_px(int32_t x, int32_t y, uint16_t c) { fb_rect(21 + 2 * x, 2 + 2 * y, 2, 2, c); }
+static void lg_px(int32_t x, int32_t y, uint16_t c) { fb_rect(21 + 2 * x, 1 + 2 * y, 2, 2, c); }
 static uint16_t dim565(uint16_t c)              /* THALL: the logo darker (the page: brightness 0.78) */
 {
     uint32_t r = c >> 11, g = c >> 5 & 63u, b = c & 31u;
@@ -155,13 +157,13 @@ static void draw_logo(uint32_t core, uint32_t dance)
     int32_t x = core ? 5 : 0, pass, i, j, word, lx, rx, ly, ry;
     uint16_t pink = core ? dim565(C_PINK) : C_PINK;
     if (core)                                   /* black metal: 2a2d2f down to 050607 */
-        for (j = 0; j < 26; j++) {
-            uint32_t v = j < 13 ? 42u - (uint32_t)j * 2u : 17u - (uint32_t)(j - 13);
+        for (j = 0; j < LOGO_H; j++) {
+            uint32_t v = j < 12 ? 42u - (uint32_t)j * 2u : 18u - (uint32_t)(j - 12);
             fb_rect(0, j, 240, 1, RGB(v, v + 2u, v + 4u));
         }
     else
-        fb_rect(0, 0, 240, 26, C_BLUE);
-    fb_frame(0, 0, 240, 26, 1, C_INK);
+        fb_rect(0, 0, 240, LOGO_H, C_BLUE);
+    fb_frame(0, 0, 240, LOGO_H, 1, C_INK);
     for (pass = 0; pass < 3; pass++) {          /* the outline, the letters, their light */
         int32_t gx = x;
         for (word = 0; word < 2; word++) {
@@ -195,8 +197,8 @@ static void draw_logo(uint32_t core, uint32_t dance)
     rx = dance == 1 ? -1 : 0;
     ry = dance == 1 ? 1 : dance == 2 ? -1 : 0;
     for (i = 0; i < 9; i++) {
-        fb_rect(6 + 2 * (NOTE[i][0] + lx), 6 + 2 * (NOTE[i][1] + ly), 2, 2, pink);
-        fb_rect(228 + 2 * (2 - NOTE[i][0] + rx), 6 + 2 * (NOTE[i][1] + ry), 2, 2, pink);
+        fb_rect(6 + 2 * (NOTE[i][0] + lx), 5 + 2 * (NOTE[i][1] + ly), 2, 2, pink);
+        fb_rect(228 + 2 * (2 - NOTE[i][0] + rx), 5 + 2 * (NOTE[i][1] + ry), 2, 2, pink);
     }
 }
 
@@ -207,38 +209,39 @@ static void draw_ham(uint32_t i, uint32_t state, uint32_t squash)
 {
     int32_t cx = (int32_t)(i & 3u) * 60, cy = Y_HAM + (int32_t)(i >> 2) * HAM_CELL_H, x, y, hh, dy;
     const uint8_t *sp = HAM_SPR[i];
-    fb_rect(cx, cy, 60, HAM_CELL_H, C_INK);     /* (its picture's first row is empty: 53 rows of it) */
-    fb_rect(cx + 1, cy + 1, 58, 53, state ? C_CREAM2 : C_CREAM);
-    fb_rect(cx + 1, cy + 55, 58, 15, state == 2u ? C_PINK2 : state == 1u ? C_PINK : C_LABEL);
-    fb_text_mid(cx, 60, cy + 55, NOTE_NAME[i], state == 2u ? C_WHITE2 : C_INK, 2);
-    /* squash: 0 = as it is; else its height in 64ths, its feet where they were (a few pixels lower) */
+    /* the cell: a line round it, the hamster with three pixels of air above and below (its picture's first row is
+       empty: 53 rows of it), a line, its note */
+    fb_rect(cx, cy, 60, HAM_CELL_H, C_INK);
+    fb_rect(cx + 1, cy + 1, 58, 59, state ? C_CREAM2 : C_CREAM);
+    fb_rect(cx + 1, cy + 61, 58, 15, state == 2u ? C_PINK2 : state == 1u ? C_PINK : C_LABEL);
+    fb_text_mid(cx, 60, cy + 61, NOTE_NAME[i], state == 2u ? C_WHITE2 : C_INK, 2);
+    /* squash: 0 = as it is; else its height in 64ths, its feet where they were (a little lower) */
     hh = squash ? 53 * (int32_t)squash / 64 : 53;
     dy = squash ? (squash < 50u ? 2 : 1) : 0;
     for (y = 0; y < hh; y++) {
-        int32_t sy = 1 + y * 53 / hh, py = cy + 1 + 53 - hh + y + dy;
-        if (py > cy + 53) break;
+        int32_t sy = 1 + y * 53 / hh, py = cy + 4 + 53 - hh + y + dy;
         for (x = 0; x < (int32_t)HAM_W; x++) {
             uint8_t v = sp[sy * (int32_t)HAM_W + x];
             if (v != 255u)
-                fb_px(cx + 3 + x, py, HAM_PAL[v]);
+                fb_px(cx + 2 + x, py, HAM_PAL[v]);
         }
     }
 }
 
-/* ---- the steps: a cell 30 x 17; the step that is chosen in yellow, the one that plays in pink */
+/* ---- the steps: a cell 30 x 16; the step that is chosen in yellow, the one that plays in pink */
 static void draw_step(uint32_t i, uint32_t s, uint32_t cur, uint32_t playing)
 {
-    int32_t x = (int32_t)(i & 7u) * 30, y = Y_STEPS + (int32_t)(i >> 3) * 17, m = cur || playing ? 2 : 1;
-    fb_rect(x, y, 30, 17, playing ? C_PINK : cur ? C_YELLOW : C_INK2);
-    fb_rect(x + m, y + 1, 30 - 2 * m, 15, playing ? C_BLUE : (s & ST_ON) ? C_BLUE3 : C_CELL0);
+    int32_t x = (int32_t)(i & 7u) * 30, y = Y_STEPS + (int32_t)(i >> 3) * 16, m = cur || playing ? 2 : 1;
+    fb_rect(x, y, 30, 16, playing ? C_PINK : cur ? C_YELLOW : C_INK2);
+    fb_rect(x + m, y + 1, 30 - 2 * m, 14, playing ? C_BLUE : (s & ST_ON) ? C_BLUE3 : C_CELL0);
     if (s & ST_ON) {
         int32_t o = ST_OCT(s), k;
-        fb_text(x + 4, y + 2, NOTE_NAME[ST_KEY(s)], cur && !playing ? C_YELLOW : C_WHITE2, 2);
+        fb_text(x + 4, y + 1, NOTE_NAME[ST_KEY(s)], cur && !playing ? C_YELLOW : C_WHITE2, 2);
         for (k = 0; k < (o < 0 ? -o : o); k++)  /* its octave: an arrow for each */
             fb_text(x + 15 + k * 4, y + 2, o < 0 ? "↓" : "↑", C_MUTED, 1);
-        if (ST_GLIDE(s)) fb_rect(x + 15, y + 11, 3, 4, C_SKY);                       /* its effects: glide, */
-        if (ST_ARP(s)) fb_rect(x + 19, y + 11, ST_ARP(s) == 2u ? 4 : 2, 4, C_YELLOW);   /* arpeggio (+12: wider), */
-        if (ST_ACCENT(s)) fb_rect(x + 24, y + 11, 2, 4, C_PINK);                     /* accent, */
+        if (ST_GLIDE(s)) fb_rect(x + 15, y + 11, 3, 3, C_SKY);                       /* its effects: glide, */
+        if (ST_ARP(s)) fb_rect(x + 19, y + 11, ST_ARP(s) == 2u ? 4 : 2, 3, C_YELLOW);   /* arpeggio (+12: wider), */
+        if (ST_ACCENT(s)) fb_rect(x + 24, y + 11, 2, 3, C_PINK);                     /* accent, */
         for (k = 1; k < (int32_t)ST_RATCHET(s); k++)                                 /* a dot for each ratchet more */
             fb_rect(x + 26, y - 1 + 4 * k, 2, 2, C_ORANGE);
     }
@@ -249,12 +252,12 @@ static void draw_drummer(uint32_t frame)
 {
     int32_t x, y;
     const uint8_t *sp = DRUM_SPR[frame & 3u];
-    fb_rect(2, 28, 116, 94, C_EDGE);
-    fb_rect(4, 30, 112, 90, RGB(0x17, 0x34, 0x40));
+    fb_rect(2, 27, 118, 100, C_EDGE);            /* its frame, with air round it */
+    fb_rect(3, 28, 116, 98, RGB(0x17, 0x34, 0x40));
     for (y = 0; y < (int32_t)DRUM_H; y++)
         for (x = 0; x < (int32_t)DRUM_W; x++) {
             uint8_t v = sp[y * (int32_t)DRUM_W + x];
             if (v != 255u)
-                fb_px(4 + x, 30 + y, DRUM_PAL[v]);
+                fb_px(5 + x, 28 + (98 - (int32_t)DRUM_H) / 2 + y, DRUM_PAL[v]);
         }
 }

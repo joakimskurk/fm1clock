@@ -391,48 +391,45 @@ static void draw_bottom(void)
     uint32_t i;
     char t[12];
     if (sign_on) {                              /* the sign, over both rows */
-        fb_rect(0, Y_BOT, 240, 40, C_INK);
-        fb_rect(2, Y_BOT + 2, 236, 36, C_SIGN);
-        fb_rect(2, Y_BOT + 36, 236, 2, RGB(0xB0, 0x78, 0x40));
+        fb_rect(0, Y_BOT, 240, 32, C_INK);
+        fb_rect(1, Y_BOT + 1, 238, 30, C_SIGN);
         if (sign2[0]) {
-            fb_text_mid(0, 240, Y_BOT + 5, sign1, C_INK, 2);
-            fb_text_mid(0, 240, Y_BOT + 21, sign2, C_INK, 2);
+            fb_text_mid(0, 240, Y_BOT + 2, sign1, C_INK, 2);
+            fb_text_mid(0, 240, Y_BOT + 17, sign2, C_INK, 2);
         } else {
-            fb_text_mid(0, 240, Y_BOT + 13, sign1, C_INK, 2);
+            fb_text_mid(0, 240, Y_BOT + 9, sign1, C_INK, 2);
         }
         return;
     }
-    fb_rect(0, Y_BOT, 240, 20, C_CREAM);
-    fb_rect(0, Y_BOT, 240, 1, C_INK);
+    fb_rect(0, Y_BOT, 240, 16, C_INK);
+    fb_rect(0, Y_BOT + 1, 240, 15, C_CREAM);
     for (i = 0; i < 4u; i++) {                  /* the patterns */
         uint32_t now = playing && play_pat == i, act = i == active && !song_playing;
         char s[2] = {(char)('A' + i), 0};
-        fb_rect(2 + (int32_t)i * 19, Y_BOT + 3, 17, 15, C_INK);
-        fb_rect(3 + (int32_t)i * 19, Y_BOT + 4, 15, 13, act ? C_YELLOW : now ? C_PINK : C_INK2);
-        fb_text(6 + (int32_t)i * 19, Y_BOT + 4, s, act || now ? C_INK : C_CREAM2, 2);
+        fb_rect(1 + (int32_t)i * 19, Y_BOT + 1, 18, 15, act ? C_YELLOW : now ? C_PINK : C_INK2);
+        fb_text(5 + (int32_t)i * 19, Y_BOT + 2, s, act || now ? C_INK : C_CREAM2, 2);
     }
     sb = t; t[0] = 0;
     sb_u(bpm * (thall ? 2u : 1u));
-    fb_rect(80, Y_BOT + 3, 42, 15, C_INK2);
-    fb_text_mid(80, 42, Y_BOT + 4, t, C_CREAM2, 2);
+    fb_rect(80, Y_BOT + 1, 42, 15, C_INK2);
+    fb_text_mid(80, 42, Y_BOT + 2, t, C_CREAM2, 2);
     {                                           /* what it is doing */
         static char st[16];
         uint16_t bg = C_CREAM, fg = C_INK;
         sb = st; st[0] = 0;
         if (ext_sync) { sb_s("EXT SYNC"); bg = C_BLUE; fg = C_CREAM2; }
+        else if (rec_on) { sb_s("● REC"); bg = C_PINK2; fg = C_WHITE2; }
         else if (song_playing) { sb_s("SONG "); sb_u(song_pos + 1u); sb_c('/'); sb_u(hq.song_len); bg = C_PINK; }
         else if (playing) { sb_s("SPILLER"); bg = C_PINK; }
-        else if (rec_on) { sb_s("● REC"); bg = C_PINK2; fg = C_WHITE2; }
         else if (edit_on) { sb_s("REDIGER"); bg = C_YELLOW; }
         else if (song_mode) sb_s("SONG PÅ");
         else sb_s("KLAR");
-        if (playing && rec_on) { sb = st; st[0] = 0; sb_s("● REC"); bg = C_PINK2; fg = C_WHITE2; }
-        fb_rect(126, Y_BOT + 3, 112, 15, bg);
-        fb_text_mid(126, 112, Y_BOT + 4, st, fg, 2);
+        fb_rect(124, Y_BOT + 1, 116, 15, bg);
+        fb_text_mid(124, 116, Y_BOT + 2, st, fg, 2);
     }
-    fb_rect(0, Y_BOT + 20, 240, 20, C_INK);
-    fb_rect(1, Y_BOT + 21, 238, 18, C_PAPER);
-    fb_text(text_px(status, 2) > 232 ? 1 : 4, Y_BOT + 23, status, C_INK, 2);
+    fb_rect(0, Y_BOT + 16, 240, 16, C_INK);
+    fb_rect(0, Y_BOT + 17, 240, 15, C_PAPER);
+    fb_text(text_px(status, 2) > 232 ? 1 : 4, Y_BOT + 17, status, C_INK, 2);
 }
 
 static void draw_home(void)                     /* the hamsters that changed, the steps that changed */
@@ -469,17 +466,17 @@ static void draw_trom(void)
     char t[12];
     fb_rect(0, Y_HAM, 240, Y_BOT - Y_HAM, C_INK2);
     draw_drummer(dr_frame);
-    fb_text(124, 32, "TROMSTER", C_YELLOW, 2);
-    fb_rect(124, 52, 17, 17, C_YELLOW);
+    fb_text(126, 30, "TROMSTER", C_YELLOW, 2);
+    fb_rect(126, 50, 17, 17, C_YELLOW);
     t[0] = (char)('A' + p); t[1] = 0;
-    fb_text(127, 54, t, C_INK, 2);
-    fb_text(148, 54, drums_on ? "PÅ" : "AV", drums_on ? C_CREAM2 : C_PINK, 2);
-    fb_text(124, 76, "8 STEG · SYNC", C_MUTED, 1);
-    fb_text(124, 88, "F3-B3 VELG TROMME", C_MUTED, 1);
-    fb_text(124, 98, "C4-C5 STEG 1-8", C_MUTED, 1);
-    fb_text(124, 108, "KNOTT 1-4 LYD", C_MUTED, 1);
+    fb_text(129, 52, t, C_INK, 2);
+    fb_text(150, 52, drums_on ? "PÅ" : "AV", drums_on ? C_CREAM2 : C_PINK, 2);
+    fb_text(126, 76, "8 STEG · SYNC", C_MUTED, 1);
+    fb_text(126, 90, "F3-B3 VELG TROMME", C_MUTED, 1);
+    fb_text(126, 102, "C4-C5 STEG 1-8", C_MUTED, 1);
+    fb_text(126, 114, "KNOTT 1-4 LYD", C_MUTED, 1);
     for (r = 0; r < 4u; r++) {
-        int32_t y = 124 + (int32_t)r * 19;
+        int32_t y = 131 + (int32_t)r * 19;
         fb_rect(1, y, 70, 18, r == trom_row ? C_YELLOW : C_BLUE3);
         fb_text(4, y + 2, DRUM_NAME[r], r == trom_row ? C_INK : C_CREAM2, 2);
         t[0] = (char)('1' + hq.dvoice[p][r]); t[1] = 0;
@@ -504,7 +501,7 @@ static void draw_song(void)
     sb_u(hq.song_len); sb_s("/64");
     fb_text(232 - text_px(t, 2), 32, t, C_MUTED, 2);
     for (i = 0; i < 64u; i++) {
-        int32_t x = 8 + (int32_t)(i & 15u) * 14, y = 54 + (int32_t)(i >> 4) * 20;
+        int32_t x = 8 + (int32_t)(i & 15u) * 14, y = 56 + (int32_t)(i >> 4) * 20;
         uint32_t now = song_playing && i == song_pos;
         if (i < hq.song_len) {
             char s[2] = {(char)('A' + hq.song[i]), 0};
@@ -516,10 +513,10 @@ static void draw_song(void)
         if (i == song_cur)
             fb_frame(x - 1, y - 1, 15, 19, 2, C_YELLOW);
     }
-    fb_text(8, 140, "C D E F  SKRIV A B C D", C_MUTED, 1);
-    fb_text(8, 152, "SELECT  FLYTT · PRESETS  BYTT", C_MUTED, 1);
-    fb_text(8, 164, "SEL  SLETT · GLO  PÅ/AV · HOME  UT", C_MUTED, 1);
-    fb_text(8, 182, "PLAY SPILLER REKKEN", C_CREAM2, 1);
+    fb_text(8, 146, "C D E F  SKRIV A B C D", C_MUTED, 1);
+    fb_text(8, 158, "SELECT  FLYTT · PRESETS  BYTT", C_MUTED, 1);
+    fb_text(8, 170, "SEL  SLETT · GLO  PÅ/AV · HOME  UT", C_MUTED, 1);
+    fb_text(8, 188, "PLAY SPILLER REKKEN", C_CREAM2, 1);
 }
 
 static const char *const HELP[3][13] = {
@@ -538,7 +535,7 @@ static void draw_help(void)
     uint32_t i;
     fb_rect(0, Y_HAM, 240, 240 - Y_HAM, C_INK2);
     for (i = 0; i < 13u; i++)
-        fb_text(1, 30 + (int32_t)i * 16, HELP[help_page][i], i ? C_CREAM2 : C_YELLOW, 2);
+        fb_text(1, 28 + (int32_t)i * 16, HELP[help_page][i], i ? C_CREAM2 : C_YELLOW, 2);
 }
 
 static void draw(void)
@@ -1153,7 +1150,7 @@ static void app_main(void)
 #ifndef DINGHY_HOST
     rnd_s ^= fm1_ticks();                       /* (the sign: not the same words at every power-on) */
 #endif
-    say("REC AV · SPILL FRITT");
+    say("KLAR · SPILL FRITT");
     lore();
 #ifdef DINGHY_WEB
     }

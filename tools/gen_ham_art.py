@@ -2,14 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Hamster Piano's pictures: firmware/gen/ham_art.h.
 
-  the eight hamsters   assets/hamster/hamsters.json: the page's own pixels (54 x 54, 18 colours), as they are
-  the drummer          assets/hamster/tromster.png: the page's four frames, at the size the page shows them (112 wide)
+  the eight hamsters   assets/hamster/hamsters.json: the page's own pixels (54 x 54, 18 colours), drawn clean: one
+                       ink for the outline, and the specks in their fur (a pixel alone among another shade) taken out
+  the drummer          assets/hamster/tromster.png: the page's four frames at the size the page shows them (112 wide).
+                       The page's picture is 538 wide with blocks of about five: each pixel here is the colour most
+                       of its block has (not their mean, which blurs), in few colours, and specks taken out
   the logo's letters   the page's 7 x 9 pixel font (H A M S T E R P I A N O C)
   the text             a 5 x 7 pixel font of this firmware's own, with what Norwegian needs (the chip's fonts have
                        no AE, OE, AA) and the page's signs: arrows, the middle dot, the cross
 
   python3 tools/gen_ham_art.py [--check] [--sheet OUT.png]
 """
+import collections
 import json
 import sys
 from pathlib import Path
@@ -19,8 +23,9 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "firmware" / "gen" / "ham_art.h"
 SRC = ROOT / "assets" / "hamster"
-DRUM_W, DRUM_CROP = 112, (130, 560)     # the drummer: this wide; these rows of the page's 703 hold all of it
-DRUM_COLOURS = 47
+DRUM_W, DRUM_CROP = 112, (139, 551)     # the drummer: this wide; these rows of the page's 703 hold all of it
+DRUM_COLOURS = 24
+INK = (0x0B, 0x04, 0x03)
 
 LOGO = {
     "H": ["1000001", "1000001", "1000001", "1111111", "1000001", "1000001", "1000001", "1000001", "1000001"],
@@ -130,24 +135,75 @@ def hexrgb(s):
     return tuple(int(s[i:i + 2], 16) for i in (1, 3, 5))
 
 
+def despeckle(g, pal, dark, passes=3, reach=70):
+    """g: rows of palette indices (-1 clear). A pixel with at most one neighbour of its own colour, among four or
+    more of one other colour not far from its own, takes that colour. The outline (dark) stays."""
+    h, w = len(g), len(g[0])
+    for _ in range(passes):
+        n = [r[:] for r in g]
+        for y in range(h):
+            for x in range(w):
+                v = g[y][x]
+                if v < 0 or v in dark:
+                    continue
+                nb = [g[yy][xx] for yy in (y - 1, y, y + 1) for xx in (x - 1, x, x + 1)
+                      if (yy, xx) != (y, x) and 0 <= yy < h and 0 <= xx < w]
+                if sum(1 for q in nb if q == v) > 1:
+                    continue
+                c = collections.Counter(q for q in nb if q >= 0 and q not in dark)
+                if c:
+                    m, cnt = c.most_common(1)[0]
+                    if cnt >= 4 and sum((a - b) ** 2 for a, b in zip(pal[m], pal[v])) ** .5 < reach:
+                        n[y][x] = m
+        g = n
+    return g
+
+
+def hamsters():
+    d = json.loads((SRC / "hamsters.json").read_text())
+    ch = ".0123456789ABCDEFGH"
+    pal = [hexrgb(c) for c in d["palette"]]
+    out = []
+    for hm in d["hamsters"]:
+        g = [[ch.index(c) - 1 for c in row.ljust(55, ".")] for row in hm["rows"]]
+        g = [[0 if v == 1 else v for v in row] for row in g]          # one ink
+        out.append(despeckle(g, pal, {0}))
+    return pal, out
+
+
 def drummer():
     im = Image.open(SRC / "tromster.png").convert("RGBA")
     fw = im.width // 4
-    h = round((DRUM_CROP[1] - DRUM_CROP[0]) * DRUM_W / fw)
-    small = [im.crop((f * fw, DRUM_CROP[0], (f + 1) * fw, DRUM_CROP[1])).resize((DRUM_W, h), Image.BOX) for f in range(4)]
+    sh = DRUM_CROP[1] - DRUM_CROP[0]
+    h = round(sh * DRUM_W / fw)
+    small = []
+    for f in range(4):
+        fr = im.crop((f * fw, DRUM_CROP[0], (f + 1) * fw, DRUM_CROP[1]))
+        px = fr.load()
+        s = Image.new("RGBA", (DRUM_W, h))
+        for y in range(h):
+            for x in range(DRUM_W):
+                blk = [px[i, j] for j in range(y * sh // h, (y + 1) * sh // h) for i in range(x * fw // DRUM_W, (x + 1) * fw // DRUM_W)]
+                op = [p for p in blk if p[3] > 110]
+                if len(op) * 2 < len(blk):
+                    continue
+                k = collections.Counter((p[0] // 24, p[1] // 24, p[2] // 24) for p in op).most_common(1)[0][0]
+                m = [p for p in op if (p[0] // 24, p[1] // 24, p[2] // 24) == k]
+                s.putpixel((x, y), tuple(sum(p[i] for p in m) // len(m) for i in range(3)) + (255,))
+        small.append(s)
     sheet = Image.new("RGB", (DRUM_W * 4, h))
     for f, s in enumerate(small):
         sheet.paste(s.convert("RGB"), (f * DRUM_W, 0))
     q = sheet.quantize(DRUM_COLOURS, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     pal = q.getpalette()[:DRUM_COLOURS * 3]
+    pal = [tuple(pal[i:i + 3]) for i in range(0, len(pal), 3)]
+    dark = {i for i, c in enumerate(pal) if sum(c) < 150}
     frames = []
     for f, s in enumerate(small):
-        px = []
-        for y in range(h):
-            for x in range(DRUM_W):
-                px.append(q.getpixel((f * DRUM_W + x, y)) if s.getpixel((x, y))[3] > 110 else 255)
-        frames.append(px)
-    return h, [tuple(pal[i:i + 3]) for i in range(0, len(pal), 3)], frames
+        g = [[q.getpixel((f * DRUM_W + x, y)) if s.getpixel((x, y))[3] else -1 for x in range(DRUM_W)] for y in range(h)]
+        g = despeckle(g, pal, dark, reach=90)
+        frames.append([255 if v < 0 else v for row in g for v in row])
+    return h, pal, frames
 
 
 def carr(name, typ, vals, per=24, fmt="{}"):
@@ -159,20 +215,16 @@ def carr(name, typ, vals, per=24, fmt="{}"):
 
 
 def build():
-    d = json.loads((SRC / "hamsters.json").read_text())
-    ch = ".0123456789ABCDEFGH"
+    hpal, hams = hamsters()
     o = ["/* SPDX-License-Identifier: GPL-3.0-only */",
          "/* Hamster Piano's pictures. Made by tools/gen_ham_art.py: do not edit. */",
          "#pragma once", "#include <stdint.h>", ""]
     o.append("#define HAM_W 55u                               /* a hamster's box (the narrower ones: clear at the right) */")
     o.append("#define HAM_H 54u")
-    o.append(carr("HAM_PAL", "uint16_t", [rgb565(*hexrgb(c)) for c in d["palette"]], 9, "0x{:04X}"))
+    o.append(carr("HAM_PAL", "uint16_t", [rgb565(*c) for c in hpal], 9, "0x{:04X}"))
     o.append("static const uint8_t HAM_SPR[8][HAM_W * HAM_H] = {       /* 255: clear */")
-    for hmm in d["hamsters"]:
-        px = []
-        for row in hmm["rows"]:
-            row = row + "." * (55 - len(row))
-            px += [ch.index(c) - 1 if c != "." else 255 for c in row]
+    for g in hams:
+        px = [255 if v < 0 else v for row in g for v in row]
         assert len(px) == 55 * 54
         o.append("    {" + ",".join(str(v) for v in px) + "},")
     o.append("};")
@@ -202,15 +254,14 @@ def build():
 
 def sheet(path):
     """the pictures as one image, to look at"""
-    d = json.loads((SRC / "hamsters.json").read_text())
+    hpal, hams = hamsters()
     h, pal, frames = drummer()
     im = Image.new("RGB", (480, 54 + h + 8 * 3 + 12), (247, 236, 215))
-    cols = [hexrgb(c) for c in d["palette"]]
-    for i, hm in enumerate(d["hamsters"]):
-        for y, row in enumerate(hm["rows"]):
-            for x, c in enumerate(row):
-                if c != ".":
-                    im.putpixel((i * 58 + x, y), cols[".0123456789ABCDEFGH".index(c) - 1])
+    for i, g in enumerate(hams):
+        for y, row in enumerate(g):
+            for x, v in enumerate(row):
+                if v >= 0:
+                    im.putpixel((i * 58 + x, y), hpal[v])
     for f, px in enumerate(frames):
         for i, v in enumerate(px):
             if v != 255:
