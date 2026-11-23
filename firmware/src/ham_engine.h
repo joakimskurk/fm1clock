@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth's sound and its sequencer, in the audio interrupt.
+/* HamsterSynth's sound and its sequencer, in the audio interrupt.
  *
  * The original is a web page: every note a graph of Web Audio oscillators, biquad filters and gains with exponential
  * ramps. Here, in integers:
@@ -27,6 +27,8 @@
 #include "ham_tables.h"
 
 #define HCB 16u                                 /* frames a control block */
+#define NPAT 8u                                 /* the patterns: A..H (the page had A..D) */
+#define PMASK (NPAT - 1u)
 #define NHV 14u                                 /* hamsters singing at once */
 #define NTV 4u                                  /* THALL: two lines (the sequence's, the hands'), each one note and the
                                                    one it cuts off (10 ms): the hands never cut the sequence */
@@ -66,9 +68,9 @@ static const uint8_t HAM_MIDI[8] = {60, 62, 64, 65, 67, 69, 71, 72};
 
 /* what the main loop owns and the interrupt reads */
 static struct {
-    volatile uint16_t pat[4][16];
-    volatile uint8_t drum[4][4];                /* [pattern][drum]: 8 steps, a bit each */
-    volatile uint8_t dvoice[4][4];              /* 0..2 */
+    volatile uint16_t pat[NPAT][16];
+    volatile uint8_t drum[NPAT][4];             /* [pattern][drum]: 8 steps, a bit each */
+    volatile uint8_t dvoice[NPAT][4];           /* 0..3 */
     volatile uint8_t song[64];
     volatile uint32_t song_len, bpm, thall, drums_on, swing, want_pat, lvl_ham, lvl_drum, off, hvoice;
     volatile uint32_t skip;                     /* the step fired as this (heng_fired) plays no note: it was played by
@@ -712,7 +714,7 @@ static void step_note(uint32_t s, uint32_t step, int32_t from, uint32_t line)
 
 static void sq_fire(void)                       /* the step sq.step of the pattern sq.pat, now */
 {
-    uint32_t step = sq.step, p = sq.pat & 3u, s = hq.pat[p][step], d, mask = 0, fired = ++sq.fired;
+    uint32_t step = sq.step, p = sq.pat & PMASK, s = hq.pat[p][step], d, mask = 0, fired = ++sq.fired;
     sq.npend = 0;                               /* (a new step: the last one's ratchets are over) */
     heng_step_info = step | p << 4 | sq.pos << 8;
     heng_step_at = sq.now;
@@ -748,9 +750,9 @@ static void sq_fire(void)                       /* the step sq.step of the patte
         sq.step = 0;
         if (sq.song) {
             sq.pos = sq.pos + 1u >= hq.song_len ? 0u : sq.pos + 1u;
-            sq.pat = hq.song[sq.pos & 63u] & 3u;
+            sq.pat = hq.song[sq.pos & 63u] & PMASK;
         } else {
-            sq.pat = hq.want_pat & 3u;
+            sq.pat = hq.want_pat & PMASK;
         }
         he_put(HE_BAR, sq.pat | sq.pos << 8);
     }
@@ -774,7 +776,7 @@ static void sq_start(uint32_t song, uint32_t ext)
     sq.step = sq.pos = 0;
     sq.npend = 0;
     sq.last_lgp = 0;
-    sq.pat = song ? hq.song[0] & 3u : hq.want_pat & 3u;
+    sq.pat = song ? hq.song[0] & PMASK : hq.want_pat & PMASK;
     sq.acc = 0;
     sq.thr = 0;                                 /* the first step at once (ext: on the first clock) */
     sq.first = 1;
@@ -802,7 +804,7 @@ static void sq_command(uint32_t c)
         break;
     }
     case HC_PREVIEW: {                          /* a step alone, as the page's editor plays it */
-        uint32_t step = a & 15u, p = a >> 4 & 3u, s = hq.pat[p][step], k;
+        uint32_t step = a & 15u, p = a >> 4 & PMASK, s = hq.pat[p][step], k;
         int32_t from = 0;
         if (!(s & ST_ON))
             break;

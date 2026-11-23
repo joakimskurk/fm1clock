@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth's sound demo (tools/ham_demo.sh): a song of four patterns to start from, instead of the page's A and
+/* HamsterSynth's sound demo (tools/ham_demo.sh): a song of four patterns to start from, instead of the page's A and
  * three empty ones. Only in the demo's host build (-DHAM_DEMO); the firmware starts as the page does.
  *   A  the page's own: C, C, F, G, the bass under the tune
  *   B  A minor, F, C, G: glides, an arpeggio, ratchets

@@ -45,7 +45,7 @@ the GPL. It marks Dinghy itself; FM-1 Clock does not use it as its own.
 "Felucca" and "Hügelton Instruments" are names of Hügelton Instruments; "M-VAVE", "FM-1", "SMK-37" and "MKE-P37"
 belong to their owners. Dinghy and FM-1 Clock are not made or endorsed by them.
 
-## Hamster Synth
+## HamsterSynth
 
 `firmware/src/hamster.c`, `ham_engine.h`, `ham_draw.h`, their tools and tests: GPL-3.0-only, as the rest. It is a port of
 the web page *Hamster Piano* (v4.17) by this repository's author. The hamsters and the drummer are drawn anew here,

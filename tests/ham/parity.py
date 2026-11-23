@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hamster Synth's sound against the original's: the web page (Hamster Piano) renders each case of tests/ham/cases.json to a WAV
+"""HamsterSynth's sound against the original's: the web page (Hamster Piano) renders each case of tests/ham/cases.json to a WAV
 itself (tools/ham_ref.js, its own export), and what is kept of those is their energy in third-octave bands over time
 (tests/ref/ham_features.json). The firmware's engine plays the same cases on the host (tests/ham/ham_render.c).
 

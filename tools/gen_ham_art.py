@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hamster Synth's pictures: firmware/gen/ham_art.h.
+"""HamsterSynth's pictures: firmware/gen/ham_art.h.
 
   the eight hamsters   drawn pixel by pixel in tools/ham_sprites.py: 26 x 27, shown 2 x 2 a pixel
   the drummer          the Tromster's, the same: 56 x 45 in four frames
@@ -246,7 +246,7 @@ def build():
     hpal, hams = indexed(ham_sprites.hamsters())
     dpal, frames = indexed(ham_sprites.drummer())
     o = ["/* SPDX-License-Identifier: GPL-3.0-only */",
-         "/* Hamster Synth's pictures. Made by tools/gen_ham_art.py of tools/ham_sprites.py: do not edit. */",
+         "/* HamsterSynth's pictures. Made by tools/gen_ham_art.py of tools/ham_sprites.py: do not edit. */",
          "#pragma once", "#include <stdint.h>", ""]
     o.append(f"#define HAM_W {ham_sprites.W}u                               /* a hamster, its pixels (2 x 2 on the screen) */")
     o.append(f"#define HAM_H {ham_sprites.H}u")

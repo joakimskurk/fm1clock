@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth's engine alone (firmware/src/ham_engine.h, unchanged) on the host: a case of tests/ham/cases.json
+/* HamsterSynth's engine alone (firmware/src/ham_engine.h, unchanged) on the host: a case of tests/ham/cases.json
  * played by its own sequencer into a WAV, to hold against what the original page renders (tests/ham/parity.py).
  *
  *   ham_render CASE.txt OUT.wav     CASE.txt: a line a setting (tests/ham/parity.py writes it from cases.json)
- *     bpm N | thall 0/1 | drums 0/1 | swing N | rounds N | song ABCD... | voice 0/1 (1: the hamster voice)
+ *     bpm N | thall 0/1 | drums 0/1 | swing N | rounds N | song ABCDEFGH... | voice 0/1 (1: the hamster voice)
  *     step P I KEY OCT GLIDE ARP ACCENT RATCHET     pattern P (0..3), step I: ARP 0, 7 or 12
  *     drum P D BITS | dvoice P D V                  drum D (0 kick .. 3 clap): its 8 steps, its voice
  *   ham_render bench                the heaviest minute for the instruction count (DINGHY_PERF) */
@@ -42,16 +42,16 @@ int main(int argc, char **argv)
             else if (!strcmp(what, "song")) { sscanf(line, "%*s %79s", song); }
             else if (!strcmp(what, "step")) {
                 sscanf(line, "%*s %u %u %u %d %u %u %u %u", &a[0], &a[1], &a[2], &oct, &a[3], &a[4], &a[5], &a[6]);
-                hq.pat[a[0] & 3u][a[1] & 15u] = (uint16_t)(ST_MAKE(a[2] & 7u, oct) | (a[3] & 1u) << 6 | (a[5] & 1u) << 7 |
+                hq.pat[a[0] & PMASK][a[1] & 15u] = (uint16_t)(ST_MAKE(a[2] & 7u, oct) | (a[3] & 1u) << 6 | (a[5] & 1u) << 7 |
                                                           (a[4] == 7u ? 1u : a[4] == 12u ? 2u : 0u) << 8 | ((a[6] ? a[6] : 1u) - 1u) << 10);
             }
-            else if (!strcmp(what, "drum")) { sscanf(line, "%*s %u %u %i", &a[0], &a[1], (int *)&a[2]); hq.drum[a[0] & 3u][a[1] & 3u] = (uint8_t)a[2]; }
-            else if (!strcmp(what, "dvoice")) { sscanf(line, "%*s %u %u %u", &a[0], &a[1], &a[2]); hq.dvoice[a[0] & 3u][a[1] & 3u] = (uint8_t)a[2]; }
+            else if (!strcmp(what, "drum")) { sscanf(line, "%*s %u %u %i", &a[0], &a[1], (int *)&a[2]); hq.drum[a[0] & PMASK][a[1] & 3u] = (uint8_t)a[2]; }
+            else if (!strcmp(what, "dvoice")) { sscanf(line, "%*s %u %u %u", &a[0], &a[1], &a[2]); hq.dvoice[a[0] & PMASK][a[1] & 3u] = (uint8_t)a[2]; }
         }
         fclose(fp);
     }
     for (i = 0; song[i] && nsong < 64u; i++)
-        if (song[i] >= 'A' && song[i] <= 'D') hq.song[nsong++] = (uint8_t)(song[i] - 'A');
+        if (song[i] >= 'A' && song[i] <= 'H') hq.song[nsong++] = (uint8_t)(song[i] - 'A');
     hq.song_len = nsong ? nsong : 1u;
     hq.want_pat = 0;
     /* as the page's export: the steps, then 0.7 s */

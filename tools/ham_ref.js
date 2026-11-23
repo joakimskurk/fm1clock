@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Hamster Synth's reference sound: the original web page (Hamster Piano) renders each case of tests/ham/cases.json itself (its own
+// HamsterSynth's reference sound: the original web page (Hamster Piano) renders each case of tests/ham/cases.json itself (its own
 // WAV export, an OfflineAudioContext), in Chromium (Playwright). What is kept of the WAVs is their band energies
 // (tests/ham/parity.py ref DIR -> tests/ref/ham_features.json); the page itself is not in this repository.
 //

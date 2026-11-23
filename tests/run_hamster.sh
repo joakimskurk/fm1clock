@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Hamster Synth's host tests (no FM-1, no JieLi toolchain; Python with numpy and Pillow): its tables and pictures are
+# HamsterSynth's host tests (no FM-1, no JieLi toolchain; Python with numpy and Pillow): its tables and pictures are
 # what their tools make, the app compiles cleanly, its engine sounds like the original web page (band energies over
 # time against the page's own renders, tests/ham/parity.py), and the app does what its buttons say (scripts in host
 # mode, read back from the notes it sends over MIDI). The chip: tools/emu_hamster.sh.

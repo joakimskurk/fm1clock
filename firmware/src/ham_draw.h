@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth's screen: the page's look on 240 x 240. Everything is drawn into one picture in RAM (fb, the pool)
+/* HamsterSynth's screen: the page's look on 240 x 240. Everything is drawn into one picture in RAM (fb, the pool)
  * and the rows that changed are sent (fb_flush): nothing flickers, and a hamster can hop without a thought for what
  * is behind it.
  *
- *   y   0 ..  23   the logo: HAMSTER SYNTH in the page's pixel letters (HAMSTERCORE on black in THALL), its notes
+ *   y   0 ..  23   the logo: HAMSTERSYNTH in the page's pixel letters (HAMSTERCORE on black in THALL), its notes
  *   y  24 .. 175   the eight hamsters, four a row, each with air around it, over its note (or the Tromster, the
  *                  song, the help)
  *   y 176 .. 207   the 16 steps, eight a row in two beats of four: each with its hamster's colour
- *   y 208 .. 223   the patterns A-D (each its colour), the tempo, what it is doing
+ *   y 208 .. 223   the patterns A-H (each its colour; the empty dim), the tempo, what it is doing
  *   y 224 .. 239   what was just done; else a hint for what one is doing
  * The sign (the hamster's wisdom, THALL's) is a speech bubble from one of the hamsters.
  * Two fonts: the big one (5 x 7, 2 x) for what matters, the small one (3 x 5, 2 x) for what is said beside it. */
@@ -36,7 +36,8 @@
 #define C_STEP0B RGB(0x23, 0x44, 0x53)
 #define C_STEP1 RGB(0x2C, 0x4B, 0x59)
 #define C_STEP1B RGB(0x34, 0x56, 0x65)
-static const uint16_t PAT_COL[4] = {C_YELLOW, C_PINK, C_SKY, C_GREEN};   /* the patterns A B C D, everywhere */
+static const uint16_t PAT_COL[8] = {        /* the patterns A..H, everywhere */
+    C_YELLOW, C_PINK, C_SKY, C_GREEN, C_ORANGE, RGB(0xC3, 0xA6, 0xE6), RGB(0x7F, 0xD6, 0xC2), RGB(0xC8, 0xCF, 0xDA)};
 
 #define LOGO_H 24
 #define Y_HAM 24
@@ -214,7 +215,7 @@ static void draw_logo(uint32_t core, uint32_t dance)
 {
     static const int8_t NOTE[9][2] = {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {1, 3}, {2, 4}, {2, 5}, {1, 5}, {0, 4}};
     const char *a = "HAMSTER", *b = core ? "CORE" : "SYNTH", *p;
-    int32_t x = core ? 5 : 0, pass, i, j, word, lx, rx, ly, ry;
+    int32_t x = core ? 5 : 1, pass, i, j, word, lx, rx, ly, ry;   /* (one word, as HAMSTERCORE) */
     uint16_t pink = core ? dim565(C_PINK) : C_PINK;
     if (core)                                   /* black metal: 2a2d2f down to 050607 */
         for (j = 0; j < LOGO_H; j++) {
@@ -249,7 +250,6 @@ static void draw_logo(uint32_t core, uint32_t dance)
                     }
                 gx += 8;
             }
-            gx += core ? 0 : 4;
         }
     }
     lx = dance == 1 ? 0 : dance == 2 ? 1 : 0;   /* the notes: the page's little dance, one pixel */

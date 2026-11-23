@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Hamster Synth's sound demo: the firmware's own code (firmware/src/hamster.c, its engine and its screen) on this
+# HamsterSynth's sound demo: the firmware's own code (firmware/src/hamster.c, its engine and its screen) on this
 # computer (tests/host.c) plays tests/scripts/ham/demo.txt with a song of four patterns (tests/ham/demo_song.h; the
 # firmware itself starts as the page does). Out come, in build/demo/:
 #   hamstersynth-demo.wav   the sound, as the FM-1 sends it over USB (44.1 kHz, 16 bit), brought to -1 dBFS
@@ -32,7 +32,7 @@ print(f"demo: {len(x) / 2 / 44100:.1f} s, peak brought to -1 dBFS (x {g:.2f})")
 PY
 if command -v ffmpeg >/dev/null 2>&1; then
     ffmpeg -loglevel error -y -i "$OUT/hamstersynth-demo.wav" -codec:a libmp3lame -b:a 192k \
-        -metadata title="Hamster Synth (FM-1)" "$OUT/hamstersynth-demo.mp3"
+        -metadata title="HamsterSynth (FM-1)" "$OUT/hamstersynth-demo.mp3"
     if [ "$1" != --no-video ]; then
         ffmpeg -loglevel error -y -framerate 30 -i "$OUT/frames/f-%05d.ppm" -i "$OUT/hamstersynth-demo.wav" \
             -vf scale=720:720:flags=neighbor -c:v libx264 -preset slow -crf 16 -pix_fmt yuv420p \
@@ -49,7 +49,7 @@ if command -v ffmpeg >/dev/null 2>&1; then           # the page's voice, the sou
     ffmpeg -loglevel error -y -i "$OUT/side/f.wav" -af "volume=$(python3 -c "
 import numpy as np; d = open('$OUT/side/f.wav', 'rb').read(); x = np.frombuffer(d[44:], dtype='<i2')
 print(f'{32767 * 10 ** (-1 / 20) / max(int(np.abs(x.astype(int)).max()), 1):.3f}')")" \
-        -codec:a libmp3lame -b:a 192k -metadata title="Hamster Synth (FM-1), the page's voice" "$OUT/hamstersynth-demo-side.mp3"
+        -codec:a libmp3lame -b:a 192k -metadata title="HamsterSynth (FM-1), the page's voice" "$OUT/hamstersynth-demo-side.mp3"
     rm -rf "$OUT/side"
 fi
 rm -rf "$OUT/frames"

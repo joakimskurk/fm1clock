@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hamster Synth on the host (tests/host.c), by what it sends over MIDI: every note a hamster sings goes out.
+"""HamsterSynth on the host (tests/host.c), by what it sends over MIDI: every note a hamster sings goes out.
 
   check_ham.py notes LOG WANT [STEP_MS]   the note-ons on channel 1, in order, are WANT (comma separated); with
                                           STEP_MS: the first sixteen that far apart (+- 12 ms)

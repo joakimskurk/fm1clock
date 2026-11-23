@@ -1,4 +1,4 @@
-# Hamster Synth's sound demo (tools/ham_demo.sh), about 49 s at 120 BPM (a bar: 4 s)
+# HamsterSynth's sound demo (tools/ham_demo.sh), about 49 s at 120 BPM (a bar: 4 s)
 # 0.6 s  the eight hamsters, one by one: C D E F G A B C (the white keys C4..C5)
 600 keys 0x80
 780 keys 0

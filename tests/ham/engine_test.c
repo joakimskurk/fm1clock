@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth's engine (firmware/src/ham_engine.h) on the host: what must hold when one plays over what plays.
+/* HamsterSynth's engine (firmware/src/ham_engine.h) on the host: what must hold when one plays over what plays.
  *   - THALL: a note by hand does not cut the sequence's note off, nor the sequence's the hand's (two lines)
  *   - all voices busy: two notes begun together both sound (a voice that has just begun is never taken)
  *   - a step asked to be skipped (it was played by hand just before it) plays no note, and only that one */

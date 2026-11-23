@@ -25,7 +25,7 @@ jobs:
         if [ "$GITHUB_REF_TYPE" = tag ]; then
           ./build.sh --release "${GITHUB_REF_NAME#v}" && cp "build/fm1clock-${GITHUB_REF_NAME#v}.fwsc" build/fm1clock.fwsc
         else ./build.sh --app hamster && ./build.sh; fi
-      # (Hamster Synth, the second firmware here: built first, so what is left in build/ is the clock's, for its tests)
+      # (HamsterSynth, the second firmware here: built first, so what is left in build/ is the clock's, for its tests)
       test: >-
         python3 -m pip install -q numpy && sh tests/run_clock.sh && sh tests/run_tests.sh && sh tools/emu_ci.sh &&
         if [ "$GITHUB_REF_TYPE" != tag ]; then sh tests/run_hamster.sh && sh tools/emu_hamster.sh; fi

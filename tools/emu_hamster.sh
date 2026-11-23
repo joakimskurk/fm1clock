@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Hamster Synth's package in fm1-emu: 7 s of the real firmware. A hamster by hand at 4.5 s (E4), PLAY at 5 s, the
+# HamsterSynth's package in fm1-emu: 7 s of the real firmware. A hamster by hand at 4.5 s (E4), PLAY at 5 s, the
 # Tromster at 6 s (SEQ), THALLHAMSTERGRINDCORE at 6.2 s (FX). Then, from its report, its sound and its screens:
 #   - it sings: silence before the key, sound after it
 #   - the audio interrupt's longest render (au_worst, read from RAM by its address) is under half of its time
@@ -18,7 +18,7 @@ ADDR=$(awk '$NF == "au_worst" { print $1 }' build/hamstersynth.syms 2>/dev/null 
 s0=$(date +%s)
 (cd "$OUT" && timeout "${EMU_TIMEOUT:-1500}" "$EMU" --fwsc pkg.fwsc --ms 7000 --keys '4500-4700:n11,5000:PLAY,6000:SEQ,6200:FX' \
     --wav out.wav --snap 1000,4600,6900 ${ADDR:+--dump $ADDR 1} >report.txt 2>&1) || true
-echo "emu_hamster: 7 s of Hamster Synth took $(( $(date +%s) - s0 )) s to emulate"
+echo "emu_hamster: 7 s of HamsterSynth took $(( $(date +%s) - s0 )) s to emulate"
 grep -E "in an ISR|^time " "$OUT/report.txt" | sed 's/^/  emu: /' || true
 python3 - "$OUT" <<'PY'
 import re, sys
@@ -77,8 +77,8 @@ PINK2, YELLOW, INK2 = (0xD9, 0x5F, 0x67), (0xFF, 0xD7, 0x4B), (0x17, 0x31, 0x3F)
 check("REC: C4 into step 8", near(px(2100, (226, 180)), NOTE), px(2100, (226, 180)))
 check("REC: E4 into step 9 (on a beat)", near(px(2100, (24, 196)), NOTE_BEAT), px(2100, (24, 196)))
 check("REC: SEL, a rest in step 10", near(px(2100, (52, 196)), CELL), px(2100, (52, 196)))
-check("REC: the bar says so (the sign made way)", near(px(2100, (200, 214)), PINK2), px(2100, (200, 214)))
-check("EDIT: the bar says so", near(px(3400, (200, 214)), YELLOW), px(3400, (200, 214)))
+check("REC: the bar says so (the sign made way)", near(px(2100, (162, 214)), PINK2), px(2100, (162, 214)))
+check("EDIT: the bar says so", near(px(3400, (162, 214)), YELLOW), px(3400, (162, 214)))
 check("SEQ: the Tromster's page", near(px(6000, (230, 100)), INK2), px(6000, (230, 100)))
 check("FX: THALL, the logo on black", sum(px(7400, (3, 3))) < 160, px(7400, (3, 3)))
 check("GLO held: the song's page", near(px(8600, (230, 100)), INK2), px(8600, (230, 100)))

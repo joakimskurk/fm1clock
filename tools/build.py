@@ -65,13 +65,13 @@ PRODUCT = "FM-1_940"                # FM-1 Clock: 94N, not in Dinghy's list of t
 VERSION = None                      # APP_VER for release builds
 NAME = "fm1clock"                   # the app's source (firmware/src/NAME.c) and its outputs (build/NAME.*)
 FIXED_ID = False                    # one identity for every build and release
-# --app hamster (or APP=hamster): Hamster Synth (firmware/src/hamster.c), the second firmware in this repository.
+# --app hamster (or APP=hamster): HamsterSynth (firmware/src/hamster.c), the second firmware in this repository.
 # Its identity is one for every build and release, as RoboSeq's: FM-1_902 (free in the Firmware Hub's catalogue on
 # 2026-11-23; of the form FM-1_9NN, so the installers finish an install that was cut off)
 APPS = {
     "clock": {},
     "hamster": {"NAME": "hamstersynth", "SOURCE": "hamster.c", "BOARD_PREFIX": {"fm1": "FM-1_902", "smk37": "SMK-37 Pro_902"},
-                "FIXED_ID": True, "DATA_FAMILY": "HAMSTER", "SCREEN_NAME": "HAMSTER SYNTH", "SCREEN_COLOUR": 0xF54A},
+                "FIXED_ID": True, "DATA_FAMILY": "HAMSTER", "SCREEN_NAME": "HAMSTERSYNTH", "SCREEN_COLOUR": 0xF54A},
 }
 SOURCE = "fm1clock.c"
 

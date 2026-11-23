@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth's pictures. Made by tools/gen_ham_art.py of tools/ham_sprites.py: do not edit. */
+/* HamsterSynth's pictures. Made by tools/gen_ham_art.py of tools/ham_sprites.py: do not edit. */
 #pragma once
 #include <stdint.h>
 

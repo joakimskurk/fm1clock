@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Synth for the M-VAVE FM-1: eight hamsters that sing C D E F G A B C, a 16-step sequencer with four patterns
+/* HamsterSynth for the M-VAVE FM-1: eight hamsters that sing C D E F G A B C, a 16-step sequencer with eight patterns
  * and a song of them, the Tromster (a drummer hamster with an 8-step drum machine) and THALLHAMSTERGRINDCORE (the same
  * hamsters, an octave down, through a wall of gain, at twice the tempo). A port of the web page Hamster Piano
  * (v4.17): its sound in ham_engine.h, its look in ham_draw.h, its hamsters in firmware/gen/ham_art.h.
@@ -14,7 +14,7 @@
  *                KNOB 1 glide, KNOB 2 arpeggio (+7, +12), KNOB 3 accent, KNOB 4 ratchet (x1..x4); OCT- OCT+ its octave;
  *                ARP the arpeggio too; SEL deletes the step; SAVE copies it to the next; LFO a random pattern
  *   ENV          undo (12 deep)
- *   SELECT       the step       PRESETS  the pattern A B C D (while it plays: from the next bar)
+ *   SELECT       the step       PRESETS  the pattern A..H (while it plays: from the next bar)
  *   ALGORITHM    the tempo, 50..220 BPM
  *   KNOB 1..4    (not editing) swing, the hamsters' level, the Tromster's level, the MIDI channel
  *   OCT- OCT+    (not editing) the keys an octave down / up again
@@ -22,7 +22,7 @@
  *                there: F3 G3 A3 B3 choose kick snare hat clap, C4..C5 set its eight steps, KNOB 1..4 their voices
  *                (1..3 the page's, 4 the hamster kit: a cheek's pop, a seed's crunch, a sniff, a squeak)
  *   FX           THALLHAMSTERGRINDCORE on / off; held: the hamster voice (squeaks, each its own) or the page's
- *   GLO          SONG on / off; held: the song's page (C4 D4 E4 F4 write A B C D, SEL takes one away)
+ *   GLO          SONG on / off; held: the song's page (C4..C5 write A..H, SEL takes one away)
  *   HOME         home; at home: the sign says something else; held: what the buttons do
  *   SEL          held: the pattern cleared
  *   SAVE         (not editing) everything to flash now (it also saves itself, when nothing sounds)
@@ -30,7 +30,7 @@
  *                notes out: what the hamsters sing (the channel), the drums on channel 10
  *   USB audio    what the FM-1 plays, to record it (the page's WAV export)
  */
-#define APP_NAME "HAMSTER SYNTH"
+#define APP_NAME "HAMSTERSYNTH"
 #define STORE_MAGIC 0x524D4148u                 /* "HAMR": this firmware's own settings (store.h) */
 #include "platform.c"
 #include "ham_engine.h"
@@ -54,13 +54,13 @@ static void app_audio(int32_t *out, uint32_t n)
 }
 
 /* ---- what is kept in flash */
-#define SV_VER 3u
+#define SV_VER 4u                               /* (4: eight patterns) */
 typedef struct {
     uint8_t ver, bpm, active, song_mode, drums_on, thall, cur_step, swing, lvl_ham, lvl_drum, midi_ch, song_len;
     int8_t kb_oct;
     uint8_t pad[3];
-    uint16_t pat[4][16];
-    uint8_t drum[4][4], dvoice[4][4], song[64];
+    uint16_t pat[NPAT][16];
+    uint8_t drum[NPAT][4], dvoice[NPAT][4], song[64];
 } save_t;
 static save_t sv;
 
@@ -179,7 +179,7 @@ static void defaults(void)
                                      {3, 2}, {4, 3}, {5, 3}, {7, 3}, {4, 2}, {6, 3}, {4, 3}, {1, 3}};
     static const char SONG[] = "AABACCDC";
     uint32_t p, i;
-    for (p = 0; p < 4u; p++) {
+    for (p = 0; p < NPAT; p++) {
         for (i = 0; i < 16u; i++)
             hq.pat[p][i] = p ? 0u : (uint16_t)(ST_ON | A[i][0] | (uint32_t)A[i][1] << 3);
         hq.drum[p][DR_KICK] = 0x11;
@@ -203,12 +203,12 @@ static void store_load(void)
 {
     uint32_t p, i, ok;
     defaults();
-    ok = !settings_load(&sv, sizeof sv) && sv.ver == SV_VER && sv.bpm >= 50u && sv.bpm <= 220u && sv.active < 4u &&
+    ok = !settings_load(&sv, sizeof sv) && sv.ver == SV_VER && sv.bpm >= 50u && sv.bpm <= 220u && sv.active < NPAT &&
          sv.cur_step < 16u && sv.swing <= 60u && sv.lvl_ham <= 32u && sv.lvl_drum <= 32u && sv.midi_ch <= 16u &&
          sv.song_len >= 1u && sv.song_len <= 64u && sv.kb_oct >= -2 && sv.kb_oct <= 0 && sv.pad[0] <= 1u;
     if (!ok)
         return;
-    for (p = 0; p < 4u; p++) {
+    for (p = 0; p < NPAT; p++) {
         for (i = 0; i < 16u; i++) {
             uint32_t s = sv.pat[p][i];
             hq.pat[p][i] = (uint16_t)((s & ST_ON) && ((s >> 3) & 7u) <= 4u ? s & 0x8FFFu : 0u);
@@ -219,7 +219,7 @@ static void store_load(void)
         }
     }
     for (i = 0; i < 64u; i++)
-        hq.song[i] = sv.song[i] & 3u;
+        hq.song[i] = sv.song[i] & PMASK;
     hq.song_len = sv.song_len;
     bpm = sv.bpm; active = sv.active; song_mode = sv.song_mode & 1u; drums_on = sv.drums_on & 1u; thall = sv.thall & 1u;
     cur_step = sv.cur_step; swing = sv.swing; lvl_ham = sv.lvl_ham; lvl_drum = sv.lvl_drum; midi_ch = sv.midi_ch;
@@ -236,7 +236,7 @@ static void store_save(void)
     sv.song_len = (uint8_t)hq.song_len; sv.kb_oct = (int8_t)kb_oct;
     sv.pad[0] = (uint8_t)!hvoice;
     sv.pad[1] = sv.pad[2] = 0;
-    for (p = 0; p < 4u; p++) {
+    for (p = 0; p < NPAT; p++) {
         for (i = 0; i < 16u; i++) sv.pat[p][i] = hq.pat[p][i];
         for (i = 0; i < 4u; i++) { sv.drum[p][i] = hq.drum[p][i]; sv.dvoice[p][i] = hq.dvoice[p][i]; }
     }
@@ -263,7 +263,7 @@ static void undo_push_p(uint32_t p)             /* pattern p as it is, to come b
 static void undo_push(void) { undo_push_p(active); }
 static void set_active(uint32_t p)
 {
-    active = p & 3u;
+    active = p & PMASK;
     hq.want_pat = active;
     rd_steps = 0xFFFF; rd_bot = 1; rd_page = 1;
     touch();
@@ -339,12 +339,12 @@ static uint32_t live_step(uint32_t *pat)
         len = heng_step_len;
     } while (info != heng_step_info);
     step = info & 15u;
-    p = info >> 4 & 3u;
+    p = info >> 4 & PMASK;
     pos = info >> 8 & 63u;
     el = heng_now - at;
     if (len && el * 2u >= len) {
         if (step == 15u)                        /* the next bar: the song's next, or the pattern asked for */
-            p = song_playing ? hq.song[(pos + 1u) % hq.song_len] & 3u : hq.want_pat & 3u;
+            p = song_playing ? hq.song[(pos + 1u) % hq.song_len] & PMASK : hq.want_pat & PMASK;
         step = (step + 1u) & 15u;
         hq.skip = heng_fired + 1u;
     }
@@ -494,33 +494,35 @@ static void draw_bottom(void)
     uint32_t i, shown = disp_pat();
     char t[48];
     fb_rect(0, Y_BOT, 240, 16, C_INK);
-    for (i = 0; i < 4u; i++) {                  /* the patterns, each its colour: the one shown filled */
-        int32_t x = 2 + (int32_t)i * 19;
+    for (i = 0; i < NPAT; i++) {                /* the patterns, each its colour: the one shown filled; the empty dim */
+        int32_t x = 2 + (int32_t)i * 12, k;
+        uint32_t used = 0;
         char s[2] = {(char)('A' + i), 0};
+        for (k = 0; k < 16; k++)
+            used |= hq.pat[i][k] & ST_ON;
         if (i == shown) {
-            fb_pill(x, Y_BOT + 1, 17, 14, PAT_COL[i]);
-            sf_text_mid(x, 17, Y_BOT + 3, s, C_INK, 2);
+            fb_pill(x, Y_BOT + 1, 11, 14, PAT_COL[i]);
+            sf_text_mid(x, 11, Y_BOT + 3, s, C_INK, 2);
         } else {
-            fb_pill_line(x, Y_BOT + 1, 17, 14, C_BLUE3);
-            sf_text_mid(x, 17, Y_BOT + 3, s, PAT_COL[i], 2);
+            sf_text_mid(x, 11, Y_BOT + 3, s, used ? PAT_COL[i] : C_BLUE3, 2);
         }
     }
     sb = t; t[0] = 0;                           /* the tempo */
     sb_u(bpm * (thall ? 2u : 1u));
-    fb_text(82, Y_BOT + 1, t, C_CREAM2, 2);
-    sf_text(82 + text_px(t, 2) + 4, Y_BOT + 5, "BPM", C_EDGE, 1);
+    fb_text(102, Y_BOT + 1, t, C_CREAM2, 2);
+    sf_text(102 + text_px(t, 2) + 3, Y_BOT + 5, "BPM", C_EDGE, 1);
     {                                           /* what it is doing: a chip */
         uint16_t bg = C_BLUE3, fg = C_MUTED;
         sb = t; t[0] = 0;
         if (ext_sync) { sb_s("EXT SYNC"); bg = C_BLUE; fg = C_CREAM2; }
         else if (rec_on) { sb_s("● REC"); bg = C_PINK2; fg = C_WHITE2; }
-        else if (song_playing) { sb_s("▶ SONG "); sb_u(song_pos + 1u); sb_c('/'); sb_u(hq.song_len); bg = C_PINK; fg = C_INK; }
+        else if (song_playing) { sb_s("▶ SONG"); bg = C_PINK; fg = C_INK; }
         else if (playing) { sb_s("▶ SPILLER"); bg = C_PINK; fg = C_INK; }
         else if (edit_on) { sb_s("REDIGER"); bg = C_YELLOW; fg = C_INK; }
         else if (song_mode) { sb_s("SONG PÅ"); fg = C_CREAM2; }
         else sb_s("■ KLAR");
-        fb_pill(146, Y_BOT + 1, 92, 14, bg);
-        sf_text_mid(146, 92, Y_BOT + 3, t, fg, 2);
+        fb_pill(158, Y_BOT + 1, 80, 14, bg);
+        sf_text_mid(158, 80, Y_BOT + 3, t, fg, 2);
     }
     fb_rect(0, Y_BOT + 16, 240, 16, C_PAPER);   /* what was just said, or the hint */
     fb_rect(0, Y_BOT + 16, 240, 1, C_INK);
@@ -619,7 +621,7 @@ static void draw_song(void)
         int32_t x = 8 + (int32_t)(i & 15u) * 14, y = 54 + (int32_t)(i >> 4) * 21;
         if (i < hq.song_len) {
             char c[2] = {(char)('A' + hq.song[i]), 0};
-            fb_pill(x, y, 13, 16, PAT_COL[hq.song[i] & 3u]);
+            fb_pill(x, y, 13, 16, PAT_COL[hq.song[i] & PMASK]);
             sf_text_mid(x, 13, y + 3, c, C_INK, 2);
             if (song_playing && i == song_pos)
                 fb_pill_line(x - 1, y - 1, 15, 18, C_WHITE2);
@@ -629,7 +631,7 @@ static void draw_song(void)
         if (i == song_cur)                      /* the cursor: under it */
             fb_rect(x, y + 18, 13, 2, C_YELLOW);
     }
-    legend(8, 146, "C D E F", "SKRIV A B C D");
+    legend(8, 146, "C4–C5", "SKRIV A–H");
     legend(8, 160, "SELECT", "FLYTT");
     legend(120, 160, "PRESETS", "BYTT");
     legend(8, 174, "SEL", "SLETT");
@@ -641,7 +643,7 @@ static void draw_song(void)
 static const char *const HELP_TITLE[3] = {"SPILLE", "REDIGERE", "MER"};
 static const char *const HELP[3][10][2] = {
     {{"HVITE", "HAMSTERNE"}, {"SVARTE", "TROMMER"}, {"PLAY", "SPILL / STOPP"}, {"REC", "TA OPP"},
-     {"SEL", "PAUSE I OPPTAK"}, {"SELECT", "VELG STEG"}, {"PRESETS", "SEKVENS A–D"}, {"ALGORITHM", "TEMPO"},
+     {"SEL", "PAUSE I OPPTAK"}, {"SELECT", "VELG STEG"}, {"PRESETS", "SEKVENS A–H"}, {"ALGORITHM", "TEMPO"},
      {"OCT − +", "OKTAV"}, {"ENV", "ANGRE"}},
     {{"EDIT", "REDIGER STEG"}, {"TANGENT", "BYTT TONE"}, {"KNOTT 1", "GLIDE"}, {"KNOTT 2", "ARP +7 / +12"},
      {"KNOTT 3", "AKSENT"}, {"KNOTT 4", "RATCHET ×1–4"}, {"OCT − +", "STEGETS OKTAV"}, {"SEL", "SLETT STEG"},
@@ -709,8 +711,8 @@ static void leds(void)
             if (k == trom_row) lit |= 1u << ROWKEY[k];
             else glow |= 1u << ROWKEY[k];
         }
-    } else if (page == PG_SONG) {
-        for (k = 0; k < 4u; k++)
+    } else if (page == PG_SONG) {             /* the eight hamsters' keys write A..H */
+        for (k = 0; k < 8u; k++)
             glow |= 1u << HAM_KEYLED[k];
     } else {                                    /* the eight glow; the one that sings is lit */
         for (k = 0; k < 8u; k++) {
@@ -1091,14 +1093,14 @@ static void encoders(void)
         if (page == PG_SONG) {                  /* the letter under the cursor */
             if (song_cur < hq.song_len) {
                 if (playing) stop(0);
-                hq.song[song_cur] = (uint8_t)((uint32_t)((int32_t)hq.song[song_cur] + e) & 3u);
+                hq.song[song_cur] = (uint8_t)((uint32_t)((int32_t)hq.song[song_cur] + e) & PMASK);
                 rd_page = 1;
                 touch();
             }
         } else if (song_playing) {
             say("SONG SPILLER · STOPP");
         } else {
-            set_active((uint32_t)((int32_t)active + e) & 3u);
+            set_active((uint32_t)((int32_t)active + e) & PMASK);
             SAY_BEGIN(); sb_s("SEKVENS "); sb_c((char)('A' + active)); sb_s(playing && play_pat != active ? " · NESTE" : " VALGT"); SAY_END();
         }
     }
@@ -1196,7 +1198,7 @@ static void keys(void)
             }
             rd_page = 1;
         } else if (page == PG_SONG) {
-            if (k >= 7u && k <= 12u && hq.song_len < 64u && KEY_HAM[k] < 4) {   /* C4 D4 E4 F4: A B C D, at the cursor */
+            if (k >= 7u && k <= 19u && KEY_HAM[k] >= 0 && hq.song_len < 64u) {   /* C4..C5: A..H, at the cursor */
                 uint32_t i;
                 if (playing) stop(0);
                 for (i = hq.song_len; i > song_cur; i--) hq.song[i] = hq.song[i - 1u];
@@ -1224,7 +1226,7 @@ static void events(void)
             uint32_t old = play_step;
             if (!playing) break;                /* (it was stopped meanwhile) */
             play_step = a & 15u;
-            play_pat = a >> 4 & 3u;
+            play_pat = a >> 4 & PMASK;
             song_pos = a >> 8 & 63u;
             rd_steps |= 1u << old | 1u << play_step;
             if (song_playing && play_step == 0u) { rd_steps = 0xFFFF; rd_bot = 1; }
@@ -1258,7 +1260,7 @@ static void events(void)
             }
             break;
         case HE_BAR:
-            play_pat = a & 3u;
+            play_pat = a & PMASK;
             rd_bot = 1;
             break;
         }

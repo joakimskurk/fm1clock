@@ -1,6 +1,6 @@
-# Hamster Synth for M-VAVE FM-1
+# HamsterSynth for M-VAVE FM-1
 
-Nettsiden *Hamster Piano* (v4.17) som firmware for FM-1, under navnet Hamster Synth: de åtte hamsterne, 16-stegs sequenceren med fire sekvenser
+Nettsiden *Hamster Piano* (v4.17) som firmware for FM-1, under navnet HamsterSynth: de åtte hamsterne, 16-stegs sequenceren med åtte sekvenser (A–H; siden har fire)
 og song, Tromster og THALLHAMSTERGRINDCORE. Den bygger på samme plattform som FM-1 Clock (Dinghy 0.5) og ligger i
 samme repo som en egen app: `firmware/src/hamster.c`.
 
@@ -47,7 +47,7 @@ CI bygger pakken på hver push (artefaktet `packages`). SMK-37: `./build.sh --ap
 | **REC** | Stegopptak: hamsteren lagres i steget og går videre. **SEL** legger inn pause. Mens det spilles (sekvens eller song): tonen lagres i steget du hører den i, det nærmeste, runde etter runde. |
 | **EDIT** | Rediger: en tangent bytter tonen uten å gå videre. **SELECT** velger steg. |
 | **SELECT** | Velg steg (og hør det). |
-| **PRESETS** | Sekvens A–D. Mens den spiller: byttes ved neste runde. |
+| **PRESETS** | Sekvens A–H. Mens den spiller: byttes ved neste runde. |
 | **ALGORITHM** | Tempo, 50–220 BPM. |
 | **OCT− / OCT+** | Tangentene en oktav ned / opp (i EDIT: stegets oktav, −3 … +1). |
 | **ENV** | Angre (12 nivåer). |
@@ -66,7 +66,7 @@ CI bygger pakken på hver push (artefaktet `packages`). SMK-37: `./build.sh --ap
 KNOTT 1–4 velger lyd 1–4 for hver tromme (1–3 er sidens, 4 er hamstersettet: kinnpop, frøknas, snus og pip); hold SEL
 sletter raden.
 
-**På song-siden:** C4 D4 E4 F4 skriver A B C D ved markøren, SELECT flytter den, PRESETS bytter bokstaven, SEL sletter.
+**På song-siden:** de åtte hamstertangentene C4–C5 skriver A–H ved markøren, SELECT flytter den, PRESETS bytter bokstaven, SEL sletter.
 
 **Stegene på skjermen:** tonen, piler for oktav, og små merker nederst: blå = glide, gul = arp (bred = +12),
 rosa = accent, oransje prikker = ratchet.
@@ -101,7 +101,8 @@ venstre hjørne. Hver figurpiksel er 2×2 skjermpiksler, som logoen og teksten.
 - **Stegene** står i slag på fire. Hvert har en stripe i fargen til hamsteren som synger det, delt i to, tre eller
   fire for ratchet. Oktaven vises som pil (og tall), effektene som fargeprikker: glide blå, arpeggio gul (+12 oransje),
   aksent rosa. Markøren er gul, steget som spilles er lyst med rosa ramme.
-- **Bunnen:** sekvensene A–D i hver sin farge (gul, rosa, blå, grønn, de samme i songen), tempoet og hva den gjør. Under
+- **Bunnen:** sekvensene A–H i hver sin farge (de samme i songen): den som vises fylt, de med noter i farge, de tomme
+  dempet; tempoet og hva den gjør. Under
   står det som akkurat skjedde i et par sekunder, ellers et hint for det du holder på med. I REDIGER sier den steget i
   ord: «A9 · F↓2 · GLIDE · ARP +7 · ×3».
 - **Skiltet** er en snakkeboble fra en av hamsterne (mørk i THALL). Den går bort så snart du gjør noe.
