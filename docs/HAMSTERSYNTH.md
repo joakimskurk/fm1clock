@@ -15,6 +15,17 @@ samme repo som en egen app: `firmware/src/hamster.c`.
 Tromster, en song på fire sekvenser og THALLHAMSTERGRINDCORE. Det er firmwarens egen kode som spiller, kjørt på en
 datamaskin: `sh tools/ham_demo.sh` lager den på nytt, også som video med skjermen (`build/demo/`).
 
+## Hva er prøvd, og hvordan
+
+- **I fm1-emu (FM-1-emulatoren), med den ekte pakken:** hele panelet i én gjennomgang (`tools/emu_hamster.sh`). REC
+  med tangenter og pause (SEL), markøren tilbake (SELECT), EDIT med knott 1 og 4 og OCT−, tempo (ALGORITHM), sekvens
+  (PRESETS), PLAY, Tromster (SEQ, A3 velger hat, knott 3 lyden), THALL (FX), song-siden (hold GLO), stemmen (hold FX),
+  hjelp (hold HOME), stopp og trommer for hånd. Hvert steg sjekkes på skjermbildet; lyden og hvor mye av brikken den tar
+  (på det meste ca. 22 %) også.
+- **På datamaskinen:** lyden mot nettsiden, og knappene, tangentene og MIDI gjennom skript (`tests/run_hamster.sh`).
+- **Ikke prøvd på en ekte FM-1.** Emulatoren viser ikke lysene på tangentene og knappene, og den kjennes ikke som
+  ekte dreieknapper. Plattformen under (Dinghy) er prøvd på FM-1: tangenter, skjerm, MIDI, installasjon.
+
 ## Bygge og installere
 
 ```sh

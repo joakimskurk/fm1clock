@@ -128,6 +128,7 @@ HVOICE = [
     (1.40, "o", 6.8, 2.0, 6500),        # C  the one in sunglasses: cool, slow
 ]
 HV_Q = (3.5, 5.0, 6.0)
+HV_TRIM = (-1.4, -0.6, 1.7, -2.9, -0.5, 1.7, 0.6, 1.4)   # dB: each hamster as loud as the page's (a note, measured)
 HV_G = (.72, .30, .12)
 
 
@@ -227,7 +228,7 @@ def build():
             f = hz(MIDI[key] + 12 * oct_)
             page, _, _ = note_table(key, f)
             xs = [hv_table(key, f, v) for v in ("i", HVOICE[key][1], "u")]
-            g = np.sqrt((page ** 2).mean()) / np.sqrt((xs[1] ** 2).mean())
+            g = np.sqrt((page ** 2).mean()) / np.sqrt((xs[1] ** 2).mean()) * 10 ** (HV_TRIM[key] / 20)
             g = min(g, 1.95 / max(np.abs(x).max() for x in xs))
             for x in xs:
                 hv.append([int(round(v * g * 16384)) for v in x] + [int(round(x[0] * g * 16384))])

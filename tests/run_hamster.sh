@@ -48,7 +48,7 @@ hv() {   # case, tolerance
 }
 run "the hamster voice: a note" hv ham_one0 2
 run "the hamster voice: the page's pattern" hv ham_default 2
-run "the hamster voice: glide, arpeggio, accent, ratchets" hv ham_fx 2
+run "the hamster voice: glide, arpeggio, accent, ratchets (its accents squeak louder: 3 dB)" hv ham_fx 3
 run "the hamster voice with the Tromster" hv full_default 2
 run "the hamster kit (the drums' fourth voices) sounds and does not clip" sh -c \
     "printf 'bpm 120\ndrums 1\ndrum 0 0 17\ndrum 0 1 68\ndrum 0 2 85\ndrum 0 3 170\ndvoice 0 0 3\ndvoice 0 1 3\ndvoice 0 2 3\ndvoice 0 3 3\n' > build/audio/kit.txt &&

@@ -135,6 +135,13 @@ static void sign(const char *a, const char *b, uint32_t ms)
     t_sign = fm1_ms + ms;
     rd_bot = 1;
 }
+static void sign_away(void)                     /* any input: the sign makes way for what it does */
+{
+    if (sign_on) {
+        sign_on = 0;
+        rd_bot = 1;
+    }
+}
 static void lore(void)
 {
     uint32_t i;
@@ -712,13 +719,13 @@ static void step_fx(uint32_t which, int32_t e)   /* the editor's knobs: 0 glide,
     if (which == 0u) {
         s = e > 0 ? s | 1u << 6 : s & ~(1u << 6);
     } else if (which == 1u) {
-        int32_t a = (int32_t)ST_ARP(s) + (e > 0 ? 1 : -1);
+        int32_t a = (int32_t)ST_ARP(s) + e;
         a = a < 0 ? 0 : a > 2 ? 2 : a;
         s = (s & ~(3u << 8)) | (uint32_t)a << 8;
     } else if (which == 2u) {
         s = e > 0 ? s | 1u << 7 : s & ~(1u << 7);
     } else {
-        int32_t r = (int32_t)ST_RATCHET(s) + (e > 0 ? 1 : -1);
+        int32_t r = (int32_t)ST_RATCHET(s) + e;
         r = r < 1 ? 1 : r > 4 ? 4 : r;
         s = (s & ~(3u << 10)) | (uint32_t)(r - 1) << 10;
     }
@@ -765,6 +772,8 @@ static void buttons(void)
         }
         b &= ~m;
     }
+    if (b | tap | hold)
+        sign_away();
     if (page == PG_HELP) {                      /* any button: the next page, then out */
         if (b || tap) {
             if ((tap & (1u << BTN_HOME)) || ++help_page >= 3u) go_page(PG_HOME);
@@ -945,29 +954,37 @@ static void buttons(void)
     }
 }
 
+static int32_t enc(uint32_t id)                 /* detents turned; a turn, as a press, sends the sign away */
+{
+    int32_t e = fm1_enc_take(id);
+    if (e)
+        sign_away();
+    return e;
+}
+
 static void encoders(void)
 {
     static const uint32_t KN[4] = {ENC_KNOB1, ENC_KNOB2, ENC_KNOB3, ENC_KNOB4};
     int32_t e;
     uint32_t k;
-    if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0 && page != PG_HELP)
+    if ((e = enc(ENC_ALGORITHM)) != 0 && page != PG_HELP)
         tempo(e);
-    if ((e = fm1_enc_take(ENC_PRESETS)) != 0 && page != PG_HELP) {
+    if ((e = enc(ENC_PRESETS)) != 0 && page != PG_HELP) {
         if (page == PG_SONG) {                  /* the letter under the cursor */
             if (song_cur < hq.song_len) {
                 if (playing) stop(0);
-                hq.song[song_cur] = (uint8_t)((hq.song[song_cur] + (e > 0 ? 1u : 3u)) & 3u);
+                hq.song[song_cur] = (uint8_t)((uint32_t)((int32_t)hq.song[song_cur] + e) & 3u);
                 rd_page = 1;
                 touch();
             }
         } else if (song_playing) {
             say("SONG SPILLER · STOPP");
         } else {
-            set_active((active + (uint32_t)(e > 0 ? 1 : 3)) & 3u);
+            set_active((uint32_t)((int32_t)active + e) & 3u);
             SAY_BEGIN(); sb_s("SEKVENS "); sb_c((char)('A' + active)); sb_s(playing && play_pat != active ? " · NESTE" : " VALGT"); SAY_END();
         }
     }
-    if ((e = fm1_enc_take(ENC_SELECT)) != 0) {
+    if ((e = enc(ENC_SELECT)) != 0) {
         if (page == PG_HELP) {
             help_page = (help_page + (e > 0 ? 1u : 2u)) % 3u;
             rd_page = 1;
@@ -990,10 +1007,10 @@ static void encoders(void)
         }
     }
     for (k = 0; k < 4u; k++) {
-        if ((e = fm1_enc_take(KN[k])) == 0 || page == PG_HELP)
+        if ((e = enc(KN[k])) == 0 || page == PG_HELP)
             continue;
         if (page == PG_TROM) {                  /* each drum's voice, 1..3 */
-            int32_t v = (int32_t)hq.dvoice[active][k] + (e > 0 ? 1 : -1);
+            int32_t v = (int32_t)hq.dvoice[active][k] + e;
             hq.dvoice[active][k] = (uint8_t)(v < 0 ? 0 : v > 3 ? 3 : v);
             drum_try(k, 1);
             SAY_BEGIN(); sb_s(DRUM_NAME[k]); sb_c(' '); sb_u(hq.dvoice[active][k] + 1u);
@@ -1034,6 +1051,8 @@ static void keys(void)
     down |= now & ~prev;                        /* (the host's keys have no edges of their own) */
 #endif
     prev = now;
+    if (down)
+        sign_away();
     if (!down || page == PG_HELP)
         return;
     for (k = 0; k < 27u; k++) {
