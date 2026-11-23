@@ -71,6 +71,13 @@ FX (THALL) og GLO (SONG) lyser når de er på.
 - **Nytt:** trommer for hånd på svarte tangenter, swing, egne nivåer for hamstere og Tromster, MIDI inn (noter,
   klokke, start / stopp) og ut (hamsterne på valgt kanal, trommene på kanal 10), alt lagres i flash.
 
+## Figurene
+
+Hamsterne og trommehamsteren er tegnet på nytt som pikselkunst i `tools/ham_sprites.py`, med samme kjennetegn som på
+siden: den gylne, den grå med solsikkefrø, den hvite som blunker, den oransje med ost, den brune, den grå som smiler
+med lukkede øyne, den oransje med tunga ute og den hvite med solbriller. Én blekkfarge for omrisset og lys fra øvre
+venstre hjørne. Hver figurpiksel er 2×2 skjermpiksler, som logoen og teksten.
+
 ## Lyden
 
 Siden bygger hver tone av Web Audio-noder. Her, i heltall (`firmware/src/ham_engine.h`):
@@ -97,6 +104,6 @@ I fm1-emu bruker lydavbruddet på det meste ca. 20 % av tiden det har.
 | `firmware/src/hamster.c` | Appen: tangenter, knapper, sider, lagring, MIDI |
 | `firmware/src/ham_engine.h` | Lyden og sequenceren (lydavbruddet) |
 | `firmware/src/ham_draw.h` | Skjermen |
-| `firmware/gen/ham_tables.h`, `ham_art.h` | Laget av `tools/gen_ham_tables.py` og `tools/gen_ham_art.py` |
-| `assets/hamster/` | Hamsterne (sidens piksler) og trommehamsteren |
+| `firmware/gen/ham_tables.h`, `ham_art.h` | Laget av `tools/gen_ham_tables.py` og `tools/gen_ham_art.py` (`--sheet FIL.png` viser alle figurene) |
+| `tools/ham_sprites.py` | Hamsterne og trommehamsteren, tegnet piksel for piksel (26×27 og 56×45, vist 2×2) |
 | `tests/run_hamster.sh`, `tests/ham/`, `tools/emu_hamster.sh` | Testene |

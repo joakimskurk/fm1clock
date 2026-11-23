@@ -48,6 +48,6 @@ belong to their owners. Dinghy and FM-1 Clock are not made or endorsed by them.
 ## Hamster Piano
 
 `firmware/src/hamster.c`, `ham_engine.h`, `ham_draw.h`, their tools and tests: GPL-3.0-only, as the rest. It is a port of
-the web page *Hamster Piano* (v4.17) by this repository's author; the hamsters and the drummer (`assets/hamster/`) are
-that page's own pictures. The page itself is not in this repository (only measurements of its sound:
+the web page *Hamster Piano* (v4.17) by this repository's author. The hamsters and the drummer are drawn anew here,
+pixel by pixel, after the page's (`tools/ham_sprites.py`). The page itself is not in this repository (only measurements of its sound:
 `tests/ref/ham_features.json`).

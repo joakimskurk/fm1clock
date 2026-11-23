@@ -215,15 +215,18 @@ static void draw_ham(uint32_t i, uint32_t state, uint32_t squash)
     fb_rect(cx + 1, cy + 1, 58, 59, state ? C_CREAM2 : C_CREAM);
     fb_rect(cx + 1, cy + 61, 58, 15, state == 2u ? C_PINK2 : state == 1u ? C_PINK : C_LABEL);
     fb_text_mid(cx, 60, cy + 61, NOTE_NAME[i], state == 2u ? C_WHITE2 : C_INK, 2);
-    /* squash: 0 = as it is; else its height in 64ths, its feet where they were (a little lower) */
-    hh = squash ? 53 * (int32_t)squash / 64 : 53;
+    /* the hamster, 2 x 2 a pixel, its feet on the cell's floor. squash: 0 = as it is; else its height in 64ths
+       (its feet stay, a little lower) */
+    hh = squash ? 2 * (int32_t)HAM_H * (int32_t)squash / 64 : 2 * (int32_t)HAM_H;
     dy = squash ? (squash < 50u ? 2 : 1) : 0;
     for (y = 0; y < hh; y++) {
-        int32_t sy = 1 + y * 53 / hh, py = cy + 4 + 53 - hh + y + dy;
+        int32_t sy = y * (int32_t)HAM_H / hh, py = cy + 4 + 2 * (int32_t)HAM_H - hh + y + dy;
         for (x = 0; x < (int32_t)HAM_W; x++) {
             uint8_t v = sp[sy * (int32_t)HAM_W + x];
-            if (v != 255u)
-                fb_px(cx + 2 + x, py, HAM_PAL[v]);
+            if (v != 255u) {
+                fb_px(cx + 4 + 2 * x, py, HAM_PAL[v]);
+                fb_px(cx + 5 + 2 * x, py, HAM_PAL[v]);
+            }
         }
     }
 }
@@ -258,6 +261,6 @@ static void draw_drummer(uint32_t frame)
         for (x = 0; x < (int32_t)DRUM_W; x++) {
             uint8_t v = sp[y * (int32_t)DRUM_W + x];
             if (v != 255u)
-                fb_px(5 + x, 28 + (98 - (int32_t)DRUM_H) / 2 + y, DRUM_PAL[v]);
+                fb_rect(5 + 2 * x, 32 + 2 * y, 2, 2, DRUM_PAL[v]);
         }
 }

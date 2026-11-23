@@ -14,8 +14,7 @@ CF="-O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-unused-parameter -Wno-si
 P=tests/ham/check_ham.py
 
 run "firmware/gen/ham_tables.h is what tools/gen_ham_tables.py makes" python3 tools/gen_ham_tables.py --check
-if python3 tools/gen_ham_art.py --check >/dev/null 2>&1; then echo "== firmware/gen/ham_art.h is what tools/gen_ham_art.py makes of assets/hamster/"; echo "ham_art.h: up to date"
-else echo "== (ham_art.h differs from what this Pillow makes of the drummer: run tools/gen_ham_art.py and look; not a failure)"; fi
+run "firmware/gen/ham_art.h is what tools/gen_ham_art.py makes of tools/ham_sprites.py" python3 tools/gen_ham_art.py --check
 run "hamster.c compiles for the host without a warning (-Wextra -Werror)" sh -c "cc $CF -o $OUT/hamsterpiano firmware/src/hamster.c"
 if command -v clang >/dev/null 2>&1; then
     run "hamster.c with clang (-Werror)" sh -c "clang $CF -o $OUT/hamsterpiano-clang firmware/src/hamster.c"
