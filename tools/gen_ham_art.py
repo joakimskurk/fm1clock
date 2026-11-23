@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hamster Piano's pictures: firmware/gen/ham_art.h.
+"""Hamster Synth's pictures: firmware/gen/ham_art.h.
 
   the eight hamsters   drawn pixel by pixel in tools/ham_sprites.py: 26 x 27, shown 2 x 2 a pixel
   the drummer          the Tromster's, the same: 56 x 45 in four frames
-  the logo's letters   the page's 7 x 9 pixel font (H A M S T E R P I A N O C)
+  the logo's letters   the page's 7 x 9 pixel font (H A M S T E R, S Y N T H, C O R E)
   the text             a 5 x 7 pixel font of this firmware's own, with what Norwegian needs (the chip's fonts have
                        no AE, OE, AA) and the page's signs: arrows, the middle dot, the cross
 
@@ -28,8 +28,7 @@ LOGO = {
     "T": ["1111111", "0001000", "0001000", "0001000", "0001000", "0001000", "0001000", "0001000", "0001000"],
     "E": ["1111111", "1000000", "1000000", "1111110", "1000000", "1000000", "1000000", "1000000", "1111111"],
     "R": ["1111110", "1000001", "1000001", "1111110", "1010000", "1001000", "1000100", "1000010", "1000001"],
-    "P": ["1111110", "1000001", "1000001", "1111110", "1000000", "1000000", "1000000", "1000000", "1000000"],
-    "I": ["1111111", "0001000", "0001000", "0001000", "0001000", "0001000", "0001000", "0001000", "1111111"],
+    "Y": ["1000001", "1000001", "0100010", "0010100", "0001000", "0001000", "0001000", "0001000", "0001000"],
     "N": ["1000001", "1100001", "1010001", "1001001", "1000101", "1000011", "1000001", "1000001", "1000001"],
     "O": ["0111110", "1000001", "1000001", "1000001", "1000001", "1000001", "1000001", "1000001", "0111110"],
     "C": ["0111110", "1000001", "1000000", "1000000", "1000000", "1000000", "1000000", "1000001", "0111110"],
@@ -159,7 +158,7 @@ def build():
     hpal, hams = indexed(ham_sprites.hamsters())
     dpal, frames = indexed(ham_sprites.drummer())
     o = ["/* SPDX-License-Identifier: GPL-3.0-only */",
-         "/* Hamster Piano's pictures. Made by tools/gen_ham_art.py of tools/ham_sprites.py: do not edit. */",
+         "/* Hamster Synth's pictures. Made by tools/gen_ham_art.py of tools/ham_sprites.py: do not edit. */",
          "#pragma once", "#include <stdint.h>", ""]
     o.append(f"#define HAM_W {ham_sprites.W}u                               /* a hamster, its pixels (2 x 2 on the screen) */")
     o.append(f"#define HAM_H {ham_sprites.H}u")
@@ -176,9 +175,9 @@ def build():
         o.append("    {" + ",".join(str(v) for v in px) + "},")
     o.append("};")
     o.append("/* the logo's letters, 7 x 9: a row a byte, bit 6 the left pixel */")
-    o.append('#define LOGO_CHARS "HAMSTERPINOC"')
-    o.append("static const uint8_t LOGO_FONT[12][9] = {")
-    for c in "HAMSTERPINOC":
+    o.append('#define LOGO_CHARS "HAMSTERYNOC"')
+    o.append("static const uint8_t LOGO_FONT[11][9] = {")
+    for c in "HAMSTERYNOC":
         o.append("    {" + ", ".join(str(int(r, 2)) for r in LOGO[c]) + "},")
     o.append("};")
     o.append("/* the text's font, 5 x 7: a row a byte, bit 4 the left pixel; PF_CODE: each glyph's Unicode code point */")

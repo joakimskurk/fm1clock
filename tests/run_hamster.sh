@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Hamster Piano's host tests (no FM-1, no JieLi toolchain; Python with numpy and Pillow): its tables and pictures are
+# Hamster Synth's host tests (no FM-1, no JieLi toolchain; Python with numpy and Pillow): its tables and pictures are
 # what their tools make, the app compiles cleanly, its engine sounds like the original web page (band energies over
 # time against the page's own renders, tests/ham/parity.py), and the app does what its buttons say (scripts in host
 # mode, read back from the notes it sends over MIDI). The chip: tools/emu_hamster.sh.
@@ -15,11 +15,11 @@ P=tests/ham/check_ham.py
 
 run "firmware/gen/ham_tables.h is what tools/gen_ham_tables.py makes" python3 tools/gen_ham_tables.py --check
 run "firmware/gen/ham_art.h is what tools/gen_ham_art.py makes of tools/ham_sprites.py" python3 tools/gen_ham_art.py --check
-run "hamster.c compiles for the host without a warning (-Wextra -Werror)" sh -c "cc $CF -o $OUT/hamsterpiano firmware/src/hamster.c"
+run "hamster.c compiles for the host without a warning (-Wextra -Werror)" sh -c "cc $CF -o $OUT/hamstersynth firmware/src/hamster.c"
 if command -v clang >/dev/null 2>&1; then
-    run "hamster.c with clang (-Werror)" sh -c "clang $CF -o $OUT/hamsterpiano-clang firmware/src/hamster.c"
+    run "hamster.c with clang (-Werror)" sh -c "clang $CF -o $OUT/hamstersynth-clang firmware/src/hamster.c"
 fi
-run "hamster.c for the SMK-37 (host)" sh -c "cc $CF -Wno-unused-variable -DBOARD_SMK37=1 -o $OUT/hamsterpiano-smk37 firmware/src/hamster.c"
+run "hamster.c for the SMK-37 (host)" sh -c "cc $CF -Wno-unused-variable -DBOARD_SMK37=1 -o $OUT/hamstersynth-smk37 firmware/src/hamster.c"
 run "the engine alone compiles without a warning" \
     cc -O2 -Wall -Wextra -Werror -Wno-unused-function -Ifirmware/src -Ifirmware/gen -o build/ham_render tests/ham/ham_render.c
 
@@ -57,13 +57,13 @@ run "the hamster kit (the drums' fourth voices) sounds and does not clip" sh -c 
 # the app, by its buttons
 A="48,64,67,64,52,67,64,62,53,67,69,72,55,71,67,62"
 run "PLAY: the pattern A, a step every 250 ms, and round again" sh -c \
-    "$OUT/hamsterpiano $OUT/ham_play tests/scripts/ham/play.txt >$OUT/ham_play.log && python3 $P notes $OUT/ham_play.log $A,48 250 && python3 $P peak $OUT/ham_play.wav 0.9"
+    "$OUT/hamstersynth $OUT/ham_play tests/scripts/ham/play.txt >$OUT/ham_play.log && python3 $P notes $OUT/ham_play.log $A,48 250 && python3 $P peak $OUT/ham_play.wav 0.9"
 run "REC writes and moves on, SEL a rest, ENV undoes; the editor changes a step, its arpeggio and ratchet; then PLAY" sh -c \
-    "$OUT/hamsterpiano $OUT/ham_rec tests/scripts/ham/rec.txt >$OUT/ham_rec.log && python3 $P notes $OUT/ham_rec.log 60,64,79,48,69,69,69,69,69,69,64,67,64,52,67,64,60,64,69,72,55,71,67,62,69"
+    "$OUT/hamstersynth $OUT/ham_rec tests/scripts/ham/rec.txt >$OUT/ham_rec.log && python3 $P notes $OUT/ham_rec.log 60,64,79,48,69,69,69,69,69,69,64,67,64,52,67,64,60,64,69,72,55,71,67,62,69"
 run "a song written on its page (AB), SONG on, PLAY: A's bar, then B's" sh -c \
-    "$OUT/hamsterpiano $OUT/ham_song tests/scripts/ham/song.txt >$OUT/ham_song.log && python3 $P notes $OUT/ham_song.log 72,$A,72"
+    "$OUT/hamstersynth $OUT/ham_song tests/scripts/ham/song.txt >$OUT/ham_song.log && python3 $P notes $OUT/ham_song.log 72,$A,72"
 run "a tour of its pages: the screens (build/host/ham_tour-*.png)" sh -c \
-    "$OUT/hamsterpiano $OUT/ham_tour tests/scripts/ham/tour.txt >$OUT/ham_tour.log && python3 $P peak $OUT/ham_tour.wav 0.98 && python3 - <<'PY'
+    "$OUT/hamstersynth $OUT/ham_tour tests/scripts/ham/tour.txt >$OUT/ham_tour.log && python3 $P peak $OUT/ham_tour.wav 0.98 && python3 - <<'PY'
 from pathlib import Path
 from PIL import Image
 for p in sorted(Path('build/host').glob('ham_tour-*.ppm')):

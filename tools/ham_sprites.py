@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hamster Piano's pictures, drawn here pixel by pixel: the eight hamsters and the Tromster's drummer.
+"""Hamster Synth's pictures, drawn here pixel by pixel: the eight hamsters and the Tromster's drummer.
 
 Each is drawn on a grid of its own pixels (a hamster 26 x 24, the drummer 56 x 45); the screen shows each of them as
 2 x 2 of its own, as the logo's letters and the text. One ink for every outline, the light from the upper left: a

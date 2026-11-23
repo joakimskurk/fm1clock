@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hamster Piano's sound tables: firmware/gen/ham_tables.h.
+"""Hamster Synth's sound tables: firmware/gen/ham_tables.h.
 
 The original (a web page, Web Audio) builds every note from a graph of oscillators and biquad filters. All of a
 hamster's graph before its amplifier is linear and its source has eight harmonics, so the three formant filters and
@@ -168,7 +168,7 @@ def arr(name, typ, vals, per=12, fmt="{}"):
 
 def build():
     o = ["/* SPDX-License-Identifier: GPL-3.0-only */",
-         "/* Hamster Piano's sound tables. Made by tools/gen_ham_tables.py: do not edit. */",
+         "/* Hamster Synth's sound tables. Made by tools/gen_ham_tables.py: do not edit. */",
          "#pragma once", "#include <stdint.h>", ""]
     o.append(f"#define HAM_WT_N {WT_N}u")
     o.append(f"#define HAM_NOCT {NOCT}u                       /* tables for octaves {OCT_LO}..{OCT_HI} */")

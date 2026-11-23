@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Piano's screen: the page's look on 240 x 240. Everything is drawn into one picture in RAM (fb, the pool)
+/* Hamster Synth's screen: the page's look on 240 x 240. Everything is drawn into one picture in RAM (fb, the pool)
  * and the rows that changed are sent (fb_flush): nothing flickers, and a hamster can hop without a thought for what
  * is behind it.
  *
- *   y   0 ..  23   the logo: HAMSTER PIANO in the page's pixel letters (HAMSTERCORE on black in THALL), its notes
+ *   y   0 ..  23   the logo: HAMSTER SYNTH in the page's pixel letters (HAMSTERCORE on black in THALL), its notes
  *   y  24 .. 175   the eight hamsters, four a row, each with air around it, over its note (or the Tromster, the
  *                  song, the help)
  *   y 176 .. 207   the 16 steps, eight a row
@@ -153,7 +153,7 @@ static uint16_t dim565(uint16_t c)              /* THALL: the logo darker (the p
 static void draw_logo(uint32_t core, uint32_t dance)
 {
     static const int8_t NOTE[9][2] = {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {1, 3}, {2, 4}, {2, 5}, {1, 5}, {0, 4}};
-    const char *a = "HAMSTER", *b = core ? "CORE" : "PIANO", *p;
+    const char *a = "HAMSTER", *b = core ? "CORE" : "SYNTH", *p;
     int32_t x = core ? 5 : 0, pass, i, j, word, lx, rx, ly, ry;
     uint16_t pink = core ? dim565(C_PINK) : C_PINK;
     if (core)                                   /* black metal: 2a2d2f down to 050607 */

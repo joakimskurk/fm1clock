@@ -1,6 +1,6 @@
-# Hamster Piano for M-VAVE FM-1
+# Hamster Synth for M-VAVE FM-1
 
-Nettsiden *Hamster Piano* (v4.17) som firmware for FM-1: de åtte hamsterne, 16-stegs sequenceren med fire sekvenser
+Nettsiden *Hamster Piano* (v4.17) som firmware for FM-1, under navnet Hamster Synth: de åtte hamsterne, 16-stegs sequenceren med fire sekvenser
 og song, Tromster og THALLHAMSTERGRINDCORE. Den bygger på samme plattform som FM-1 Clock (Dinghy 0.5) og ligger i
 samme repo som en egen app: `firmware/src/hamster.c`.
 
@@ -18,8 +18,8 @@ datamaskin: `sh tools/ham_demo.sh` lager den på nytt, også som video med skjer
 ## Bygge og installere
 
 ```sh
-./build.sh --app hamster                           # -> build/hamsterpiano.fwsc (identitet FM-1_902)
-python3 tools/fm1_install.py build/hamsterpiano.fwsc   # spør før den skriver
+./build.sh --app hamster                           # -> build/hamstersynth.fwsc (identitet FM-1_902)
+python3 tools/fm1_install.py build/hamstersynth.fwsc   # spør før den skriver
 sh tests/run_hamster.sh                            # testene på vertsmaskin (Python med numpy og Pillow)
 sh tools/emu_hamster.sh                            # pakken i fm1-emu
 ```
@@ -97,7 +97,7 @@ Standardstemmen er firmwarens egen, mer hamstrete enn sidens (hold **FX** for å
 - **Hamstersettet** i Tromster (lyd 4 på hver tromme): kinnpop, et frø som knaser, et snus og et pip.
 
 Lyddemoen bruker hamsterstemmen. `tools/ham_demo.sh` lager også samme demo med sidens stemme
-(`build/demo/hamsterpiano-demo-side.mp3`) til sammenligning.
+(`build/demo/hamstersynth-demo-side.mp3`) til sammenligning.
 
 ## Sidens stemme
 

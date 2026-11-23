@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Piano for the M-VAVE FM-1: eight hamsters that sing C D E F G A B C, a 16-step sequencer with four patterns
+/* Hamster Synth for the M-VAVE FM-1: eight hamsters that sing C D E F G A B C, a 16-step sequencer with four patterns
  * and a song of them, the Tromster (a drummer hamster with an 8-step drum machine) and THALLHAMSTERGRINDCORE (the same
- * hamsters, an octave down, through a wall of gain, at twice the tempo). A port of the web page of that name
+ * hamsters, an octave down, through a wall of gain, at twice the tempo). A port of the web page Hamster Piano
  * (v4.17): its sound in ham_engine.h, its look in ham_draw.h, its hamsters in firmware/gen/ham_art.h.
  *
  * The page is played with a finger on a screen. Here:
@@ -29,7 +29,7 @@
  *                notes out: what the hamsters sing (the channel), the drums on channel 10
  *   USB audio    what the FM-1 plays, to record it (the page's WAV export)
  */
-#define APP_NAME "HAMSTER PIANO"
+#define APP_NAME "HAMSTER SYNTH"
 #define STORE_MAGIC 0x524D4148u                 /* "HAMR": this firmware's own settings (store.h) */
 #include "platform.c"
 #include "ham_engine.h"

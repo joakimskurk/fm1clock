@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Piano's engine alone (firmware/src/ham_engine.h, unchanged) on the host: a case of tests/ham/cases.json
+/* Hamster Synth's engine alone (firmware/src/ham_engine.h, unchanged) on the host: a case of tests/ham/cases.json
  * played by its own sequencer into a WAV, to hold against what the original page renders (tests/ham/parity.py).
  *
  *   ham_render CASE.txt OUT.wav     CASE.txt: a line a setting (tests/ham/parity.py writes it from cases.json)

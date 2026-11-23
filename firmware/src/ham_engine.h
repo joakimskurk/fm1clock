@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Piano's sound and its sequencer, in the audio interrupt.
+/* Hamster Synth's sound and its sequencer, in the audio interrupt.
  *
  * The original is a web page: every note a graph of Web Audio oscillators, biquad filters and gains with exponential
  * ramps. Here, in integers:

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Hamster Piano's sound tables. Made by tools/gen_ham_tables.py: do not edit. */
+/* Hamster Synth's sound tables. Made by tools/gen_ham_tables.py: do not edit. */
 #pragma once
 #include <stdint.h>
 

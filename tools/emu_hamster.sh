@@ -1,23 +1,23 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Hamster Piano's package in fm1-emu: 7 s of the real firmware. A hamster by hand at 4.5 s (E4), PLAY at 5 s, the
+# Hamster Synth's package in fm1-emu: 7 s of the real firmware. A hamster by hand at 4.5 s (E4), PLAY at 5 s, the
 # Tromster at 6 s (SEQ), THALLHAMSTERGRINDCORE at 6.2 s (FX). Then, from its report, its sound and its screens:
 #   - it sings: silence before the key, sound after it
 #   - the audio interrupt's longest render (au_worst, read from RAM by its address) is under half of its time
 #   - the screens: the logo's blue, a hamster's cream, the Tromster's page and the black logo of THALL at the end
-#   tools/emu_hamster.sh build/hamsterpiano.fwsc     FM1_EMU: the fm1-emu binary (tools/emu_ci.sh builds it)
+#   tools/emu_hamster.sh build/hamstersynth.fwsc     FM1_EMU: the fm1-emu binary (tools/emu_ci.sh builds it)
 set -e
-PKG="${1:-build/hamsterpiano.fwsc}"
+PKG="${1:-build/hamstersynth.fwsc}"
 EMU="${FM1_EMU:-$HOME/fm1-emu/target/release/fm1-emu}"
 OUT=build/emu-ham
 rm -rf "$OUT"
 mkdir -p "$OUT/work"
 cp "$PKG" "$OUT/pkg.fwsc"
-ADDR=$(awk '$NF == "au_worst" { print $1 }' build/hamsterpiano.syms 2>/dev/null | head -1)
+ADDR=$(awk '$NF == "au_worst" { print $1 }' build/hamstersynth.syms 2>/dev/null | head -1)
 s0=$(date +%s)
 (cd "$OUT" && timeout "${EMU_TIMEOUT:-1500}" "$EMU" --fwsc pkg.fwsc --ms 7000 --keys '4500-4700:n11,5000:PLAY,6000:SEQ,6200:FX' \
     --wav out.wav --snap 1000,4600,6900 ${ADDR:+--dump $ADDR 1} >report.txt 2>&1) || true
-echo "emu_hamster: 7 s of Hamster Piano took $(( $(date +%s) - s0 )) s to emulate"
+echo "emu_hamster: 7 s of Hamster Synth took $(( $(date +%s) - s0 )) s to emulate"
 grep -E "in an ISR|^time " "$OUT/report.txt" | sed 's/^/  emu: /' || true
 python3 - "$OUT" <<'PY'
 import re, sys

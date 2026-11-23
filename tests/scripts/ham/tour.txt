@@ -1,4 +1,4 @@
-# a tour of Hamster Piano for its screens (tests/run_hamster.sh; docs/screens/ham-*.png)
+# a tour of Hamster Synth for its screens (tests/run_hamster.sh; docs/screens/ham-*.png)
 500 shot
 4600 shot
 # a hamster by hand: E4

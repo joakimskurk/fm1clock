@@ -16,7 +16,7 @@ Kept small, so a later Dinghy can be merged by diffing these files.
 | --- | --- |
 | `firmware/src/dinghy.c` | renamed `fm1clock.c`: the app; `APP_NAME "FM1 CLOCK"`, `STORE_MAGIC` "FCLK"; with it `clk_engine.h`, `clk_draw.h` and `firmware/gen/clk_*.h` |
 | `tools/build.py` | compiles `fm1clock.c`; outputs `fm1clock.*` and `fm1clock.syms` (the symbol table: `tools/emu_check.sh` reads the engine's state by its address); identity `FM-1_94N` (N = the minor version, 0 = a dev build; 94N is not in Dinghy's list of taken ones); loader screen "FM1 CLOCK" in brass `0xE526`; data family `FMCLOCK` |
-| `tools/build.py` | `--app hamster` (or `APP=hamster`): Hamster Piano, `firmware/src/hamster.c` with `ham_engine.h`, `ham_draw.h`, `firmware/gen/ham_*.h`; outputs `hamsterpiano.*`; identity `FM-1_902`, one for every build; loader screen "HAMSTER PIANO"; data family `HAMSTER`; its own `STORE_MAGIC` "HAMR" ([docs/HAMSTER.md](docs/HAMSTER.md)) |
+| `tools/build.py` | `--app hamster` (or `APP=hamster`): Hamster Synth, `firmware/src/hamster.c` with `ham_engine.h`, `ham_draw.h`, `firmware/gen/ham_*.h`; outputs `hamstersynth.*`; identity `FM-1_902`, one for every build; loader screen "HAMSTER SYNTH"; data family `HAMSTER`; its own `STORE_MAGIC` "HAMR" ([docs/HAMSTERSYNTH.md](docs/HAMSTERSYNTH.md)) |
 | `build.sh` | a comment |
 | `tests/run_host.sh` | builds `fm1clock.c` as `build/host/fm1clock` |
 | `tests/run_tests.sh` | `fm1clock.*` names; the SMK-37 packages' identities `_94N` |
