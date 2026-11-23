@@ -94,6 +94,19 @@ siden: den gylne, den grå med solsikkefrø, den hvite som blunker, den oransje 
 med lukkede øyne, den oransje med tunga ute og den hvite med solbriller. Én blekkfarge for omrisset og lys fra øvre
 venstre hjørne. Hver figurpiksel er 2×2 skjermpiksler, som logoen og teksten.
 
+## Skjermen
+
+- **To fonter:** store bokstaver for det viktigste (tonene, tempoet, titlene), en liten pikselfont (med ÆØÅ) for det
+  som sies ved siden av: status, hint, merkelapper og hjelp.
+- **Stegene** står i slag på fire. Hvert har en stripe i fargen til hamsteren som synger det, delt i to, tre eller
+  fire for ratchet. Oktaven vises som pil (og tall), effektene som fargeprikker: glide blå, arpeggio gul (+12 oransje),
+  aksent rosa. Markøren er gul, steget som spilles er lyst med rosa ramme.
+- **Bunnen:** sekvensene A–D i hver sin farge (gul, rosa, blå, grønn, de samme i songen), tempoet og hva den gjør. Under
+  står det som akkurat skjedde i et par sekunder, ellers et hint for det du holder på med. I REDIGER sier den steget i
+  ord: «A9 · F↓2 · GLIDE · ARP +7 · ×3».
+- **Skiltet** er en snakkeboble fra en av hamsterne (mørk i THALL). Den går bort så snart du gjør noe.
+- **Hjelpen** (hold HOME): tre sider, knappene tegnet som taster.
+
 ## Hamsterstemmen
 
 Standardstemmen er firmwarens egen, mer hamstrete enn sidens (hold **FX** for å bytte til sidens):

@@ -69,7 +69,7 @@ static uint32_t page, rec_on, edit_on, cur_step = 7, active, playing, song_playi
 static uint32_t sel_key, trom_row, song_cur, help_page, song_mode, drums_on, thall, bpm = 120, swing, lvl_ham = 16, lvl_drum = 16;
 static uint32_t midi_ch, dirty, t_change, save_now, hvoice = 1;   /* hvoice: the hamster voice (0: the page's) */
 static int32_t kb_oct;
-static uint32_t t_ham[8], t_logo, logo_dance, t_sign, sign_on, lore_i = 99, t_status;
+static uint32_t t_ham[8], t_logo, logo_dance, t_sign, sign_on, sign_who = 4, sign_dark, lore_i = 99, t_status;
 static char status[64], sign1[40], sign2[40];
 /* what has to be drawn again */
 static uint32_t rd_all = 1, rd_logo, rd_hams, rd_steps, rd_bot, rd_page;
@@ -79,6 +79,7 @@ static uint32_t dr_frame, dr_step_t, dr_hit, dr_alt, dr_prev_t, dr_prev_kind;
 
 static uint32_t rnd_s = 0x1234567u;
 static uint32_t rnd(uint32_t n) { rnd_s = rnd_s * 1664525u + 1013904223u; return (rnd_s >> 8) % n; }
+#define MSG_MS 2500u                            /* a message stays this long in the bottom line; then the hint */
 
 /* ---- small strings without a C library */
 static char *sb;
@@ -125,9 +126,12 @@ static const char *const LORE[][2] = {
     {"I HAMSTERDAM", ""}, {"NEPPE BEDRE ENN", "HAMSTERMELK"}, {"HAMSTEREN", "HAR TALT."}, {"STOL PÅ", "HAMSTEREN."},
 };
 #define NLORE (sizeof LORE / sizeof LORE[0])
+static uint32_t rnd(uint32_t n);
 static void sign(const char *a, const char *b, uint32_t ms)
 {
     uint32_t i;
+    sign_who = 4u + rnd(4);                     /* one of the lower row says it */
+    sign_dark = 0;
     for (i = 0; a[i] && i < sizeof sign1 - 1u; i++) sign1[i] = a[i];
     sign1[i] = 0;
     for (i = 0; b[i] && i < sizeof sign2 - 1u; i++) sign2[i] = b[i];
@@ -135,12 +139,14 @@ static void sign(const char *a, const char *b, uint32_t ms)
     sign_on = 1;
     t_sign = fm1_ms + ms;
     rd_bot = 1;
+    rd_hams = 0xFF;                             /* (its bubble over the hamsters) */
 }
 static void sign_away(void)                     /* any input: the sign makes way for what it does */
 {
     if (sign_on) {
         sign_on = 0;
         rd_bot = 1;
+        rd_hams = 0xFF;                         /* (the hamsters under its bubble) */
     }
 }
 static void lore(void)
@@ -313,12 +319,11 @@ static void preview(uint32_t step)
     if (hq.pat[active][step] & ST_ON)
         heng_cmd(HCMD(HC_PREVIEW, step | active << 4));
 }
+static void sb_step_words(uint32_t step);
 static void step_say(uint32_t step)
 {
-    uint32_t s = hq.pat[active][step];
     SAY_BEGIN();
-    sb_step(step);
-    if (s & ST_ON) { sb_s(" · "); sb_note(s, 0); } else sb_s(" · TOMT");
+    sb_step_words(step);
     SAY_END();
 }
 
@@ -423,9 +428,10 @@ static void set_thall(uint32_t on)
     if (thall) {
         static char l2[24];
         sb = l2; l2[0] = 0;
-        sb_s("GRINDCORE · "); sb_u(bpm * 2u); sb_s(" BPM");
+        sb_s("GRINDCORE!");
         sign("THALLHAMSTER-", l2, 2600);
-        say("-1 OKT · VRENG · ×2");
+        sign_dark = 1;
+        SAY_BEGIN(); sb_u(bpm * 2u); sb_s(" BPM · −1 OKT · VRENG"); SAY_END();
     } else {
         SAY_BEGIN(); sb_s("HAMSTER MODE · "); sb_u(bpm); SAY_END();
     }
@@ -436,55 +442,101 @@ static void set_thall(uint32_t on)
 /* ---- drawing */
 static uint32_t disp_pat(void) { return song_playing ? play_pat : active; }
 
-static void draw_bottom(void)
+/* a step in words, onto sb: "A9 · F↓2 · GLIDE · ARP +7 · AKSENT · ×3" */
+static void sb_step_words(uint32_t step)
 {
-    uint32_t i;
-    char t[12];
-    if (sign_on) {                              /* the sign, over both rows */
-        fb_rect(0, Y_BOT, 240, 32, C_INK);
-        fb_rect(1, Y_BOT + 1, 238, 30, C_SIGN);
-        if (sign2[0]) {
-            fb_text_mid(0, 240, Y_BOT + 2, sign1, C_INK, 2);
-            fb_text_mid(0, 240, Y_BOT + 17, sign2, C_INK, 2);
-        } else {
-            fb_text_mid(0, 240, Y_BOT + 9, sign1, C_INK, 2);
-        }
-        return;
+    uint32_t st = hq.pat[active][step];
+    sb_step(step);
+    if (!(st & ST_ON)) { sb_s(" · TOMT"); if (edit_on) sb_s(" · VELG TONE"); return; }
+    {
+        int32_t o = ST_OCT(st);
+        sb_s(" · "); sb_s(NOTE_NAME[ST_KEY(st)]);
+        if (o) { sb_s(o < 0 ? "↓" : "↑"); if (o < -1 || o > 1) sb_u((uint32_t)(o < 0 ? -o : o)); }
+        if (ST_GLIDE(st)) sb_s(" · GLIDE");
+        if (ST_ARP(st)) sb_s(ST_ARP(st) == 1u ? " · ARP +7" : " · ARP +12");
+        if (ST_ACCENT(st)) sb_s(" · AKSENT");
+        if (ST_RATCHET(st) > 1u) { sb_s(" · ×"); sb_u(ST_RATCHET(st)); }
     }
-    fb_rect(0, Y_BOT, 240, 16, C_INK);
-    fb_rect(0, Y_BOT + 1, 240, 15, C_CREAM);
-    for (i = 0; i < 4u; i++) {                  /* the patterns */
-        uint32_t now = playing && play_pat == i, act = i == active && !song_playing;
-        char s[2] = {(char)('A' + i), 0};
-        fb_rect(1 + (int32_t)i * 19, Y_BOT + 1, 18, 15, act ? C_YELLOW : now ? C_PINK : C_INK2);
-        fb_text(5 + (int32_t)i * 19, Y_BOT + 2, s, act || now ? C_INK : C_CREAM2, 2);
-    }
-    sb = t; t[0] = 0;
-    sb_u(bpm * (thall ? 2u : 1u));
-    fb_rect(80, Y_BOT + 1, 42, 15, C_INK2);
-    fb_text_mid(80, 42, Y_BOT + 2, t, C_CREAM2, 2);
-    {                                           /* what it is doing */
-        static char st[16];
-        uint16_t bg = C_CREAM, fg = C_INK;
-        sb = st; st[0] = 0;
-        if (ext_sync) { sb_s("EXT SYNC"); bg = C_BLUE; fg = C_CREAM2; }
-        else if (rec_on) { sb_s("● REC"); bg = C_PINK2; fg = C_WHITE2; }
-        else if (song_playing) { sb_s("SONG "); sb_u(song_pos + 1u); sb_c('/'); sb_u(hq.song_len); bg = C_PINK; }
-        else if (playing) { sb_s("SPILLER"); bg = C_PINK; }
-        else if (edit_on) { sb_s("REDIGER"); bg = C_YELLOW; }
-        else if (song_mode) sb_s("SONG PÅ");
-        else sb_s("KLAR");
-        fb_rect(124, Y_BOT + 1, 116, 15, bg);
-        fb_text_mid(124, 116, Y_BOT + 2, st, fg, 2);
-    }
-    fb_rect(0, Y_BOT + 16, 240, 16, C_INK);
-    fb_rect(0, Y_BOT + 17, 240, 15, C_PAPER);
-    fb_text(text_px(status, 2) > 232 ? 1 : 4, Y_BOT + 17, status, C_INK, 2);
 }
 
-static void draw_home(void)                     /* the hamsters that changed, the steps that changed */
+/* the hint for what one is doing: the bottom line's, when nothing has just been said */
+static void hint(char *t)
 {
-    uint32_t i, p = disp_pat();
+    uint32_t p = disp_pat();
+    sb = t;
+    t[0] = 0;
+    if (page == PG_TROM) {
+        static const char *const KIT[4] = {"KINNPOP", "FRØKNAS", "SNUS", "PIP"};
+        uint32_t v = hq.dvoice[p][trom_row];
+        sb_s(DRUM_NAME[trom_row]); sb_s(" · LYD "); sb_u(v + 1u);
+        if (v == 3u) { sb_s(" · "); sb_s(KIT[trom_row]); }
+        if (!drums_on) sb_s(" · AV (HOLD SEQ)");
+    } else if (page == PG_SONG) {
+        sb_s(song_playing ? "SPILLER SONGEN" : song_mode ? "PLAY SPILLER SONGEN" : "GLO SLÅR SONG PÅ");
+    } else if (edit_on) {                       /* the step the editor holds, in words */
+        sb_step_words(cur_step);
+    } else if (rec_on) {
+        if (playing) sb_s("SPILL MED · SEL = PAUSE");
+        else { sb_s("NESTE: "); sb_step(cur_step); sb_s(" · SEL = PAUSE"); }
+    } else if (song_playing) {
+        sb_s("SONG "); sb_u(song_pos + 1u); sb_c('/'); sb_u(hq.song_len); sb_s(" · SEKVENS "); sb_c((char)('A' + p));
+    } else if (playing) {
+        sb_s("SPILLER "); sb_c((char)('A' + p)); sb_s(" · REC SPILLER INN");
+    } else {
+        sb_s("HOLD HOME FOR HJELP");
+    }
+}
+static char hint_shown[48];
+
+/* the bottom: the patterns, the tempo and what it is doing; under it what was just said, or the hint */
+static void draw_bottom(void)
+{
+    uint32_t i, shown = disp_pat();
+    char t[48];
+    fb_rect(0, Y_BOT, 240, 16, C_INK);
+    for (i = 0; i < 4u; i++) {                  /* the patterns, each its colour: the one shown filled */
+        int32_t x = 2 + (int32_t)i * 19;
+        char s[2] = {(char)('A' + i), 0};
+        if (i == shown) {
+            fb_pill(x, Y_BOT + 1, 17, 14, PAT_COL[i]);
+            sf_text_mid(x, 17, Y_BOT + 3, s, C_INK, 2);
+        } else {
+            fb_pill_line(x, Y_BOT + 1, 17, 14, C_BLUE3);
+            sf_text_mid(x, 17, Y_BOT + 3, s, PAT_COL[i], 2);
+        }
+    }
+    sb = t; t[0] = 0;                           /* the tempo */
+    sb_u(bpm * (thall ? 2u : 1u));
+    fb_text(82, Y_BOT + 1, t, C_CREAM2, 2);
+    sf_text(82 + text_px(t, 2) + 4, Y_BOT + 5, "BPM", C_EDGE, 1);
+    {                                           /* what it is doing: a chip */
+        uint16_t bg = C_BLUE3, fg = C_MUTED;
+        sb = t; t[0] = 0;
+        if (ext_sync) { sb_s("EXT SYNC"); bg = C_BLUE; fg = C_CREAM2; }
+        else if (rec_on) { sb_s("● REC"); bg = C_PINK2; fg = C_WHITE2; }
+        else if (song_playing) { sb_s("▶ SONG "); sb_u(song_pos + 1u); sb_c('/'); sb_u(hq.song_len); bg = C_PINK; fg = C_INK; }
+        else if (playing) { sb_s("▶ SPILLER"); bg = C_PINK; fg = C_INK; }
+        else if (edit_on) { sb_s("REDIGER"); bg = C_YELLOW; fg = C_INK; }
+        else if (song_mode) { sb_s("SONG PÅ"); fg = C_CREAM2; }
+        else sb_s("■ KLAR");
+        fb_pill(146, Y_BOT + 1, 92, 14, bg);
+        sf_text_mid(146, 92, Y_BOT + 3, t, fg, 2);
+    }
+    fb_rect(0, Y_BOT + 16, 240, 16, C_PAPER);   /* what was just said, or the hint */
+    fb_rect(0, Y_BOT + 16, 240, 1, C_INK);
+    if (t_status && fm1_ms - t_status < MSG_MS) {
+        sf_text(6, Y_BOT + 20, status, C_INK, 2);
+    } else {
+        hint(t);
+        for (i = 0; t[i] && i < sizeof hint_shown - 1u; i++) hint_shown[i] = t[i];
+        hint_shown[i] = 0;
+        sf_text(6, Y_BOT + 20, t, C_BLUE, 2);
+    }
+}
+
+static void draw_home(void)                     /* the hamsters that changed, the steps that changed, the bubble */
+{
+    uint32_t i, p = disp_pat(), drawn = 0;
     for (i = 0; i < 8u; i++) {
         uint32_t age = t_ham[i] ? fm1_ms - t_ham[i] : 9999u, st, sq = 0;
         if (thall) {                            /* the page's hard press: flat, then nearly, then up */
@@ -500,9 +552,14 @@ static void draw_home(void)                     /* the hamsters that changed, th
         if ((rd_hams >> i & 1u) || ham_shown[i] != (st | sq << 4)) {
             ham_shown[i] = st | sq << 4;
             draw_ham(i, st, sq);
+            drawn = 1;
         }
     }
     rd_hams = 0;
+    if (sign_on && drawn)                       /* the sign: a hamster of the lower row says it */
+        draw_bubble(sign1, sign2, sign_who, (int)sign_dark);
+    if (rd_steps == 0xFFFFu)
+        draw_steps_bg();
     for (i = 0; i < 16u; i++)
         if (rd_steps >> i & 1u)
             draw_step(i, hq.pat[p][i], !song_playing && i == cur_step, playing && play_pat == p && i == play_step);
@@ -510,32 +567,39 @@ static void draw_home(void)                     /* the hamsters that changed, th
 }
 
 static const uint16_t DRUM_COL[4] = {C_PINK, C_CREAM2, C_YELLOW, C_SKY};
+static void legend(int32_t x, int32_t y, const char *key, const char *what)   /* "KEY  what": a key, its meaning */
+{
+    sf_text(sf_text(x, y, key, C_CREAM2, 2) + 6, y, what, C_EDGE, 2);
+}
 static void draw_trom(void)
 {
     uint32_t r, i, p = disp_pat();
-    char t[12];
+    char t[2] = {(char)('A' + p), 0};
     fb_rect(0, Y_HAM, 240, Y_BOT - Y_HAM, C_INK2);
     draw_drummer(dr_frame);
-    fb_text(126, 30, "TROMSTER", C_YELLOW, 2);
-    fb_rect(126, 50, 17, 17, C_YELLOW);
-    t[0] = (char)('A' + p); t[1] = 0;
-    fb_text(129, 52, t, C_INK, 2);
-    fb_text(150, 52, drums_on ? "PÅ" : "AV", drums_on ? C_CREAM2 : C_PINK, 2);
-    fb_text(126, 76, "8 STEG · SYNC", C_MUTED, 1);
-    fb_text(126, 90, "F3-B3 VELG TROMME", C_MUTED, 1);
-    fb_text(126, 102, "C4-C5 STEG 1-8", C_MUTED, 1);
-    fb_text(126, 114, "KNOTT 1-4 LYD", C_MUTED, 1);
+    fb_text(126, 31, "TROMSTER", C_YELLOW, 2);
+    fb_pill(126, 52, 17, 14, PAT_COL[p]);
+    sf_text_mid(126, 17, 54, t, C_INK, 2);
+    fb_pill(148, 52, 30, 14, drums_on ? C_GREEN : C_PINK2);
+    sf_text_mid(148, 30, 54, drums_on ? "PÅ" : "AV", drums_on ? C_INK : C_WHITE2, 2);
+    legend(126, 76, "F3–B3", "TROMME");
+    legend(126, 92, "C4–C5", "STEG");
+    legend(126, 108, "KNOTT", "LYD 1–4");
     for (r = 0; r < 4u; r++) {
-        int32_t y = 131 + (int32_t)r * 19;
-        fb_rect(1, y, 70, 18, r == trom_row ? C_YELLOW : C_BLUE3);
-        fb_text(4, y + 2, DRUM_NAME[r], r == trom_row ? C_INK : C_CREAM2, 2);
-        t[0] = (char)('1' + hq.dvoice[p][r]); t[1] = 0;
-        fb_text(64, y + 9, t, r == trom_row ? C_INK : C_MUTED, 1);
+        int32_t y = 131 + (int32_t)r * 19, k;
+        uint32_t v = hq.dvoice[p][r], sel = r == trom_row;
+        char d[2] = {(char)('1' + v), 0};
+        fb_pill(2, y, 72, 18, sel ? C_YELLOW : C_BLUE3);
+        sf_text(8, y + 4, DRUM_NAME[r], sel ? C_INK : C_CREAM2, 2);
+        fb_pill(56, y + 2, 15, 14, v == 3u ? C_ORANGE : sel ? C_INK : C_INK2);   /* its voice (4: the hamster kit) */
+        sf_text_mid(56, 15, y + 4, d, v == 3u ? C_INK : sel ? C_YELLOW : C_CREAM2, 2);
+        (void)k;
         for (i = 0; i < 8u; i++) {
             uint32_t on = hq.drum[p][r] >> i & 1u, now = playing && (play_step & 7u) == i;
-            int32_t x = 72 + (int32_t)i * 21, m = now ? 2 : 1;
-            fb_rect(x, y, 20, 18, now ? C_WHITE2 : C_EDGE);
-            fb_rect(x + m, y + m, 20 - 2 * m, 18 - 2 * m, on ? DRUM_COL[r] : C_BLUE3);
+            int32_t x = 77 + (int32_t)i * 20 + (i >= 4u ? 3 : 0);
+            fb_rect(x, y, 18, 18, on ? DRUM_COL[r] : (i & 3u) ? C_STEP0 : C_STEP0B);
+            if (now)
+                fb_frame(x, y, 18, 18, 2, C_WHITE2);
         }
     }
 }
@@ -545,47 +609,60 @@ static void draw_song(void)
     uint32_t i;
     char t[24];
     fb_rect(0, Y_HAM, 240, Y_BOT - Y_HAM, C_INK2);
-    fb_text(8, 32, "SONG", C_YELLOW, 2);
-    fb_text(64, 32, song_mode ? "PÅ" : "AV", song_mode ? C_CREAM2 : C_PINK, 2);
+    fb_text(8, 31, "SONG", C_YELLOW, 2);
+    fb_pill(60, 31, 30, 14, song_mode ? C_GREEN : C_BLUE3);
+    sf_text_mid(60, 30, 33, song_mode ? "PÅ" : "AV", song_mode ? C_INK : C_MUTED, 2);
     sb = t; t[0] = 0;
-    sb_u(hq.song_len); sb_s("/64");
-    fb_text(232 - text_px(t, 2), 32, t, C_MUTED, 2);
-    for (i = 0; i < 64u; i++) {
-        int32_t x = 8 + (int32_t)(i & 15u) * 14, y = 56 + (int32_t)(i >> 4) * 20;
-        uint32_t now = song_playing && i == song_pos;
+    sb_u(hq.song_len); sb_s(" / 64");
+    sf_text(232 - sf_px(t, 2), 33, t, C_EDGE, 2);
+    for (i = 0; i <= hq.song_len && i < 64u; i++) {   /* the song: its patterns in their colours, then a place */
+        int32_t x = 8 + (int32_t)(i & 15u) * 14, y = 54 + (int32_t)(i >> 4) * 21;
         if (i < hq.song_len) {
-            char s[2] = {(char)('A' + hq.song[i]), 0};
-            fb_rect(x, y, 13, 17, now ? C_PINK : C_BLUE3);
-            fb_text(x + 2, y + 2, s, now ? C_INK : C_CREAM2, 2);
+            char c[2] = {(char)('A' + hq.song[i]), 0};
+            fb_pill(x, y, 13, 16, PAT_COL[hq.song[i] & 3u]);
+            sf_text_mid(x, 13, y + 3, c, C_INK, 2);
+            if (song_playing && i == song_pos)
+                fb_pill_line(x - 1, y - 1, 15, 18, C_WHITE2);
         } else {
-            fb_rect(x, y, 13, 17, C_CELL0);
+            fb_pill_line(x, y, 13, 16, C_BLUE3);
         }
-        if (i == song_cur)
-            fb_frame(x - 1, y - 1, 15, 19, 2, C_YELLOW);
+        if (i == song_cur)                      /* the cursor: under it */
+            fb_rect(x, y + 18, 13, 2, C_YELLOW);
     }
-    fb_text(8, 146, "C D E F  SKRIV A B C D", C_MUTED, 1);
-    fb_text(8, 158, "SELECT  FLYTT · PRESETS  BYTT", C_MUTED, 1);
-    fb_text(8, 170, "SEL  SLETT · GLO  PÅ/AV · HOME  UT", C_MUTED, 1);
-    fb_text(8, 188, "PLAY SPILLER REKKEN", C_CREAM2, 1);
+    legend(8, 146, "C D E F", "SKRIV A B C D");
+    legend(8, 160, "SELECT", "FLYTT");
+    legend(120, 160, "PRESETS", "BYTT");
+    legend(8, 174, "SEL", "SLETT");
+    legend(120, 174, "GLO", "PÅ / AV");
+    legend(8, 188, "PLAY", "SPILL SONGEN");
 }
 
-static const char *const HELP[3][13] = {
-    {"SLIK FUNKER DET 1/3", "HVITE   HAMSTERE", "SVARTE  TROMMER", "PLAY    SPILL/STOPP", "REC     STEG-OPPTAK",
-     "SEL     PAUSE I REC", "EDIT    REDIGER", "SELECT  VELG STEG", "PRESETS SEKVENS A-D", "ALGORITHM TEMPO",
-     "OCT-/+  OKTAV", "ENV     ANGRE", "HOLD SEL: SLETT ALT"},
-    {"REDIGER          2/3", "TANGENT BYTT TONE", "KNOTT 1 GLIDE", "KNOTT 2 ARP +7/+12", "KNOTT 3 ACCENT",
-     "KNOTT 4 RATCHET ×1-4", "OCT-/+  STEGETS OKT.", "ARP     ARP +7/+12", "SEL     SLETT STEG", "SAVE    KOPIER →",
-     "LFO     RANDOMISER", "ENV     ANGRE", ""},
-    {"MER              3/3", "SEQ     TROMSTER", "HOLD SEQ TROMMER AV", "FX      THALLHAMSTER", "HOLD FX STEMME",
-     "GLO     SONG AV/PÅ", "HOLD GLO SONG-REKKE", "HOME    HJEM/SKILT", "KNOTT 1-4 UTENFOR", " REDIGER: SWING,",
-     " HAMSTER, TROMSTER,", " MIDI-KANAL", "USB: LYD OG MIDI"},
+/* help: three pages, a key and what it does on each line */
+static const char *const HELP_TITLE[3] = {"SPILLE", "REDIGERE", "MER"};
+static const char *const HELP[3][10][2] = {
+    {{"HVITE", "HAMSTERNE"}, {"SVARTE", "TROMMER"}, {"PLAY", "SPILL / STOPP"}, {"REC", "TA OPP"},
+     {"SEL", "PAUSE I OPPTAK"}, {"SELECT", "VELG STEG"}, {"PRESETS", "SEKVENS A–D"}, {"ALGORITHM", "TEMPO"},
+     {"OCT − +", "OKTAV"}, {"ENV", "ANGRE"}},
+    {{"EDIT", "REDIGER STEG"}, {"TANGENT", "BYTT TONE"}, {"KNOTT 1", "GLIDE"}, {"KNOTT 2", "ARP +7 / +12"},
+     {"KNOTT 3", "AKSENT"}, {"KNOTT 4", "RATCHET ×1–4"}, {"OCT − +", "STEGETS OKTAV"}, {"SEL", "SLETT STEG"},
+     {"SAVE", "KOPIER →"}, {"LFO", "TILFELDIG"}},
+    {{"SEQ", "TROMSTER"}, {"HOLD SEQ", "TROMMER AV / PÅ"}, {"FX", "HAMSTERCORE"}, {"HOLD FX", "STEMME"},
+     {"GLO", "SONG AV / PÅ"}, {"HOLD GLO", "SONG-REKKEFØLGE"}, {"HOLD SEL", "SLETT SEKVENS"},
+     {"KNOTT 1–4", "SWING/NIVÅ/MIDI"}, {"HOME", "HJEM · SKILT"}, {"HOLD HOME", "DENNE HJELPEN"}},
 };
 static void draw_help(void)
 {
     uint32_t i;
     fb_rect(0, Y_HAM, 240, 240 - Y_HAM, C_INK2);
-    for (i = 0; i < 13u; i++)
-        fb_text(1, 28 + (int32_t)i * 16, HELP[help_page][i], i ? C_CREAM2 : C_YELLOW, 2);
+    fb_text(8, 30, HELP_TITLE[help_page], C_YELLOW, 2);
+    for (i = 0; i < 3u; i++)                    /* which page: three dots */
+        fb_pill(196 + (int32_t)i * 12, 33, 8, 8, i == help_page ? C_YELLOW : C_BLUE3);
+    for (i = 0; i < 10u; i++) {
+        int32_t y = 52 + (int32_t)i * 18, w = sf_px(HELP[help_page][i][0], 2) + 10;
+        fb_pill(8, y, w, 15, C_CREAM2);         /* the key, as a key */
+        sf_text(13, y + 3, HELP[help_page][i][0], C_INK, 2);
+        sf_text(106, y + 3, HELP[help_page][i][1], C_CREAM2, 2);
+    }
 }
 
 static void draw(void)
@@ -1259,10 +1336,19 @@ static void app_main(void)
         if (sign_on && (int32_t)(fm1_ms - t_sign) >= 0) {
             sign_on = 0;
             rd_bot = 1;
+            rd_hams = 0xFF;
         }
-        if (page == PG_HOME && edit_on && t_status && fm1_ms - t_status > 1800u) {   /* the editor: the step it holds */
-            step_say(cur_step);
+        if (t_status && fm1_ms - t_status >= MSG_MS) {   /* the message has been read: the hint again */
             t_status = 0;
+            rd_bot = 1;
+        }
+        if (!t_status && fm1_ms - t_draw >= 16u) {   /* the hint changed (another step, another drum ...) */
+            char t[48];
+            uint32_t i;
+            hint(t);
+            for (i = 0; t[i] == hint_shown[i] && t[i]; i++) {}
+            if (t[i] != hint_shown[i])
+                rd_bot = 1;
         }
         if (fm1_ms - t_draw >= 16u) {
             t_draw = fm1_ms;
