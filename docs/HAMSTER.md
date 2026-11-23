@@ -11,6 +11,10 @@ samme repo som en egen app: `firmware/src/hamster.c`.
 > (FM-1-emulatoren), men ikke på en fysisk enhet. Installer på eget ansvar. Går noe galt: hold **OCT−** mens du slår
 > på, så starter FM-1 i USB-redning, der en installer alltid virker.
 
+**Hør den:** [hamster-demo.mp3](hamster-demo.mp3) (49 s). Hamsterne én og én, trommene for hånd, sekvens A,
+Tromster, en song på fire sekvenser og THALLHAMSTERGRINDCORE. Det er firmwarens egen kode som spiller, kjørt på en
+datamaskin: `sh tools/ham_demo.sh` lager den på nytt, også som video med skjermen (`build/demo/`).
+
 ## Bygge og installere
 
 ```sh
@@ -107,3 +111,4 @@ I fm1-emu bruker lydavbruddet på det meste ca. 20 % av tiden det har.
 | `firmware/gen/ham_tables.h`, `ham_art.h` | Laget av `tools/gen_ham_tables.py` og `tools/gen_ham_art.py` (`--sheet FIL.png` viser alle figurene) |
 | `tools/ham_sprites.py` | Hamsterne og trommehamsteren, tegnet piksel for piksel (26×27 og 56×45, vist 2×2) |
 | `tests/run_hamster.sh`, `tests/ham/`, `tools/emu_hamster.sh` | Testene |
+| `tools/ham_demo.sh`, `tests/scripts/ham/demo.txt`, `tests/ham/demo_song.h` | Lyddemoen: hva som trykkes når, og sangen den spiller (bare i demobygget) |

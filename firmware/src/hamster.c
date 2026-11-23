@@ -154,6 +154,9 @@ static void push_all(void)
     hq.lvl_drum = lvl_drum * 16u;
 }
 
+#ifdef HAM_DEMO
+#include HAM_DEMO                               /* a song to start from: the sound demo's (tools/ham_demo.sh) */
+#endif
 static void defaults(void)
 {
     static const uint8_t A[16][2] = {{0, 2}, {2, 3}, {4, 3}, {2, 3}, {2, 2}, {4, 3}, {2, 3}, {1, 3},
@@ -175,6 +178,9 @@ static void defaults(void)
     hq.song_len = 8;
     bpm = 120; active = 0; song_mode = 0; drums_on = 0; thall = 0; cur_step = 7; swing = 0;
     lvl_ham = lvl_drum = 16; midi_ch = 0; kb_oct = 0;
+#ifdef HAM_DEMO
+    ham_demo();
+#endif
 }
 
 static void store_load(void)

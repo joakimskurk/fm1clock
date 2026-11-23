@@ -1,0 +1,56 @@
+# Hamster Piano's sound demo (tools/ham_demo.sh), about 49 s at 120 BPM (a bar: 4 s)
+# 0.6 s  the eight hamsters, one by one: C D E F G A B C (the white keys C4..C5)
+600 keys 0x80
+780 keys 0
+1100 keys 0x200
+1280 keys 0
+1600 keys 0x800
+1780 keys 0
+2100 keys 0x1000
+2280 keys 0
+2600 keys 0x4000
+2780 keys 0
+3100 keys 0x10000
+3280 keys 0
+3600 keys 0x40000
+3780 keys 0
+4100 keys 0x80000
+4400 keys 0
+# 4.7 s  the drums by hand: kick, hat, snare, hat, kick, kick, snare, kick + clap (the black keys)
+4700 keys 0x100
+4760 keys 0
+4825 keys 0x2000
+4885 keys 0
+4950 keys 0x400
+5010 keys 0
+5075 keys 0x2000
+5135 keys 0
+5200 keys 0x100
+5260 keys 0
+5325 keys 0x100
+5385 keys 0
+5450 keys 0x400
+5510 keys 0
+5700 keys 0x8100
+5800 keys 0
+# 6.2 s  PLAY: the pattern A, the page's own
+6200 btn 12
+# 14.2 s  SEQ: the Tromster joins in (its page); 18.2 s home
+14150 btn 11
+18150 btn 8
+# 22.2 s  SONG on (GLO) and PLAY: A B C D, each with its drums; the Tromster's page for C
+22180 btn 7
+22200 btn 12
+30150 btn 11
+34150 btn 8
+# 38.2 s  THALLHAMSTERGRINDCORE (FX): the song again, an octave down, distorted, twice as fast
+38180 btn 12
+38185 btn 2
+38200 btn 12
+# 46.2 s  stop, back to the hamsters: a C major chord, and the sign
+46190 btn 12
+46195 btn 2
+46400 keys 0x84880
+47600 keys 0
+47700 btn 8
+49000 end
